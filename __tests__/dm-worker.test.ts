@@ -195,7 +195,11 @@ describe("DM Worker — Full Pipeline", () => {
 
     expect(mockPrisma.automation.findMany).toHaveBeenCalledWith({
       where: {
-        postId: "media_101",
+        OR: [
+          { postId: "media_101" },
+          { postId: "ALL_POSTS" },
+          { postId: "ALL" },
+        ],
         isActive: true,
         instagramAccount: { instagramId: "ig_456" },
       },

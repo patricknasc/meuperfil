@@ -1,7 +1,7 @@
 import { Worker, type Job } from "bullmq";
 import { getDMQueue, getRedisConnection, type ProcessCommentJob } from "./client";
 import { prisma } from "@/lib/db/client";
-import { MetaApiError, sendPrivateReply } from "@/lib/meta/client";
+import { MetaApiError, sendPrivateReply, sendDirectMessage } from "@/lib/meta/client";
 import { decryptToken } from "@/lib/meta/oauth";
 import { matchKeywords } from "@/lib/utils/keyword-matcher";
 import { reserveDMSlot } from "@/lib/utils/rate-limiter";
@@ -37,7 +37,11 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
 
   const automations = await prisma.automation.findMany({
     where: {
-      postId: mediaId,
+      OR: [
+        { postId: mediaId },
+        { postId: "ALL_POSTS" },
+        { postId: "ALL" },
+      ],
       isActive: true,
       instagramAccount: {
         instagramId: instagramAccountId,
@@ -274,12 +278,26 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
     });
 
     try {
-      await sendPrivateReply(
-        accessToken,
-        automation.instagramAccount.instagramId,
-        commentId,
-        dmMessage
-      );
+      if (
+        mediaId === "direct_message" ||
+        commentId.startsWith("mid.") ||
+        !commentId ||
+        commentId.startsWith("mention_")
+      ) {
+        await sendDirectMessage(
+          accessToken,
+          automation.instagramAccount.instagramId,
+          commenterId,
+          dmMessage
+        );
+      } else {
+        await sendPrivateReply(
+          accessToken,
+          automation.instagramAccount.instagramId,
+          commentId,
+          dmMessage
+        );
+      }
 
       await prisma.dmLog.update({
         where: {
