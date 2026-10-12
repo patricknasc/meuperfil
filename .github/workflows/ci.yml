@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   test:
@@ -27,7 +27,7 @@ jobs:
       - name: Generate Prisma client
         run: npm run db:generate
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/instrareply
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/meuperfil
 
       - name: Typecheck
         run: npm run typecheck
@@ -41,14 +41,14 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/instrareply
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/meuperfil
           REDIS_URL: redis://localhost:6379
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: test-secret-for-ci-build
           CRON_SECRET: test-secret-for-ci-cron
           ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           RESEND_API_KEY: re_test
-          EMAIL_FROM: "InstaReply <login@example.com>"
+          EMAIL_FROM: "MeuPerfil <login@example.com>"
           STRIPE_SECRET_KEY: sk_test_123
           STRIPE_WEBHOOK_SECRET: whsec_123
           STRIPE_PRICE_PRO: price_pro
