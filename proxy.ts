@@ -12,6 +12,7 @@ const PROTECTED_PREFIXES = [
   "/scheduler",
   "/automations",
   "/campaigns",
+  "/leads",
   "/logs",
   "/settings",
   "/diagnostics",

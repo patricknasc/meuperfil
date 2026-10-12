@@ -1,3 +1,4 @@
+import { publicTranslator } from "@/lib/i18n/public";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/language-switcher";
 import type { Locale } from "@/app/[lang]/dictionaries";
@@ -20,17 +21,18 @@ export default function PublicSiteHeader({
   locale = "pt",
   dict,
 }: PublicSiteHeaderProps) {
+  const t = publicTranslator(locale);
   const prefix = `/${locale}`;
 
   const navLinks = [
-    { label: dict?.templates ?? "Templates", href: `${prefix}/templates`, key: "templates" },
+    { label: dict?.templates ?? t("Templates"), href: `${prefix}/templates`, key: "templates" },
     {
-      label: dict?.agencies ?? "Agencies",
+      label: dict?.agencies ?? t("Agencies"),
       href: `${prefix}/instagram-dm-automation-agencies`,
       key: "agencies",
     },
-    { label: dict?.pricing ?? "Pricing", href: `${prefix}#pricing`, key: "pricing" },
-    { label: dict?.security ?? "Security", href: `${prefix}#security`, key: "security" },
+    { label: dict?.pricing ?? t("Pricing"), href: `${prefix}#pricing`, key: "pricing" },
+    { label: dict?.security ?? t("Security"), href: `${prefix}#security`, key: "security" },
   ];
 
   return (
@@ -63,13 +65,13 @@ export default function PublicSiteHeader({
             href={`${prefix}/login`}
             className="hidden px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:text-white sm:inline-flex"
           >
-            {dict?.signIn ?? "Sign in"}
+            {dict?.signIn ?? t("Sign in")}
           </Link>
           <Link
             href={`${prefix}/login`}
             className="inline-flex items-center justify-center bg-cyan-300 px-4 py-2 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
           >
-            {dict?.startFree ?? "Start free"}
+            {dict?.startFree ?? t("Start free")}
           </Link>
         </div>
       </div>

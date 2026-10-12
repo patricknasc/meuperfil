@@ -54,6 +54,7 @@ export function getDMQueue(): Queue<ProcessCommentJob> {
 export interface PublishPostJob {
   scheduledPostId: string;
   workspaceId: string;
+  queueVersion?: number;
 }
 
 let postPublishingQueue: Queue<PublishPostJob> | null = null;

@@ -1,3 +1,7 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { landingTranslator } from "@/lib/i18n/landing";
 import type { CampaignTemplate } from "@/lib/templates/campaign-templates";
 
 const accentClasses: Record<CampaignTemplate["accent"], string> = {
@@ -18,6 +22,8 @@ export default function TemplateVisual({
   template,
   compact = false,
 }: TemplateVisualProps) {
+  const { lang } = useParams<{ lang: string }>();
+  const t = landingTranslator(lang);
   return (
     <div
       className={`border bg-gradient-to-br p-4 shadow-2xl shadow-black/30 ${
@@ -28,21 +34,21 @@ export default function TemplateVisual({
         <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Comment trigger
+              {t("Comment trigger")}
             </p>
             <p className="mt-1 text-sm font-bold text-white">
-              {template.triggerExample}
+              {t(template.triggerExample)}
             </p>
           </div>
           <span className="border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-zinc-300">
-            {template.category}
+            {t(template.category)}
           </span>
         </div>
 
         <div className={`grid gap-3 pt-4 ${compact ? "" : "sm:grid-cols-2"}`}>
           <div className="border border-white/10 bg-white/[0.035] p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Keywords
+              {t("Keywords")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {template.keywords.map((keyword) => (
@@ -57,10 +63,10 @@ export default function TemplateVisual({
           </div>
           <div className="border border-white/10 bg-white/[0.035] p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Private reply
+              {t("Private reply")}
             </p>
             <p className="mt-3 text-sm leading-6 text-zinc-200">
-              {template.privateReplyPreview}
+              {t(template.privateReplyPreview)}
             </p>
           </div>
         </div>

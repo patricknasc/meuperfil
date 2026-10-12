@@ -136,6 +136,13 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
+  const leadFilter = { workspaceId, ...(selectedAccountId ? { interactions: { some: { workspaceId, automation: { instagramAccountId: selectedAccountId } } } } : {}) };
+  const [totalLeads, convertedLeads, recentLeads] = await Promise.all([
+    prisma.contact.count({ where: leadFilter }),
+    prisma.contact.count({ where: { ...leadFilter, status: "CONVERTED" } }),
+    prisma.contact.findMany({ where: leadFilter, orderBy: { lastInteractionAt: "desc" }, take: 5, select: { id: true, name: true, instagramUsername: true, status: true, lastInteractionAt: true } }),
+  ]);
+
   const dailyDMs: { date: string; count: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const dayStart = new Date(todayStart);
@@ -178,6 +185,9 @@ export async function GET(request: NextRequest) {
     success: true,
     data: {
       workspace,
+      totalLeads,
+      convertedLeads,
+      recentLeads,
       instagramAccount,
       instagramAccounts,
       selectedInstagramAccountId: selectedAccountId,

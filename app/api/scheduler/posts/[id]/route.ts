@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-access";
 import { updateScheduledPostSchema } from "@/lib/scheduler/validation";
 import {
+  SchedulerError,
   getScheduledPostById,
   updateScheduledPost,
   deleteScheduledPost,
@@ -29,7 +30,7 @@ export async function GET(
     }
     return NextResponse.json({ success: true, data: post });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao carregar post";
+    const message = error instanceof SchedulerError ? error.message : "Erro ao carregar post";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    const message = error instanceof Error ? error.message : "Erro ao atualizar post";
+    const message = error instanceof SchedulerError ? error.message : "Erro ao atualizar post";
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }
@@ -94,7 +95,7 @@ export async function DELETE(
     await deleteScheduledPost(context.workspaceId, id);
     return NextResponse.json({ success: true, message: "Post excluído com sucesso" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao excluir post";
+    const message = error instanceof SchedulerError ? error.message : "Erro ao excluir post";
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }

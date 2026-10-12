@@ -1,12 +1,17 @@
+import { publicTranslator } from "@/lib/i18n/public";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
 import LanguageSwitcher from "@/components/language-switcher";
 import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
 
-export const metadata = {
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  const t = publicTranslator(lang);
+  return {
   title: "Login - MeuPerfil",
-  description: "Sign in to manage Instagram comment-to-DM campaigns.",
+  description: t("Sign in to manage Instagram comment-to-DM campaigns."),
 };
+}
 
 export default async function LoginPage({
   params,
@@ -21,6 +26,7 @@ export default async function LoginPage({
 }) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const t = publicTranslator(locale);
   const sParams = await searchParams;
   const checkEmail = sParams.checkEmail === "1";
   const selectedTemplate = getCampaignTemplate(sParams.template);
@@ -53,17 +59,15 @@ export default async function LoginPage({
           </h1>
           <p className="text-muted text-sm leading-relaxed mt-2">
             {selectedTemplate
-              ? `Sign in to use the ${selectedTemplate.title} template.`
-              : "Sign in by email, then connect your Instagram professional account."}
+              ? t("Sign in to use the {template} template.", { template: selectedTemplate.title })
+              : t("Sign in by email, then connect your Instagram professional account.")}
           </p>
         </div>
 
         <div className="glass-strong rounded-2xl p-8 shadow-2xl shadow-black/40">
           {selectedTemplate && !checkEmail && (
             <div className="mb-5 border border-cyan-200/20 bg-cyan-300/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">
-                Template selected
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">{t("Template selected")}</p>
               <p className="mt-2 text-sm font-semibold text-white">
                 {selectedTemplate.title}
               </p>
@@ -72,11 +76,8 @@ export default async function LoginPage({
 
           {checkEmail ? (
             <div className="text-center py-4">
-              <h2 className="text-lg font-semibold mb-2">Check your email</h2>
-              <p className="text-sm text-muted">
-                We sent you a secure sign-in link. Open it on this device to
-                continue.
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t("Check your email")}</h2>
+              <p className="text-sm text-muted">{t("We sent you a secure sign-in link. Open it on this device to continue.")}</p>
             </div>
           ) : (
             <form action={sendMagicLink} className="space-y-5">
@@ -84,9 +85,7 @@ export default async function LoginPage({
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-foreground"
-                >
-                  Work email
-                </label>
+                >{t("Work email")}</label>
                 <input
                   id="email"
                   name="email"
@@ -101,9 +100,7 @@ export default async function LoginPage({
               <button
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
-              >
-                Email me a magic link
-              </button>
+              >{t("Email me a magic link")}</button>
             </form>
           )}
         </div>

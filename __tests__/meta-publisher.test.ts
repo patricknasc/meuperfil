@@ -103,3 +103,26 @@ describe("Meta Content Publisher", () => {
     expect(result.permalink).toBe("https://www.instagram.com/p/Cxyz123/");
   });
 });
+
+describe("Publisher authentication and checkpoints", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("uses the Instagram Login host and keeps the token out of the URL", async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: "c1" }) });
+    vi.stubGlobal("fetch", fetch);
+    await createSingleMediaContainer("ig1", "sensitive-token", { mediaUrl: "https://example.com/a.jpg", mediaType: "IMAGE" });
+    const [url, options] = fetch.mock.calls[0];
+    expect(url).toMatch(/^https:\/\/graph.instagram.com\//);
+    expect(url).not.toContain("sensitive-token");
+    expect(options.headers.get("Authorization")).toBe("Bearer sensitive-token");
+  });
+  it("does not publish if the durable attempt checkpoint fails", async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: "existing", status_code: "FINISHED" }) });
+    vi.stubGlobal("fetch", fetch);
+    await expect(publishToInstagram("ig1", "token", {
+      mediaUrls: ["https://example.com/a.jpg"], mediaType: "IMAGE", existingContainerId: "existing",
+      onPublishStarted: async () => { throw new Error("DB checkpoint failed"); },
+    })).rejects.toThrow("DB checkpoint failed");
+    expect(fetch.mock.calls.some(([url]) => url.includes("media_publish"))).toBe(false);
+    expect(fetch.mock.calls.some(([url]) => url.includes("/ig1/media?"))).toBe(false);
+  });
+});

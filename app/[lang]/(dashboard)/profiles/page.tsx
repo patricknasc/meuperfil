@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { profileTranslator } from "@/lib/i18n/profiles";
 import { useParams, useRouter } from "next/navigation";
 import { THEMES, type ProfileTheme } from "@/lib/profiles/themes";
 
@@ -25,6 +27,7 @@ export default function ProfilesPage() {
   const params = useParams();
   const router = useRouter();
   const lang = (params?.lang as string) || "pt";
+  const t = profileTranslator(lang);
 
   const [profiles, setProfiles] = useState<ProfileItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,14 +79,14 @@ export default function ProfilesPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Erro ao criar perfil");
+        throw new Error(data.error || t("Erro ao criar perfil"));
       }
 
       setShowCreateModal(false);
       // Navigate straight to the new profile studio
       router.push(`/${lang}/profiles/${data.data.id}`);
     } catch (err) {
-      setFormError((err instanceof Error && err.message) || "Erro ao criar perfil");
+      setFormError((err instanceof Error && err.message) || t("Erro ao criar perfil"));
     } finally {
       setCreating(false);
     }
@@ -102,9 +105,9 @@ export default function ProfilesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Link na Bio</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{t("Link na Bio")}</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Crie e personalize sua página pública com links, temas premium e rastreamento de conversão.
+            {t("Crie e personalize sua página pública com links, temas premium e rastreamento de conversão.")}
           </p>
         </div>
         <button
@@ -120,7 +123,7 @@ export default function ProfilesPage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          Criar Novo Perfil
+          {t("Criar Novo Perfil")}
         </button>
       </div>
 
@@ -148,16 +151,16 @@ export default function ProfilesPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Nenhum perfil criado ainda</h2>
+            <h2 className="text-xl font-bold text-white">{t("Nenhum perfil criado ainda")}</h2>
             <p className="text-sm text-zinc-400 mt-2">
-              Comece agora criando seu primeiro Link na Bio. Compartilhe seu link exclusivo no Instagram, TikTok, WhatsApp e onde quiser.
+              {t("Comece agora criando seu primeiro Link na Bio. Compartilhe seu link exclusivo no Instagram, TikTok, WhatsApp e onde quiser.")}
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-sm transition shadow-lg shadow-indigo-500/20"
           >
-            Criar meu primeiro perfil
+            {t("Criar meu primeiro perfil")}
           </button>
         </div>
       ) : (
@@ -186,14 +189,14 @@ export default function ProfilesPage() {
                           : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       }`}
                     >
-                      {profile.isPublished ? "Publicado" : "Rascunho"}
+                      {profile.isPublished ? t("Publicado") : t("Rascunho")}
                     </span>
                   </div>
 
                   {/* Profile Header */}
                   <div className="flex items-center gap-3.5 mb-4">
                     {profile.avatarUrl ? (
-                      <img
+                      <Image unoptimized width={48} height={48}
                         src={profile.avatarUrl}
                         alt={profile.displayName}
                         className="w-12 h-12 rounded-full object-cover border border-white/10"
@@ -208,7 +211,7 @@ export default function ProfilesPage() {
                         {profile.displayName}
                       </h3>
                       <p className="text-xs text-zinc-400 truncate">
-                        Tema: {themeConfig.name}
+                        {t("Tema:")} {themeConfig.name}
                       </p>
                     </div>
                   </div>
@@ -223,11 +226,11 @@ export default function ProfilesPage() {
                   {/* Metrics preview */}
                   <div className="grid grid-cols-3 gap-2 py-3 px-3.5 rounded-xl bg-zinc-950/40 border border-white/5 text-center mb-5">
                     <div>
-                      <p className="text-xs text-zinc-400">Blocos</p>
+                      <p className="text-xs text-zinc-400">{t("Blocos")}</p>
                       <p className="text-sm font-bold text-white mt-0.5">{profile._count.blocks}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-400">Visitas</p>
+                      <p className="text-xs text-zinc-400">{t("Visitas")}</p>
                       <p className="text-sm font-bold text-white mt-0.5">{profile._count.visits}</p>
                     </div>
                     <div>
@@ -243,21 +246,21 @@ export default function ProfilesPage() {
                     href={`/${lang}/profiles/${profile.id}`}
                     className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-center text-xs font-semibold text-white transition border border-white/10"
                   >
-                    Editar no Studio
+                    {t("Editar no Studio")}
                   </Link>
                   <button
                     onClick={() => handleCopyLink(profile.handle, profile.id)}
                     className="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-xs font-medium text-zinc-200 transition border border-zinc-700 flex items-center gap-1.5"
-                    title="Copiar link"
+                    title={t("Copiar link")}
                   >
                     {copiedId === profile.id ? (
-                      <span className="text-emerald-400">Copiado!</span>
+                      <span className="text-emerald-400">{t("Copiado!")}</span>
                     ) : (
                       <>
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9 9.06 9.06 0 0 0-1.5.124m7.5 10.376h-3.375a1.125 1.125 0 0 1-1.125-1.125V7.875m-7.5 0V3.375c0-.621.504-1.125 1.125-1.125h9.75c.621 0 1.125.504 1.125 1.125v3.375m-9.75 0h9.75" />
                         </svg>
-                        Link
+                        {t("Link")}
                       </>
                     )}
                   </button>
@@ -273,7 +276,7 @@ export default function ProfilesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-6 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Criar Novo Perfil</h3>
+              <h3 className="text-lg font-bold text-white">{t("Criar Novo Perfil")}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-zinc-400 hover:text-white transition p-1"
@@ -293,7 +296,7 @@ export default function ProfilesPage() {
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                  Handle (Link exclusivo)
+                  {t("Handle (Link exclusivo)")}
                 </label>
                 <div className="flex items-center rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 focus-within:border-accent transition">
                   <span className="text-sm text-zinc-500 font-mono select-none">meuperfil.me/</span>
@@ -302,45 +305,45 @@ export default function ProfilesPage() {
                     required
                     value={handle}
                     onChange={(e) => setHandle(e.target.value.toLowerCase().trim())}
-                    placeholder="seunome"
+                    placeholder={t("seunome")}
                     className="flex-1 bg-transparent text-sm text-white font-mono placeholder:text-zinc-600 focus:outline-none ml-1"
                   />
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-1">
-                  {"Mínimo 3 caracteres (letras, números, '.', '_' e '-')"}
+                  {t("Mínimo 3 caracteres (letras, números, '.', '_' e '-')")}
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                  Nome de Exibição
+                  {t("Nome de Exibição")}
                 </label>
                 <input
                   type="text"
                   required
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Ex: João Silva ou Minha Marca"
+                  placeholder={t("Ex: João Silva ou Minha Marca")}
                   className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-accent focus:outline-none transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                  Bio (Opcional)
+                  {t("Bio (Opcional)")}
                 </label>
                 <textarea
                   rows={2}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Ex: Criador de conteúdo | Dicas diárias de design e tecnologia"
+                  placeholder={t("Ex: Criador de conteúdo | Dicas diárias de design e tecnologia")}
                   className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-accent focus:outline-none transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                  Escolha o Tema Inicial
+                  {t("Escolha o Tema Inicial")}
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   {Object.values(THEMES).map((th) => (
@@ -369,14 +372,14 @@ export default function ProfilesPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-400 hover:text-white transition"
                 >
-                  Cancelar
+                  {t("Cancelar")}
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
                   className="px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-sm transition shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                 >
-                  {creating ? "Criando..." : "Criar e Abrir Studio"}
+                  {creating ? t("Criando...") : t("Criar e Abrir Studio")}
                 </button>
               </div>
             </form>

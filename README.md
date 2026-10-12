@@ -60,6 +60,10 @@ Most tools in this market are broad chatbot platforms. MeuPerfil is intentionall
 ## Current Product
 
 - Email magic-link signup with workspace tenancy.
+- Bio-link profiles with themes, ordered blocks, visits, and click analytics.
+- Instagram post scheduling with automatic campaign attachment and delivery recovery.
+- Persisted campaign leads with search, campaign filters, and qualification status.
+- Database-backed beta waitlist with duplicate registration protection.
 - Instagram professional account connection as an integration.
 - Keyword campaigns for posts and reels.
 - Meta webhook verification and event storage.
@@ -224,6 +228,18 @@ Want to help? Start with the public issue list:
 - [Template issues](https://github.com/patricknasc/meuperfil/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%3Atemplates)
 
 If you build a campaign template that works for your niche, open an issue or pull request.
+
+## Latest database changes
+
+Run `npm run db:migrate` before starting the updated web app and worker. Production
+and staging must deploy both processes after applying migrations. Instagram accounts
+need to reconnect to grant the new publishing permission.
+
+If a previous installation used `.data/beta-waitlist.jsonl`, run
+`npm run beta:import` to import it without deleting the original file.
+
+See [integration checks](docs/integration-smoke-tests.md) and
+[implementation notes](docs/implementation-2026-10-12.md).
 
 ## Development Checks
 

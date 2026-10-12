@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { dashboardMessages } from "@/lib/i18n/dashboard";
 import LanguageSwitcher from "@/components/language-switcher";
 import type { Locale } from "@/app/[lang]/dictionaries";
 
@@ -52,6 +53,10 @@ const navItems = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
       </svg>
     ),
+  },
+  {
+    key: "leads", label: "Leads", path: "/leads",
+    icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></svg>,
   },
   {
     key: "logs",
@@ -105,6 +110,7 @@ export default function Sidebar({
   const segments = pathname.split("/").filter(Boolean);
   const currentLocale = (["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt") as Locale;
   const prefix = `/${currentLocale}`;
+  const messages = dashboardMessages(currentLocale);
 
   return (
     <>
@@ -161,7 +167,7 @@ export default function Sidebar({
                 <span className={`transition-colors ${isActive ? "text-accent" : "text-muted group-hover:text-foreground"}`}>
                   {item.icon}
                 </span>
-                {item.label}
+                {messages[item.key as keyof typeof messages]}
                 {isActive && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
                 )}

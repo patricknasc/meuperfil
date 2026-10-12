@@ -35,6 +35,8 @@ const {
   mockReleaseWorkspaceDMReservation: vi.fn(),
 }));
 
+vi.mock("@/lib/crm", () => ({ captureLeadFromInteraction: vi.fn().mockResolvedValue({ success: true, contactId: "contact_1" }) }));
+
 vi.mock("@/lib/db/client", () => ({
   prisma: mockPrisma,
 }));
@@ -323,7 +325,7 @@ describe("DM Worker — Full Pipeline", () => {
       }),
       expect.objectContaining({
         delay: 1800000,
-        jobId: "comment:ig_456:comment_555:retry:1",
+        jobId: expect.stringMatching(/^comment-[a-f0-9]{64}$/),
       })
     );
   });

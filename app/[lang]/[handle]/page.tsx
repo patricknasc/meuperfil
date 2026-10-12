@@ -1,3 +1,5 @@
+import Image from "next/image";
+import { profileTranslator } from "@/lib/i18n/profiles";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
@@ -11,12 +13,13 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { handle } = await params;
+  const { lang, handle } = await params;
+  const t = profileTranslator(lang);
   const profile = await getPublicProfileByHandle(handle);
 
   if (!profile || !profile.isPublished) {
     return {
-      title: "Perfil não encontrado | meuperfil.me",
+      title: `${t("Perfil não encontrado")} | meuperfil.me`,
       robots: { index: false, follow: false },
     };
   }
@@ -25,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description =
     profile.seoDescription ||
     profile.bio ||
-    `Acesse todos os links, produtos e redes sociais de ${profile.displayName} no meuperfil.me.`;
+    `${profile.displayName} — ${lang === "en" ? "Links, products and social networks" : lang === "es" ? "Enlaces, productos y redes sociales" : "Links, produtos e redes sociais"} | meuperfil.me`;
 
   return {
     title,
@@ -47,7 +50,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PublicProfilePage({ params }: PageProps) {
-  const { handle } = await params;
+  const { lang, handle } = await params;
+  const t = profileTranslator(lang);
   const profile = await getPublicProfileByHandle(handle);
 
   if (!profile || !profile.isPublished) {
@@ -80,7 +84,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
         {/* Profile Avatar & Header */}
         <div className="flex flex-col items-center text-center space-y-3 mb-8">
           {profile.avatarUrl ? (
-            <img
+            <Image unoptimized width={96} height={96}
               src={profile.avatarUrl}
               alt={profile.displayName}
               className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 ${themeConfig.classes.avatarBorder} transition-all duration-300`}
@@ -160,7 +164,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 className={`w-full p-4 rounded-2xl flex items-center gap-3.5 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} group`}
               >
                 {block.imageUrl && (
-                  <img
+                  <Image unoptimized width={40} height={40}
                     src={block.imageUrl}
                     alt=""
                     className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
@@ -185,12 +189,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
       {/* Powered by meuperfil.me Footer Badge */}
       <footer className="pt-8 pb-4 text-center">
         <a
-          href="/"
+          href={`/${lang}`}
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase opacity-75 hover:opacity-100 transition-opacity ${themeConfig.classes.footerText}`}
         >
-          <span>Criado com</span>
+          <span>{t("Criado com")}</span>
           <strong className="font-bold text-white">meuperfil.me</strong>
         </a>
       </footer>

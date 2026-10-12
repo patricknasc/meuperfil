@@ -1,4 +1,5 @@
 "use client";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
 /**
  * Keyword Input
@@ -15,6 +16,7 @@ interface KeywordInputProps {
 }
 
 export default function KeywordInput({ keywords, onChange, max = 10 }: KeywordInputProps) {
+  const t = useFlowTranslation();
   const [input, setInput] = useState("");
 
   function addKeyword(value: string) {
@@ -65,13 +67,12 @@ export default function KeywordInput({ keywords, onChange, max = 10 }: KeywordIn
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={keywords.length === 0 ? "Type keyword and press Enter..." : ""}
+          placeholder={keywords.length === 0 ? t("Type keyword and press Enter...") : ""}
           className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-zinc-500 outline-none"
         />
       </div>
       <p className="text-xs text-muted">
-        {keywords.length}/{max} keywords · Press Enter or comma to add
-      </p>
+        {keywords.length}/{max}{t("keywords · Press Enter or comma to add")}</p>
     </div>
   );
 }

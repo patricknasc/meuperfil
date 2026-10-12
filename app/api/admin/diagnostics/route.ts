@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { getCurrentWorkspaceId } from "@/lib/auth";
+import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-access";
 import { prisma } from "@/lib/db/client";
-import { getDMQueue } from "@/lib/queue/client";
-import { getWorkerAlerts, getWorkerHealth } from "@/lib/ops/worker-health";
+
+import { getWorkerHealth } from "@/lib/ops/worker-health";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const workspaceId = await getCurrentWorkspaceId();
-  if (!workspaceId) {
+  const context = await getCurrentWorkspaceContext();
+  if (!context) {
     return NextResponse.json(
       { success: false, error: "Unauthorized" },
       { status: 401 }
     );
   }
 
+  if (!canManageWorkspace(context.role)) {
+    return NextResponse.json({ success: false, error: "Permissão insuficiente no workspace" }, { status: 403 });
+  }
+  const { workspaceId } = context;
   const [
     queueCounts,
     workerHealth,
@@ -25,9 +29,9 @@ export async function GET() {
     tokenRefreshFailures,
     operationalEvents,
   ] = await Promise.all([
-    getDMQueue().getJobCounts("waiting", "active", "delayed", "failed"),
+    prisma.dmLog.groupBy({ by: ["status"], where: { workspaceId }, _count: { _all: true } }),
     getWorkerHealth(),
-    getWorkerAlerts(10),
+    prisma.operationalEvent.findMany({ where: { workspaceId, source: "WORKER", level: { in: ["WARNING", "ERROR"] } }, orderBy: { createdAt: "desc" }, take: 10, select: { level: true, message: true, createdAt: true } }),
     prisma.webhookEvent.findMany({
       where: { workspaceId, status: "FAILED" },
       orderBy: { createdAt: "desc" },
@@ -88,7 +92,7 @@ export async function GET() {
     }),
     prisma.operationalEvent.findMany({
       where: {
-        OR: [{ workspaceId }, { workspaceId: null }],
+        workspaceId,
       },
       orderBy: { createdAt: "desc" },
       take: 20,
@@ -106,8 +110,8 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     data: {
-      queueCounts,
-      workerHealth,
+      queueCounts: Object.fromEntries(queueCounts.map((row) => [row.status.toLowerCase(), row._count._all])),
+      workerHealth: { healthy: workerHealth.healthy, ageMs: workerHealth.ageMs, heartbeat: workerHealth.heartbeat ? { checkedAt: workerHealth.heartbeat.checkedAt } : null },
       workerAlerts,
       webhookFailures,
       billingEvents,

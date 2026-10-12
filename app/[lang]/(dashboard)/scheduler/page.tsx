@@ -1,7 +1,10 @@
 "use client";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { dashboardMessages } from "@/lib/i18n/dashboard";
+import Image from "next/image";
 import Link from "next/link";
 
 export type PostMediaType = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" | "STORY";
@@ -22,6 +25,7 @@ interface ScheduledPostItem {
   platform: string;
   scheduledFor: string | null;
   publishedAt: string | null;
+  publishAttemptedAt: string | null;
   status: PostStatus;
   publishedPostId: string | null;
   publishedPostUrl: string | null;
@@ -35,9 +39,13 @@ interface ScheduledPostItem {
 }
 
 export default function SchedulerPage() {
+  const t = useFlowTranslation();
   const params = useParams();
-  const router = useRouter();
+
   const lang = (params?.lang as string) || "pt";
+  const messages = dashboardMessages(lang);
+  const locale = lang === "pt" ? "pt-BR" : lang === "es" ? "es" : "en";
+  const [loadError, setLoadError] = useState(false);
 
   // Data states
   const [posts, setPosts] = useState<ScheduledPostItem[]>([]);
@@ -61,69 +69,42 @@ export default function SchedulerPage() {
   const [formMediaUrls, setFormMediaUrls] = useState<string[]>([""]);
   const [formCaption, setFormCaption] = useState("");
   const [formScheduledFor, setFormScheduledFor] = useState("");
-  const [formAutoCampaign, setFormAutoCampaign] = useState(true);
+  const [formAutoCampaign, setFormAutoCampaign] = useState(false);
   const [formKeywords, setFormKeywords] = useState("QUERO, LINK, EU");
-  const [formDmMessage, setFormDmMessage] = useState("Olá! Aqui está o link que você pediu: https://meuperfil.me");
+  const [formDmMessage, setFormDmMessage] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   // Toast / Feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
 
   function showToast(msg: string) {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   }
 
-  async function fetchInitialData() {
+  const fetchInitialData = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const [postsRes, accountsRes] = await Promise.all([
-        fetch("/api/scheduler/posts"),
-        fetch("/api/instagram/sync-media").catch(() => null), // or fallback to workspace accounts
+        fetch("/api/scheduler/posts"), fetch("/api/instagram/accounts"),
       ]);
+      const [postsData, accountsData] = await Promise.all([postsRes.json(), accountsRes.json()]);
+      if (!postsRes.ok || !accountsRes.ok || !postsData.success || !accountsData.success) throw new Error("Load failed");
+      setPosts(postsData.data);
+      setAccounts(accountsData.data);
+      setFormAccountId((current) => current || accountsData.data[0]?.id || "");
+    } catch (error) {
+      console.error("Error fetching scheduler data", error);
+      setLoadError(true);
+    } finally { setLoading(false); }
+  }, []);
 
-      const postsData = await postsRes.json();
-      if (postsData.success) {
-        setPosts(postsData.data);
-      }
-
-      // If sync-media gives accounts or fallback to accounts extracted from posts
-      const extractedAccounts: InstagramAccountSummary[] = [];
-      if (postsData.data) {
-        postsData.data.forEach((p: ScheduledPostItem) => {
-          if (p.instagramAccount && !extractedAccounts.some((a) => a.id === p.instagramAccount!.id)) {
-            extractedAccounts.push(p.instagramAccount);
-          }
-        });
-      }
-
-      // Also try fetching accounts list from dashboard/settings if available
-      try {
-        const accRes = await fetch("/api/instagram/automations");
-        const accData = await accRes.json();
-        if (accData.success && accData.data?.accounts) {
-          accData.data.accounts.forEach((acc: InstagramAccountSummary) => {
-            if (!extractedAccounts.some((a) => a.id === acc.id)) {
-              extractedAccounts.push(acc);
-            }
-          });
-        }
-      } catch {}
-
-      setAccounts(extractedAccounts);
-      if (extractedAccounts.length > 0 && !formAccountId) {
-        setFormAccountId(extractedAccounts[0].id);
-      }
-    } catch (err) {
-      console.error("Error fetching scheduler data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    const initial = setTimeout(() => void fetchInitialData(), 0);
+    const timer = setInterval(() => void fetchInitialData(), 30_000);
+    return () => { clearTimeout(initial); clearInterval(timer); };
+  }, [fetchInitialData]);
 
   // Filtered posts
   const filteredPosts = useMemo(() => {
@@ -194,11 +175,11 @@ export default function SchedulerPage() {
   function openCreateModal(datePreset?: Date) {
     setEditingPostId(null);
     setFormMediaType("REEL");
-    setFormMediaUrls(["https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"]);
+    setFormMediaUrls([""]);
     setFormCaption("");
-    setFormAutoCampaign(true);
+    setFormAutoCampaign(false);
     setFormKeywords("QUERO, LINK, EU");
-    setFormDmMessage("Olá! Aqui está o link exclusivo que você pediu: https://meuperfil.me");
+    setFormDmMessage("");
     setFormError(null);
 
     if (datePreset) {
@@ -240,12 +221,13 @@ export default function SchedulerPage() {
     const validUrls = formMediaUrls.filter((u) => u.trim().length > 0);
 
     if (validUrls.length === 0) {
-      setFormError("Informe pelo menos uma URL de mídia válida.");
+      setFormError(t("Informe pelo menos uma URL de mídia válida."));
       return;
     }
 
-    if (!formAccountId && accounts.length > 0) {
-      setFormAccountId(accounts[0].id);
+    if (!formAccountId && !accounts.length) {
+      setFormError(messages.connectFirst);
+      return;
     }
 
     setSubmitting(true);
@@ -266,7 +248,8 @@ export default function SchedulerPage() {
             caption: formCaption,
             mediaUrls: validUrls,
             mediaType: formMediaType,
-            scheduledFor: scheduledIso,
+            scheduledFor: publishNow ? null : scheduledIso,
+            status: !publishNow && scheduledIso ? "SCHEDULED" : "DRAFT",
             autoCampaignEnabled: formAutoCampaign,
             autoCampaignKeywords: keywordsArray,
             autoCampaignDmMessage: formDmMessage,
@@ -275,7 +258,12 @@ export default function SchedulerPage() {
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
 
-        showToast("Post atualizado com sucesso!");
+        if (publishNow) {
+          const publishResponse = await fetch(`/api/scheduler/posts/${editingPostId}/publish-now`, { method: "POST" });
+          const publishData = await publishResponse.json();
+          if (!publishResponse.ok || !publishData.success) throw new Error(publishData.error);
+        }
+        showToast(t("Post atualizado com sucesso!"));
       } else {
         // Create
         const res = await fetch("/api/scheduler/posts", {
@@ -296,13 +284,13 @@ export default function SchedulerPage() {
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
 
-        showToast(publishNow ? "Publicação disparada para o Instagram!" : "Post agendado com sucesso!");
+        showToast(publishNow ? t("Publicação disparada para o Instagram!") : t("Post agendado com sucesso!"));
       }
 
       setShowModal(false);
       fetchInitialData();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao salvar post";
+      const message = err instanceof Error ? err.message : t("Erro ao salvar post");
       setFormError(message);
     } finally {
       setSubmitting(false);
@@ -310,12 +298,12 @@ export default function SchedulerPage() {
   }
 
   async function handleDelete(postId: string) {
-    if (!confirm("Deseja realmente cancelar e excluir este post agendado?")) return;
+    if (!confirm(t("Deseja realmente cancelar e excluir este post agendado?"))) return;
     try {
       const res = await fetch(`/api/scheduler/posts/${postId}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
-        showToast("Post cancelado com sucesso.");
+        showToast(t("Post cancelado com sucesso."));
         fetchInitialData();
       } else {
         alert(data.error);
@@ -326,12 +314,12 @@ export default function SchedulerPage() {
   }
 
   async function handlePublishNow(postId: string) {
-    if (!confirm("Deseja forçar a publicação imediata no Instagram agora?")) return;
+    if (!confirm(t("Deseja forçar a publicação imediata no Instagram agora?"))) return;
     try {
       const res = await fetch(`/api/scheduler/posts/${postId}/publish-now`, { method: "POST" });
       const data = await res.json();
       if (data.success) {
-        showToast("Publicação imediata enfileirada no worker!");
+        showToast(t("Publicação imediata enfileirada no worker!"));
         fetchInitialData();
       } else {
         alert(data.error);
@@ -345,6 +333,9 @@ export default function SchedulerPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 space-y-8">
+      {loading && !posts.length && <p role="status">{messages.loading}</p>}
+      {loadError && <div role="alert" className="rounded-xl border border-error/30 p-4 text-error">{messages.loadError} <button className="underline" onClick={() => void fetchInitialData()}>{messages.searchButton}</button></div>}
+      {!loading && !accounts.length && !loadError && <Link className="block rounded-xl border border-border p-4 text-accent" href={`/${lang}/settings`}>{messages.connectFirst}</Link>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-5 py-3 rounded-xl shadow-2xl shadow-indigo-500/20 border border-indigo-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5">
@@ -359,16 +350,10 @@ export default function SchedulerPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-800/80 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              Novo Módulo
-            </span>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-              Agendador de Conteúdo
-            </h1>
+            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{t("Novo Módulo")}</span>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">{t("Agendador de Conteúdo")}</h1>
           </div>
-          <p className="text-zinc-400 text-sm mt-1">
-            Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.
-          </p>
+          <p className="text-zinc-400 text-sm mt-1">{t("Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.")}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -384,9 +369,7 @@ export default function SchedulerPage() {
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
-              </svg>
-              Calendário
-            </button>
+              </svg>{t("Calendário")}</button>
             <button
               onClick={() => setActiveView("list")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
@@ -397,9 +380,7 @@ export default function SchedulerPage() {
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm0 5.25h.007v.008H3.75V12Zm0 5.25h.007v.008H3.75v-.008Z" />
-              </svg>
-              Lista
-            </button>
+              </svg>{t("Lista")}</button>
           </div>
 
           <button
@@ -408,9 +389,7 @@ export default function SchedulerPage() {
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Agendar Publicação
-          </button>
+            </svg>{t("Agendar Publicação")}</button>
         </div>
       </div>
 
@@ -418,7 +397,7 @@ export default function SchedulerPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">Agendados</p>
+            <p className="text-zinc-400 text-xs font-medium">{t("Agendados")}</p>
             <p className="text-2xl font-bold text-white mt-1">
               {posts.filter((p) => p.status === "SCHEDULED").length}
             </p>
@@ -432,7 +411,7 @@ export default function SchedulerPage() {
 
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">Publicados</p>
+            <p className="text-zinc-400 text-xs font-medium">{t("Publicados")}</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {posts.filter((p) => p.status === "PUBLISHED").length}
             </p>
@@ -446,7 +425,7 @@ export default function SchedulerPage() {
 
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">Rascunhos</p>
+            <p className="text-zinc-400 text-xs font-medium">{t("Rascunhos")}</p>
             <p className="text-2xl font-bold text-amber-400 mt-1">
               {posts.filter((p) => p.status === "DRAFT").length}
             </p>
@@ -460,7 +439,7 @@ export default function SchedulerPage() {
 
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">Automações Ligadas</p>
+            <p className="text-zinc-400 text-xs font-medium">{t("Automações Ligadas")}</p>
             <p className="text-2xl font-bold text-violet-400 mt-1">
               {posts.filter((p) => p.autoCampaignEnabled || p.createdAutomationId).length}
             </p>
@@ -480,14 +459,12 @@ export default function SchedulerPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-white capitalize">
-                {currentMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                {currentMonth.toLocaleDateString(locale, { month: "long", year: "numeric" })}
               </h2>
               <button
                 onClick={() => setCurrentMonth(new Date())}
                 className="px-2.5 py-1 text-xs font-medium rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition"
-              >
-                Hoje
-              </button>
+              >{t("Hoje")}</button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -520,13 +497,13 @@ export default function SchedulerPage() {
 
           {/* Weekday headers */}
           <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-            <span>Dom</span>
-            <span>Seg</span>
-            <span>Ter</span>
-            <span>Qua</span>
-            <span>Qui</span>
-            <span>Sex</span>
-            <span>Sáb</span>
+            <span>{t("Dom")}</span>
+            <span>{t("Seg")}</span>
+            <span>{t("Ter")}</span>
+            <span>{t("Qua")}</span>
+            <span>{t("Qui")}</span>
+            <span>{t("Sex")}</span>
+            <span>{t("Sáb")}</span>
           </div>
 
           {/* Days Grid */}
@@ -557,9 +534,7 @@ export default function SchedulerPage() {
                     >
                       {day.date.getDate()}
                     </span>
-                    <span className="text-[10px] text-zinc-600 group-hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition">
-                      + Agendar
-                    </span>
+                    <span className="text-[10px] text-zinc-600 group-hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition">{t("+ Agendar")}</span>
                   </div>
 
                   {/* Day Posts Badges */}
@@ -590,12 +565,12 @@ export default function SchedulerPage() {
                               : "📷"}
                           </span>
                           <span className="truncate">
-                            {post.caption || "Sem legenda"}
+                            {post.caption || t("Sem legenda")}
                           </span>
                         </div>
                         <span className="text-[9px] opacity-75 shrink-0">
                           {post.scheduledFor
-                            ? new Date(post.scheduledFor).toLocaleTimeString("pt-BR", {
+                            ? new Date(post.scheduledFor).toLocaleTimeString(locale, {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })
@@ -626,14 +601,14 @@ export default function SchedulerPage() {
                   }`}
                 >
                   {st === "ALL"
-                    ? "Todos"
+                    ? t("Todos")
                     : st === "SCHEDULED"
-                    ? "Agendados"
+                    ? t("Agendados")
                     : st === "PUBLISHED"
-                    ? "Publicados"
+                    ? t("Publicados")
                     : st === "DRAFT"
-                    ? "Rascunhos"
-                    : "Falhas"}
+                    ? t("Rascunhos")
+                    : t("Falhas")}
                 </button>
               ))}
             </div>
@@ -644,7 +619,7 @@ export default function SchedulerPage() {
                 onChange={(e) => setSelectedAccountId(e.target.value)}
                 className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-xl px-3 py-2 outline-none"
               >
-                <option value="ALL">Todas as Contas</option>
+                <option value="ALL">{t("Todas as Contas")}</option>
                 {accounts.map((acc) => (
                   <option key={acc.id} value={acc.id}>
                     @{acc.username}
@@ -661,13 +636,11 @@ export default function SchedulerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
                 </svg>
               </div>
-              <p className="text-zinc-300 font-medium">Nenhum post agendado nesta visão.</p>
+              <p className="text-zinc-300 font-medium">{t("Nenhum post agendado nesta visão.")}</p>
               <button
                 onClick={() => openCreateModal()}
                 className="text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold"
-              >
-                Criar primeiro agendamento
-              </button>
+              >{t("Criar primeiro agendamento")}</button>
             </div>
           ) : (
             <div className="divide-y divide-zinc-800/60">
@@ -677,21 +650,19 @@ export default function SchedulerPage() {
                     {/* Media Thumbnail */}
                     <div className="w-16 h-20 rounded-xl bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700 relative">
                       {post.mediaUrls[0] ? (
-                        <img
+                        <Image unoptimized fill sizes="(max-width: 768px) 100vw, 320px"
                           src={post.mediaUrls[0]}
-                          alt="Thumbnail"
+                          alt={t("Thumbnail")}
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
-                          Sem foto
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">{t("Sem foto")}</div>
                       )}
                       <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/70 text-white backdrop-blur">
                         {post.mediaType === "REEL"
                           ? "Reel"
                           : post.mediaType === "CAROUSEL"
-                          ? "Carrossel"
+                          ? t("Carrossel")
                           : post.mediaType === "STORY"
                           ? "Story"
                           : "Feed"}
@@ -712,7 +683,7 @@ export default function SchedulerPage() {
                               : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                           }`}
                         >
-                          {post.status}
+                          {t({ DRAFT: "Draft", SCHEDULED: "Scheduled", PUBLISHING: "Publishing", PUBLISHED: "Published", FAILED: "Failed" }[post.status])}
                         </span>
 
                         {post.instagramAccount && (
@@ -723,29 +694,27 @@ export default function SchedulerPage() {
 
                         {post.autoCampaignEnabled && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 flex items-center gap-1">
-                            <span>💬</span> DM Ativa
-                          </span>
+                            <span>💬</span>{t("DM Ativa")}</span>
                         )}
                         {post.createdAutomationId && (
                           <Link
                             href={`/${lang}/campaigns/${post.createdAutomationId}`}
                             className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1 transition hover:bg-emerald-500/20"
                           >
-                            <span>↗</span> Campanha criada
-                          </Link>
+                            <span>↗</span>{t("Campanha criada")}</Link>
                         )}
                       </div>
 
                       <p className="text-sm text-zinc-200 line-clamp-2 max-w-xl">
-                        {post.caption || <span className="italic text-zinc-500">Sem legenda</span>}
+                        {post.caption || <span className="italic text-zinc-500">{t("Sem legenda")}</span>}
                       </p>
 
                       <div className="text-xs text-zinc-400 flex items-center gap-3">
                         <span>
                           📅{" "}
                           {post.scheduledFor
-                            ? new Date(post.scheduledFor).toLocaleString("pt-BR")
-                            : "Sem data agendada"}
+                            ? new Date(post.scheduledFor).toLocaleString(locale)
+                            : t("Sem data agendada")}
                         </span>
                         {post.publishedPostUrl && (
                           <a
@@ -753,9 +722,7 @@ export default function SchedulerPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-indigo-400 hover:underline flex items-center gap-1"
-                          >
-                            Ver no Instagram
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          >{t("Ver no Instagram")}<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                             </svg>
                           </a>
@@ -763,8 +730,7 @@ export default function SchedulerPage() {
                       </div>
 
                       {post.errorMessage && (
-                        <p className="text-xs text-rose-400 bg-rose-950/30 p-1.5 rounded-lg border border-rose-800/30">
-                          Erro: {post.errorMessage}
+                        <p className="text-xs text-rose-400 bg-rose-950/30 p-1.5 rounded-lg border border-rose-800/30">{t("Erro:")}{post.errorMessage}
                         </p>
                       )}
                     </div>
@@ -772,18 +738,16 @@ export default function SchedulerPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
-                    {post.status !== "PUBLISHED" && post.status !== "PUBLISHING" && (
+                    {post.status !== "PUBLISHED" && post.status !== "PUBLISHING" && !post.publishAttemptedAt && (
                       <>
                         <button
                           onClick={() => handlePublishNow(post.id)}
                           className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
-                        >
-                          Publicar Agora
-                        </button>
+                        >{t("Publicar Agora")}</button>
                         <button
                           onClick={() => openEditModal(post)}
                           className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
-                          title="Editar"
+                          title={t("Editar")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -792,7 +756,7 @@ export default function SchedulerPage() {
                         <button
                           onClick={() => handleDelete(post.id)}
                           className="p-2 rounded-xl bg-zinc-800 hover:bg-rose-950/60 hover:text-rose-400 text-zinc-400 transition"
-                          title="Excluir"
+                          title={t("Excluir")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
@@ -822,11 +786,9 @@ export default function SchedulerPage() {
                 </span>
                 <div>
                   <h3 className="text-lg font-bold text-white">
-                    {editingPostId ? "Editar Publicação Agendada" : "Novo Agendamento no Instagram"}
+                    {editingPostId ? t("Editar Publicação Agendada") : t("Novo Agendamento no Instagram")}
                   </h3>
-                  <p className="text-xs text-zinc-400">
-                    Configure mídia, legenda, horário e gatilho de Comentário → Direct.
-                  </p>
+                  <p className="text-xs text-zinc-400">{t("Configure mídia, legenda, horário e gatilho de Comentário → Direct.")}</p>
                 </div>
               </div>
 
@@ -855,17 +817,10 @@ export default function SchedulerPage() {
 
                 {/* Account Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                    Conta do Instagram
-                  </label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">{t("Conta do Instagram")}</label>
                   {accounts.length === 0 ? (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-                      Nenhuma conta do Instagram conectada neste workspace. Vá em{" "}
-                      <Link href={`/${lang}/settings`} className="underline font-bold">
-                        Ajustes &gt; Conectar Instagram
-                      </Link>{" "}
-                      para vincular.
-                    </div>
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">{t("Nenhuma conta do Instagram conectada neste workspace. Vá em")}{" "}
+                      <Link href={`/${lang}/settings`} className="underline font-bold">{t("Ajustes > Conectar Instagram")}</Link>{" "}{t("para vincular.")}</div>
                   ) : (
                     <select
                       value={formAccountId}
@@ -883,14 +838,12 @@ export default function SchedulerPage() {
 
                 {/* Media Type Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                    Tipo de Formato
-                  </label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">{t("Tipo de Formato")}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[
                       { type: "REEL", label: "Reels", icon: "🎬" },
-                      { type: "IMAGE", label: "Feed Foto", icon: "📷" },
-                      { type: "CAROUSEL", label: "Carrossel", icon: "📑" },
+                      { type: "IMAGE", label: t("Feed Foto"), icon: "📷" },
+                      { type: "CAROUSEL", label: t("Carrossel"), icon: "📑" },
                       { type: "STORY", label: "Story", icon: "⏳" },
                     ].map((item) => (
                       <button
@@ -913,17 +866,13 @@ export default function SchedulerPage() {
                 {/* Media URLs */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                      URL da Mídia (Imagem ou Vídeo MP4)
-                    </label>
+                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("URL da Mídia (Imagem ou Vídeo MP4)")}</label>
                     {formMediaType === "CAROUSEL" && (
                       <button
                         type="button"
                         onClick={() => setFormMediaUrls([...formMediaUrls, ""])}
                         className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
-                      >
-                        + Adicionar Mídia ao Carrossel
-                      </button>
+                      >{t("+ Adicionar Mídia ao Carrossel")}</button>
                     )}
                   </div>
 
@@ -932,7 +881,7 @@ export default function SchedulerPage() {
                       <div key={idx} className="flex items-center gap-2">
                         <input
                           type="url"
-                          placeholder="https://exemplo.com/video-reel.mp4 ou .jpg"
+                          placeholder={t("https://exemplo.com/video-reel.mp4 ou .jpg")}
                           value={url}
                           onChange={(e) => {
                             const updated = [...formMediaUrls];
@@ -960,16 +909,14 @@ export default function SchedulerPage() {
                 {/* Caption Editor */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                      Legenda do Post
-                    </label>
+                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("Legenda do Post")}</label>
                     <span className="text-[11px] text-zinc-500">
                       {formCaption.length} / 2.200
                     </span>
                   </div>
                   <textarea
                     rows={4}
-                    placeholder="Escreva a legenda envolvente do seu post... Diga para comentarem a palavra-chave!"
+                    placeholder={t("Escreva a legenda envolvente do seu post... Diga para comentarem a palavra-chave!")}
                     value={formCaption}
                     onChange={(e) => setFormCaption(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition"
@@ -991,9 +938,7 @@ export default function SchedulerPage() {
 
                 {/* Schedule Date & Time */}
                 <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800 space-y-3">
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                    Data e Horário de Publicação
-                  </label>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("Data e Horário de Publicação")}</label>
                   <input
                     type="datetime-local"
                     value={formScheduledFor}
@@ -1006,23 +951,17 @@ export default function SchedulerPage() {
                       type="button"
                       onClick={() => setQuickSchedule(0, 18)}
                       className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
-                    >
-                      Hoje 18:00
-                    </button>
+                    >{t("Hoje 18:00")}</button>
                     <button
                       type="button"
                       onClick={() => setQuickSchedule(24, 12)}
                       className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
-                    >
-                      Amanhã 12:00
-                    </button>
+                    >{t("Amanhã 12:00")}</button>
                     <button
                       type="button"
                       onClick={() => setQuickSchedule(24, 19)}
                       className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
-                    >
-                      Amanhã 19:00
-                    </button>
+                    >{t("Amanhã 19:00")}</button>
                   </div>
                 </div>
 
@@ -1032,10 +971,8 @@ export default function SchedulerPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-lg">💬</span>
                       <div>
-                        <h4 className="text-xs font-bold text-white">Automação Comentário → Direct</h4>
-                        <p className="text-[11px] text-zinc-400">
-                          Dispara DM automática assim que alguém comentar no post publicado.
-                        </p>
+                        <h4 className="text-xs font-bold text-white">{t("Automação Comentário → Direct")}</h4>
+                        <p className="text-[11px] text-zinc-400">{t("Dispara DM automática assim que alguém comentar no post publicado.")}</p>
                       </div>
                     </div>
                     <button
@@ -1056,27 +993,23 @@ export default function SchedulerPage() {
                   {formAutoCampaign && (
                     <div className="space-y-3 pt-2 border-t border-violet-500/20">
                       <div>
-                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                          Palavras-chave Gatilho (separadas por vírgula)
-                        </label>
+                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">{t("Palavras-chave Gatilho (separadas por vírgula)")}</label>
                         <input
                           type="text"
                           value={formKeywords}
                           onChange={(e) => setFormKeywords(e.target.value)}
-                          placeholder="QUERO, LINK, PRECO, EU"
+                          placeholder={t("QUERO, LINK, PRECO, EU")}
                           className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                          Mensagem enviada no Direct (DM)
-                        </label>
+                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">{t("Mensagem enviada no Direct (DM)")}</label>
                         <textarea
                           rows={2}
                           value={formDmMessage}
                           onChange={(e) => setFormDmMessage(e.target.value)}
-                          placeholder="Olá! Conforme prometido no post, aqui está seu link..."
+                          placeholder={t("Olá! Conforme prometido no post, aqui está seu link...")}
                           className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500"
                         />
                       </div>
@@ -1088,9 +1021,7 @@ export default function SchedulerPage() {
               {/* Right Column: Interactive Phone Mockup (5 cols) */}
               <div className="lg:col-span-5 flex flex-col items-center justify-center">
                 <div className="text-center mb-3">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                    Simulador em Tempo Real
-                  </span>
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{t("Simulador em Tempo Real")}</span>
                 </div>
 
                 {/* Phone Frame */}
@@ -1118,15 +1049,15 @@ export default function SchedulerPage() {
                     {/* Media Area */}
                     <div className="flex-1 bg-zinc-900 relative overflow-hidden flex items-center justify-center">
                       {formMediaUrls[0] && formMediaUrls[0].trim().length > 0 ? (
-                        <img
+                        <Image unoptimized fill sizes="(max-width: 768px) 100vw, 320px"
                           src={formMediaUrls[0]}
-                          alt="Preview"
+                          alt={t("Preview")}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="text-center p-4 text-zinc-600 space-y-1">
                           <span className="text-2xl">🎬</span>
-                          <p className="text-[10px]">Insira uma URL de mídia para visualizar</p>
+                          <p className="text-[10px]">{t("Insira uma URL de mídia para visualizar")}</p>
                         </div>
                       )}
 
@@ -1160,7 +1091,7 @@ export default function SchedulerPage() {
                       {formAutoCampaign && (
                         <div className="p-1.5 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-[9px] text-indigo-300 flex items-center gap-1.5">
                           <span>💬</span>
-                          <span className="truncate">Gatilho: {formKeywords}</span>
+                          <span className="truncate">{t("Gatilho:")}{formKeywords}</span>
                         </div>
                       )}
                     </div>
@@ -1178,9 +1109,7 @@ export default function SchedulerPage() {
                 type="button"
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition"
-              >
-                Cancelar
-              </button>
+              >{t("Cancelar")}</button>
 
               <div className="flex items-center gap-3">
                 <button
@@ -1189,7 +1118,7 @@ export default function SchedulerPage() {
                   onClick={() => handleSave(false)}
                   className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50"
                 >
-                  {submitting ? "Salvando..." : "Salvar Agendamento"}
+                  {submitting ? t("Salvando...") : t("Salvar Agendamento")}
                 </button>
                 <button
                   type="button"
@@ -1197,7 +1126,7 @@ export default function SchedulerPage() {
                   onClick={() => handleSave(true)}
                   className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition active:scale-95 disabled:opacity-50"
                 >
-                  {submitting ? "Publicando..." : "Publicar Imediatamente"}
+                  {submitting ? t("Publicando...") : t("Publicar Imediatamente")}
                 </button>
               </div>
             </div>

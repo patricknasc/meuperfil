@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { landingTranslator } from "@/lib/i18n/landing";
 import { redirect } from "next/navigation";
 import PublicSiteHeader from "@/components/public-site-header";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -103,7 +104,8 @@ function SparkIcon() {
   );
 }
 
-function InstagramPost() {
+function InstagramPost({ locale }: { locale: Locale }) {
+  const t = landingTranslator(locale);
   return (
     <div className="border border-white/10 bg-zinc-950 p-3 shadow-2xl shadow-black/40">
       <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -111,23 +113,23 @@ function InstagramPost() {
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-pink-500 via-orange-400 to-yellow-300" />
           <div>
             <p className="text-sm font-semibold text-white">@studio.store</p>
-            <p className="text-xs text-zinc-500">Reel campaign</p>
+            <p className="text-xs text-zinc-500">{t("Reel campaign")}</p>
           </div>
         </div>
         <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-300">
-          Live
+          {t("Live")}
         </span>
       </div>
 
       <div className="mt-3 aspect-[4/5] overflow-hidden bg-[linear-gradient(135deg,#f97316_0%,#ec4899_48%,#22d3ee_100%)] p-4">
         <div className="flex h-full flex-col justify-between border border-white/20 bg-black/20 p-4">
-          <p className="text-xs font-semibold text-white/80">New drop</p>
+          <p className="text-xs font-semibold text-white/80">{t("New drop")}</p>
           <div>
             <p className="text-2xl font-bold leading-tight text-white">
-              Comment LINK
+              {t("Comment LINK")}
             </p>
             <p className="mt-2 text-sm text-white/80">
-              Get the full guide in your inbox.
+              {t("Get the full guide in your inbox.")}
             </p>
           </div>
         </div>
@@ -136,45 +138,46 @@ function InstagramPost() {
       <div className="mt-3 space-y-2">
         <div className="border border-white/10 bg-white/[0.03] p-3">
           <p className="text-xs font-semibold text-white">@maya.co</p>
-          <p className="mt-1 text-sm text-zinc-300">LINK please</p>
+          <p className="mt-1 text-sm text-zinc-300">{t("LINK please")}</p>
         </div>
         <div className="border border-emerald-300/20 bg-emerald-300/10 p-3">
-          <p className="text-xs font-semibold text-emerald-100">Matched keyword</p>
-          <p className="mt-1 text-sm text-zinc-200">Queued private reply</p>
+          <p className="text-xs font-semibold text-emerald-100">{t("Matched keyword")}</p>
+          <p className="mt-1 text-sm text-zinc-200">{t("Queued private reply")}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function BuilderPreview() {
+function BuilderPreview({ locale }: { locale: Locale }) {
+  const t = landingTranslator(locale);
   return (
     <div className="border border-white/10 bg-zinc-950 shadow-2xl shadow-black/40">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div>
-          <p className="text-sm font-semibold text-white">Product guide reply</p>
-          <p className="text-xs text-zinc-500">Campaign builder</p>
+          <p className="text-sm font-semibold text-white">{t("Product guide reply")}</p>
+          <p className="text-xs text-zinc-500">{t("Campaign builder")}</p>
         </div>
         <span className="bg-cyan-300 px-3 py-1 text-xs font-bold text-zinc-950">
-          Active
+          {t("Active")}
         </span>
       </div>
 
       <div className="grid gap-3 p-4 md:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-3">
           <div className="border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs font-semibold text-zinc-500">POST OR REEL</p>
+            <p className="text-xs font-semibold text-zinc-500">{t("POST OR REEL")}</p>
             <div className="mt-3 flex items-center gap-3">
               <div className="h-14 w-14 bg-[linear-gradient(135deg,#f43f5e,#22d3ee)]" />
               <div>
-                <p className="text-sm font-semibold text-white">Spring drop reel</p>
-                <p className="text-xs text-zinc-500">12.8k views</p>
+                <p className="text-sm font-semibold text-white">{t("Spring drop reel")}</p>
+                <p className="text-xs text-zinc-500">{t("12.8k views")}</p>
               </div>
             </div>
           </div>
 
           <div className="border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs font-semibold text-zinc-500">KEYWORDS</p>
+            <p className="text-xs font-semibold text-zinc-500">{t("KEYWORDS")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {["LINK", "GUIDE", "PRICE"].map((item) => (
                 <span
@@ -189,9 +192,9 @@ function BuilderPreview() {
         </div>
 
         <div className="flex flex-col border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-xs font-semibold text-zinc-500">PRIVATE REPLY</p>
+          <p className="text-xs font-semibold text-zinc-500">{t("PRIVATE REPLY")}</p>
           <div className="mt-4 flex-1 border border-white/10 bg-zinc-950 p-4 text-sm leading-6 text-zinc-200">
-            Hey {"{username}"}, here is the product guide you asked for:
+            {t("Hey {username}, here is the product guide you asked for:")}
             <span className="text-cyan-200"> shop.link/guide</span>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
@@ -201,8 +204,8 @@ function BuilderPreview() {
               ["sent", "status"],
             ].map(([value, label]) => (
               <div key={label} className="border border-white/10 bg-zinc-950 p-2">
-                <p className="text-sm font-bold text-white">{value}</p>
-                <p className="text-[11px] text-zinc-500">{label}</p>
+                <p className="text-sm font-bold text-white">{t(value)}</p>
+                <p className="text-[11px] text-zinc-500">{t(label)}</p>
               </div>
             ))}
           </div>
@@ -212,25 +215,26 @@ function BuilderPreview() {
   );
 }
 
-function DashboardVisual() {
+function DashboardVisual({ locale }: { locale: Locale }) {
+  const t = landingTranslator(locale);
   return (
     <div className="border border-white/10 bg-zinc-950 p-4 shadow-2xl shadow-black/40">
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           ["Active campaigns", "8"],
-          ["DMs this month", "1,284"],
+          ["DMs this month", new Intl.NumberFormat(locale).format(1284)],
           ["Delivery status", "99%"],
         ].map(([label, value]) => (
           <div key={label} className="border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs text-zinc-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+            <p className="text-xs text-zinc-500">{t(label)}</p>
+            <p className="mt-2 text-2xl font-bold text-white">{t(value)}</p>
           </div>
         ))}
       </div>
       <div className="mt-3 border border-white/10 bg-white/[0.03] p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-white">Recent replies</p>
-          <p className="text-xs text-zinc-500">Live logs</p>
+          <p className="text-sm font-semibold text-white">{t("Recent replies")}</p>
+          <p className="text-xs text-zinc-500">{t("Live logs")}</p>
         </div>
         <div className="mt-4 space-y-2">
           {[
@@ -243,9 +247,9 @@ function DashboardVisual() {
               className="grid grid-cols-[1fr_1.1fr_auto] items-center gap-3 border border-white/10 bg-zinc-950 px-3 py-2 text-sm"
             >
               <span className="truncate text-white">{user}</span>
-              <span className="truncate text-zinc-400">{automation}</span>
+              <span className="truncate text-zinc-400">{t(automation)}</span>
               <span className="bg-emerald-300/10 px-2 py-1 text-xs font-semibold text-emerald-100">
-                {status}
+                {t(status)}
               </span>
             </div>
           ))}
@@ -266,6 +270,7 @@ export default async function Home({
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
   const dict = await getDictionary(locale);
   const prefix = `/${locale}`;
+  const t = landingTranslator(locale);
   const betaParams = searchParams ? await searchParams : {};
   const betaSuccess = betaParams.beta === "success";
   const betaInvalid = betaParams.beta === "invalid";
@@ -333,17 +338,17 @@ export default async function Home({
           <div className="absolute -left-4 top-8 hidden h-20 w-20 border border-cyan-200/20 bg-cyan-300/10 lg:block" />
           <div className="absolute -right-4 bottom-10 hidden h-24 w-24 border border-rose-200/20 bg-rose-300/10 lg:block" />
           <div className="relative grid gap-4 sm:grid-cols-[0.74fr_1fr]">
-            <InstagramPost />
+            <InstagramPost locale={locale} />
             <div className="space-y-4 sm:pt-16">
-              <BuilderPreview />
+              <BuilderPreview locale={locale} />
               <div className="grid grid-cols-2 gap-4">
                 <div className="border border-white/10 bg-zinc-950 p-4">
-                  <p className="text-xs text-zinc-500">Plan guard</p>
-                  <p className="mt-2 text-lg font-bold text-white">2,000/mo</p>
+                  <p className="text-xs text-zinc-500">{t("Plan guard")}</p>
+                  <p className="mt-2 text-lg font-bold text-white">{t("2,000/mo")}</p>
                 </div>
                 <div className="border border-white/10 bg-zinc-950 p-4">
-                  <p className="text-xs text-zinc-500">Worker</p>
-                  <p className="mt-2 text-lg font-bold text-white">Running</p>
+                  <p className="text-xs text-zinc-500">{t("Worker")}</p>
+                  <p className="mt-2 text-lg font-bold text-white">{t("Running")}</p>
                 </div>
               </div>
             </div>
@@ -405,7 +410,7 @@ export default async function Home({
       {/* Dashboard Section */}
       <section className="border-y border-white/10 bg-white/[0.025] py-20">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:items-center">
-          <DashboardVisual />
+          <DashboardVisual locale={locale} />
 
           <div>
             <p className="text-sm font-bold uppercase text-emerald-200">
@@ -530,7 +535,7 @@ export default async function Home({
 
                 <div className="mt-7 flex items-end gap-1">
                   <span className="text-5xl font-black text-white">{tier.price}</span>
-                  <span className="pb-2 text-sm text-zinc-500">/mo</span>
+                  <span className="pb-2 text-sm text-zinc-500">{t("/mo")}</span>
                 </div>
 
                 <ul className="mt-7 space-y-3">
@@ -653,21 +658,21 @@ export default async function Home({
       <section className="mx-auto w-full max-w-7xl px-5 py-20 sm:px-6 lg:px-8">
         <div className="grid gap-8 border border-cyan-200/20 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(16,185,129,0.06),rgba(244,63,94,0.08))] p-6 sm:p-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-sm font-bold uppercase text-cyan-100">Beta access</p>
+            <p className="text-sm font-bold uppercase text-cyan-100">{t("Beta access")}</p>
             <h2 className="mt-3 max-w-xl text-4xl font-black leading-tight text-white sm:text-5xl">
-              Request early access for agencies and launch teams.
+              {t("Request early access for agencies and launch teams.")}
             </h2>
             <p className="mt-5 text-base leading-8 text-zinc-400">
-              Join the initial cohort for onboarding, feedback, and the founding agency offer.
+              {t("Join the initial cohort for onboarding, feedback, and the founding agency offer.")}
             </p>
             {betaSuccess && (
               <div className="mt-5 rounded-xl border border-emerald-300/30 bg-emerald-400/10 p-4 text-sm text-emerald-100">
-                You are on the beta waitlist. We will reach out with the next onboarding step.
+                {t("You are on the beta waitlist. We will reach out with the next onboarding step.")}
               </div>
             )}
             {betaInvalid && (
               <div className="mt-5 rounded-xl border border-rose-300/30 bg-rose-400/10 p-4 text-sm text-rose-100">
-                Please provide a valid name and work email.
+                {t("Please provide a valid name and work email.")}
               </div>
             )}
           </div>
@@ -675,7 +680,7 @@ export default async function Home({
           <form action={submitWaitlist} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/70 p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2 text-sm text-zinc-300">
-                <span>Name</span>
+                <span>{t("Name")}</span>
                 <input
                   name="name"
                   required
@@ -684,19 +689,19 @@ export default async function Home({
                 />
               </label>
               <label className="space-y-2 text-sm text-zinc-300">
-                <span>Work email</span>
+                <span>{t("Work email")}</span>
                 <input
                   name="email"
                   type="email"
                   required
                   className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-white placeholder:text-zinc-500 outline-none focus:border-cyan-300"
-                  placeholder="you@agency.com"
+                  placeholder={t("you@agency.com")}
                 />
               </label>
             </div>
 
             <label className="block space-y-2 text-sm text-zinc-300">
-              <span>Company</span>
+              <span>{t("Company")}</span>
               <input
                 name="company"
                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-white placeholder:text-zinc-500 outline-none focus:border-cyan-300"
@@ -705,12 +710,12 @@ export default async function Home({
             </label>
 
             <label className="block space-y-2 text-sm text-zinc-300">
-              <span>What are you trying to launch?</span>
+              <span>{t("What are you trying to launch?")}</span>
               <textarea
                 name="goal"
                 rows={3}
                 className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-white placeholder:text-zinc-500 outline-none focus:border-cyan-300"
-                placeholder="3 client campaigns, lead magnet flow, or weekly launch funnel..."
+                placeholder={t("3 client campaigns, lead magnet flow, or weekly launch funnel...")}
               />
             </label>
 
@@ -718,7 +723,7 @@ export default async function Home({
               type="submit"
               className="inline-flex w-full items-center justify-center gap-2 bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
             >
-              Join beta waitlist
+              {t("Join beta waitlist")}
               <ArrowIcon />
             </button>
           </form>
@@ -759,7 +764,7 @@ export default async function Home({
               {dict.common.templates}
             </Link>
             <Link href={`${prefix}/manychat-alternative`} className="transition hover:text-white">
-              Manychat alternative
+              {t("Manychat alternative")}
             </Link>
             <Link href={`${prefix}/instagram-comment-to-dm-templates`} className="transition hover:text-white">
               {dict.common.commentToDmTemplates}

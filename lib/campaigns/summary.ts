@@ -1,3 +1,5 @@
+import { campaignTranslator } from "@/lib/i18n/campaigns";
+
 export interface CampaignLinkSummary {
   id: string;
   destinationUrl: string;
@@ -18,6 +20,8 @@ export interface CampaignSummaryInput {
     failed?: number;
     clicks?: number;
     ctr?: number;
+    leads?: number;
+    convertedLeads?: number;
     topKeywords?: Array<{ keyword: string; count: number }>;
   };
   trackedLinks?: CampaignLinkSummary[];
@@ -90,20 +94,20 @@ export function getCampaignConversionSnapshot(campaign: CampaignSummaryInput) {
       ? links.reduce((best, next) => (next.clicks > best.clicks ? next : best), links[0])
       : null;
 
-  const leadRate = sent > 0 ? Number(((clicks / sent) * 100).toFixed(2)) : 0;
+  const clickRate = sent > 0 ? Number(((clicks / sent) * 100).toFixed(2)) : 0;
   const stage = !campaign.isActive
     ? "Paused"
     : sent === 0
       ? "Waiting"
-      : leadRate >= 25
+      : clickRate >= 25
         ? "Strong"
-        : leadRate >= 10
+        : clickRate >= 10
           ? "Growing"
           : "Early";
 
   return {
     totalClicks: clicks,
-    leadRate,
+    clickRate,
     bestLink,
     topKeyword,
     stage,
@@ -217,7 +221,8 @@ export function getCampaignPerformanceLeaderboard(
     }));
 }
 
-export function getCampaignExecutiveSummary(campaign: CampaignSummaryInput) {
+export function getCampaignExecutiveSummary(campaign: CampaignSummaryInput, locale = "en") {
+  const t = campaignTranslator(locale);
   const ctr = campaign.analytics.ctr ?? 0;
   const sent = campaign.analytics.sent ?? 0;
   const clicks = campaign.analytics.clicks ?? 0;
@@ -238,19 +243,19 @@ export function getCampaignExecutiveSummary(campaign: CampaignSummaryInput) {
 
   const recommendation =
     priority === "Scale"
-      ? "This campaign is ready to scale. Increase volume on the winning message and keep the current offer stable."
+      ? t("This campaign is ready to scale. Increase volume on the winning message and keep the current offer stable.")
       : priority === "Optimize"
-        ? "This campaign is performing, but still needs a sharper message. Optimize the CTA and offer around LINK before scaling."
+        ? t("This campaign is performing, but still needs a sharper message. Optimize the CTA and offer around LINK before scaling.")
         : priority === "Fix"
-          ? "This campaign needs a stronger offer and a clearer trigger before it can scale effectively."
-          : "This campaign is paused or hasn't started sending enough volume to make an executive call yet.";
+          ? t("This campaign needs a stronger offer and a clearer trigger before it can scale effectively.")
+          : t("This campaign is paused or hasn't started sending enough volume to make an executive call yet.");
 
   const nextAction =
     priority === "Scale"
-      ? `Scale the strongest creative around ${topKeyword} and increase delivery on the current winning flow.`
+      ? t("Scale the strongest creative around {keyword} and increase delivery on the current winning flow.", { keyword: topKeyword, ctr })
       : priority === "Optimize"
-        ? `Optimize the CTA and offer around ${topKeyword} to improve conversion quality before a broader push.`
-        : `Fix the offer and tighten the response trigger around ${topKeyword} before expanding spend or volume.`;
+        ? t("Optimize the CTA and offer around {keyword} to improve conversion quality before a broader push.", { keyword: topKeyword, ctr })
+        : t("Fix the offer and tighten the response trigger around {keyword} before expanding spend or volume.", { keyword: topKeyword, ctr });
 
   return {
     priority,
@@ -262,31 +267,32 @@ export function getCampaignExecutiveSummary(campaign: CampaignSummaryInput) {
   };
 }
 
-export function getCampaignOutcomeSummary(campaign: CampaignSummaryInput) {
-  const goal = campaign.goal ?? "Campaign objective";
+export function getCampaignOutcomeSummary(campaign: CampaignSummaryInput, locale = "en") {
+  const t = campaignTranslator(locale);
+  const goal = campaign.goal ?? t("Campaign objective");
   const goalText = goal.toLowerCase();
   const ctr = campaign.analytics.ctr ?? 0;
-  const sent = campaign.analytics.sent ?? 0;
-  const clicks = campaign.analytics.clicks ?? 0;
 
   const primaryOutcome = goalText.includes("waitlist")
-    ? "waitlist growth"
+    ? t("waitlist growth")
     : goalText.includes("lead") || goalText.includes("form") || goalText.includes("magnet")
-      ? "lead capture"
+      ? t("lead capture")
       : goalText.includes("sale") || goalText.includes("product") || goalText.includes("price")
-        ? "sales or booking intent"
-        : "audience engagement";
+        ? t("sales or booking intent")
+        : t("audience engagement");
 
   const expectedOutcome = goalText.includes("waitlist")
-    ? "Grow a qualified waitlist and turn attention into registrations."
+    ? t("Grow a qualified waitlist and turn attention into registrations.")
     : goalText.includes("lead") || goalText.includes("form") || goalText.includes("magnet")
-      ? "Capture high-intent leads and move them into an email or sales follow-up flow."
+      ? t("Capture high-intent leads and move them into an email or sales follow-up flow.")
       : goalText.includes("sale") || goalText.includes("product") || goalText.includes("price")
-        ? "Turn interest into product demand, purchases, or booked conversations."
-        : "Build momentum, intent, and repeat engagement from the top keyword."
+        ? t("Turn interest into product demand, purchases, or booked conversations.")
+        : t("Build momentum, intent, and repeat engagement from the top keyword.")
 
-  const conversionRate = sent > 0 ? Number(((clicks / sent) * 100).toFixed(2)) : 0;
-  const horizon = ctr >= 25 ? "High intent" : ctr >= 12 ? "Growing intent" : "Early stage";
+  const leads = campaign.analytics.leads ?? 0;
+  const convertedLeads = campaign.analytics.convertedLeads ?? 0;
+  const conversionRate = leads > 0 ? Number(((convertedLeads / leads) * 100).toFixed(2)) : 0;
+  const horizon = ctr >= 25 ? t("High intent") : ctr >= 12 ? t("Growing intent") : t("Early stage");
 
   return {
     goal,
@@ -297,7 +303,8 @@ export function getCampaignOutcomeSummary(campaign: CampaignSummaryInput) {
   };
 }
 
-export function getCampaignInsights(campaign: CampaignSummaryInput) {
+export function getCampaignInsights(campaign: CampaignSummaryInput, locale = "en") {
+  const t = campaignTranslator(locale);
   const ctr = campaign.analytics.ctr ?? 0;
   const sent = campaign.analytics.sent ?? 0;
   const clicks = campaign.analytics.clicks ?? 0;
@@ -318,19 +325,19 @@ export function getCampaignInsights(campaign: CampaignSummaryInput) {
 
   const primary =
     score === "High"
-      ? "This campaign is converting well. Keep the offer and tighten creative testing only if scale matters."
+      ? t("This campaign is converting well. Keep the offer and tighten creative testing only if scale matters.")
       : score === "Medium"
-        ? "This campaign is active but still underperforming. We should test a sharper CTA and a stronger headline around LINK."
+        ? t("This campaign is active but still underperforming. We should test a sharper CTA and a stronger headline around LINK.")
         : score === "Low"
-          ? "This campaign needs a tighter offer and a stronger response trigger before scaling."
-          : "This campaign is paused or has not started sending messages yet.";
+          ? t("This campaign needs a tighter offer and a stronger response trigger before scaling.")
+          : t("This campaign is paused or has not started sending messages yet.");
 
   const actions = [
-    `Test a stronger CTA around ${topKeyword} to lift the current ${ctr}% CTR.`,
+    t("Test a stronger CTA around {keyword} to lift the current {ctr}% CTR.", { keyword: topKeyword, ctr }),
     clicks > 0
-      ? `Keep the best-performing conversion path and trim weak variants.`
-      : `Write a more specific offer in the DM and shorten the call to action.`,
-    sent > 0 ? `Review the top keyword and push the strongest message to more posts.` : `Start with one keyword and one CTA before scaling.`,
+      ? t("Keep the best-performing conversion path and trim weak variants.")
+      : t("Write a more specific offer in the DM and shorten the call to action."),
+    sent > 0 ? t("Review the top keyword and push the strongest message to more posts.") : t("Start with one keyword and one CTA before scaling."),
   ];
 
   return {

@@ -30,12 +30,13 @@ export async function canSchedulePostForWorkspace(workspaceId: string): Promise<
   }
 
   // Count posts scheduled or published in current usage period
-  const periodStart = workspace.usagePeriodStart ?? new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const now = new Date();
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const currentCount = await prisma.scheduledPost.count({
     where: {
       workspaceId,
-      createdAt: { gte: periodStart },
+      quotaCountedAt: { gte: periodStart },
       status: { not: "DRAFT" },
     },
   });

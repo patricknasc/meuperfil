@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
+import { commentJobId } from "@/lib/queue/job-ids";
 import { getDMQueue } from "@/lib/queue/client";
 import { parseCommentEvents, verifyWebhookSignature } from "@/lib/meta/webhook";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
           mediaId: event.mediaId,
         },
         {
-          jobId: `comment:${event.instagramAccountId}:${event.commentId}`,
+          jobId: commentJobId(event.instagramAccountId, event.commentId),
         }
       );
 

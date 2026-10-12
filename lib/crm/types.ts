@@ -31,6 +31,7 @@ export interface CaptureLeadInput {
   workspaceId: string;
   source: LeadSource;
   sourceId?: string;
+  interactionKey?: string;
   name?: string;
   email?: string;
   phone?: string;
