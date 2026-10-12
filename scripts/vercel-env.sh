@@ -6,6 +6,8 @@
 #   ./scripts/vercel-env.sh hm       -> Preview, só na branch develop
 #   ./scripts/vercel-env.sh limpar   -> remove do projeto todas as variáveis
 #                                       listadas no .env.example
+#   ./scripts/vercel-env.sh limpar-shared -> remove variáveis da aba Shared
+#                                       que não estão ligadas a nenhum projeto
 #
 # Pré-requisito (uma vez): npx vercel login && npx vercel link
 # Rodar de novo é seguro: valores existentes no mesmo alvo são sobrescritos.
@@ -32,9 +34,19 @@ case "$target" in
     done
     exit 0
     ;;
+  limpar-shared)
+    # Variáveis compartilhadas do time (aba "Shared") que não estão ligadas a nenhum projeto.
+    team=$(python3 -c 'import json;print(json.load(open(".vercel/project.json"))["orgId"])')
+    ids=$("${VERCEL[@]}" api "/v1/env?teamId=$team" --raw 2>/dev/null \
+      | python3 -c 'import sys,json;print(json.dumps({"ids":[e["id"] for e in json.load(sys.stdin)["data"] if not e.get("projectId")]}))')
+    if [[ "$ids" == '{"ids": []}' ]]; then echo "Nenhuma variável compartilhada solta."; exit 0; fi
+    echo "$ids" | "${VERCEL[@]}" api "/v1/env?teamId=$team" -X DELETE --input - --dangerously-skip-permissions --raw >/dev/null
+    echo "Removidas: $(echo "$ids" | python3 -c 'import sys,json;print(len(json.load(sys.stdin)["ids"]))') variáveis compartilhadas."
+    exit 0
+    ;;
   pd) file=.env.pd; args=(production) ;;
   hm) file=.env.hm; args=(preview --git-branch develop) ;;
-  *) echo "Uso: $0 <pd|hm|limpar>"; exit 1 ;;
+  *) echo "Uso: $0 <pd|hm|limpar|limpar-shared>"; exit 1 ;;
 esac
 
 [[ -f "$file" ]] || { echo "$file não encontrado"; exit 1; }
