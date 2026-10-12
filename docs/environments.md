@@ -56,7 +56,15 @@ Ordem no deploy: aplicar a migration no ambiente **antes** de fazer merge do có
 
 ## Variáveis na Vercel
 
-Cadastre em Settings → Environment Variables:
+Use o script (evita erros de ambiente/branch na interface):
+
+```bash
+npx vercel login && npx vercel link   # uma vez
+./scripts/vercel-env.sh pd            # .env.pd -> Production (Secret)
+./scripts/vercel-env.sh hm            # .env.hm -> Preview, branch develop (Secret)
+```
+
+Depois de mudar um valor, rode o script de novo e faça Redeploy. Equivalente na interface (Settings → Environment Variables):
 
 - **Production**: valores de PD.
 - **Preview**, restrito à branch `develop`: valores de HM.
