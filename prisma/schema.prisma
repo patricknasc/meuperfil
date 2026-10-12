@@ -1,4 +1,4 @@
-// CampaignCue — B2B Instagram Comment → DM SaaS schema
+// MeuPerfil — B2B Instagram Comment → DM SaaS schema
 
 generator client {
   provider = "prisma-client"
@@ -91,6 +91,7 @@ model Workspace {
   webhookEvents     WebhookEvent[]
   billingEvents     BillingEvent[]
   operationalEvents OperationalEvent[]
+  profiles          Profile[]
 
   @@index([ownerId])
 }
@@ -143,10 +144,10 @@ model InstagramAccount {
   connectedAt       DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  automations Automation[]
-  dmLogs      DmLog[]
-  linkClicks  LinkClick[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  automations    Automation[]
+  dmLogs         DmLog[]
+  linkClicks     LinkClick[]
 
   @@index([workspaceId])
 }
@@ -355,4 +356,104 @@ enum OperationalEventLevel {
   INFO
   WARNING
   ERROR
+}
+
+enum ProfileTheme {
+  MODERN_DARK
+  NEON_CYAN
+  AURORA_PURPLE
+  MINIMAL_LIGHT
+  SUNSET_ORANGE
+  EMERALD_CLEAN
+  MIDNIGHT_VELVET
+  OCEAN_GRADIENT
+}
+
+enum ProfileBlockType {
+  LINK
+  TEXT_DIVIDER
+  SOCIAL_LINKS
+}
+
+model Profile {
+  id              String       @id @default(cuid())
+  workspaceId     String
+  handle          String       @unique
+  displayName     String
+  bio             String?
+  avatarUrl       String?
+  theme           ProfileTheme @default(MODERN_DARK)
+  isPublished     Boolean      @default(true)
+  customDomain    String?      @unique
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  blocks          ProfileBlock[]
+  visits          ProfileVisit[]
+  clicks          ProfileBlockClick[]
+
+  @@index([workspaceId])
+  @@index([handle])
+}
+
+model ProfileBlock {
+  id             String           @id @default(cuid())
+  profileId      String
+  type           ProfileBlockType @default(LINK)
+  title          String?
+  url            String?
+  description    String?
+  imageUrl       String?
+  isActive       Boolean          @default(true)
+  sortOrder      Int              @default(0)
+  config         Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  profile        Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  clicks         ProfileBlockClick[]
+
+  @@index([profileId])
+  @@index([sortOrder])
+}
+
+model ProfileVisit {
+  id          String   @id @default(cuid())
+  profileId   String
+  workspaceId String
+  ipHash      String?
+  userAgent   String?
+  referrer    String?
+  createdAt   DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([profileId, createdAt])
+}
+
+model ProfileBlockClick {
+  id             String   @id @default(cuid())
+  profileId      String
+  blockId        String
+  workspaceId    String
+  destinationUrl String
+  ipHash         String?
+  userAgent      String?
+  referrer       String?
+  createdAt      DateTime @default(now())
+
+  profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  block          ProfileBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([blockId])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([profileId, createdAt])
 }

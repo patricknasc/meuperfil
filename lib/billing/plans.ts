@@ -5,6 +5,9 @@ export interface PlanLimit {
   maxDMsPerMonth: number;
   maxInstagramAccounts: number;
   maxWorkspaceMembers: number;
+  maxProfiles: number;
+  maxBlocksPerProfile: number;
+  maxScheduledPostsPerMonth: number;
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
@@ -13,18 +16,27 @@ export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
     maxDMsPerMonth: 100,
     maxInstagramAccounts: 1,
     maxWorkspaceMembers: 1,
+    maxProfiles: 1,
+    maxBlocksPerProfile: 5,
+    maxScheduledPostsPerMonth: 5,
   },
   PRO: {
     maxAutomations: 10,
     maxDMsPerMonth: 2000,
     maxInstagramAccounts: 1,
     maxWorkspaceMembers: 1,
+    maxProfiles: 3,
+    maxBlocksPerProfile: 25,
+    maxScheduledPostsPerMonth: 60,
   },
   AGENCY: {
     maxAutomations: Number.POSITIVE_INFINITY,
     maxDMsPerMonth: 10000,
     maxInstagramAccounts: 10,
     maxWorkspaceMembers: 10,
+    maxProfiles: 20,
+    maxBlocksPerProfile: 100,
+    maxScheduledPostsPerMonth: Number.POSITIVE_INFINITY,
   },
 };
 
