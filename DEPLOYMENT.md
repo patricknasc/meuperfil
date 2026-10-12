@@ -1,11 +1,13 @@
-# CampaignCue Production Deployment
+# MeuPerfil Production Deployment
 
 This app is designed as two deployable services:
 
 - **Web/API**: Next.js on Vercel.
 - **Worker**: a persistent Railway service running `npm run worker`.
 
-Postgres and Redis should be provisioned on Railway or another managed provider and shared by both services.
+PostgreSQL (Supabase) and Redis (Upstash / Railway) should be provisioned and shared by both services.
+- On Supabase, use the **Transaction Pooler URL (Port 6543)** with `?pgbouncer=true&connection_limit=1` for `DATABASE_URL` in serverless/Vercel.
+- For running migrations (`npm run db:migrate` / `npx prisma db push`), use the **Direct Connection URL (Port 5432)** or set `DIRECT_URL`.
 
 ## Required Environment Variables
 
@@ -63,6 +65,10 @@ Start command:
 npm run worker
 ```
 
+The unified worker handles:
+- **`dm-processing`**: Rate-limited private direct message delivery on comment triggers.
+- **`post-publishing`**: Scheduled Reels, Stories, Carousels and Feed posts publishing to Meta Graph API, with automatic Comment-to-DM campaign attachment.
+
 Use the same `DATABASE_URL`, `REDIS_URL`, Meta, Stripe, and encryption environment variables as the Vercel app.
 
 ## Stripe
@@ -82,7 +88,7 @@ Subscribe to:
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
-## Meta
+## Meta App & Permissions
 
 Configure the webhook callback URL:
 
@@ -90,4 +96,12 @@ Configure the webhook callback URL:
 https://your-domain.com/api/webhook
 ```
 
-Use `WEBHOOK_VERIFY_TOKEN` as the verify token. Public customer launch requires Meta App Review for Instagram messaging/comment permissions.
+Use `WEBHOOK_VERIFY_TOKEN` as the verify token.
+
+### Required Permissions for App Review:
+- `instagram_basic`: Reading connected profile info and media.
+- `instagram_manage_comments`: Receiving webhooks and reading comments.
+- `instagram_manage_messages`: Sending automated DM replies (Comment-to-DM).
+- `instagram_content_publish`: Publishing scheduled Reels, Carousels, Photos and Stories via Graph API.
+- `pages_show_list` & `pages_read_engagement`: Managing linked Facebook Pages for Instagram Professional accounts.
+

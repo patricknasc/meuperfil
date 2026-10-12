@@ -1,6 +1,6 @@
 # Referral Program Plan
 
-CampaignCue will launch referrals as a manual founding-agency loop before automating billing credits.
+MeuPerfil will launch referrals as a manual founding-agency loop before automating billing credits.
 
 ## Founding Agency Offer
 
@@ -44,7 +44,7 @@ Billing credits should not be automatic until these controls exist:
 
 ## Future Implementation
 
-Follow-up GitHub issue: [#26 P2: Implement referral billing credits](https://github.com/im-anishraj/instagram-comment-to-dm/issues/26).
+Follow-up GitHub issue: [#26 P2: Implement referral billing credits](https://github.com/patricknasc/meuperfil/issues/26).
 
 Planned implementation pieces:
 
