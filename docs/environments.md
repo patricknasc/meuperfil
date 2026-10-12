@@ -3,9 +3,9 @@
 | | DS (desenvolvimento) | HM (homologação) | PD (produção) |
 |---|---|---|---|
 | Branch | qualquer feature branch | `develop` | `main` |
-| App | `npm run dev` (localhost:3000) | Vercel Preview (branch `develop`) | Vercel Production |
+| App | `./iniciar-local.sh` (localhost:3000+) | Vercel Preview (branch `develop`) | Vercel Production |
 | Domínio | `localhost:3000` | `hm.meuperfil.me` | `meuperfil.me` |
-| Banco | Postgres no Docker (porta 5433) | Supabase `meuperfil-hml` | Supabase `meuperfil-prd` |
+| Banco | Postgres no Docker (porta 5433) | Supabase `meuperfil-hm` | Supabase `meuperfil-pd` |
 | Redis / fila | Redis no Docker (porta 6379) | Upstash (HM) | Upstash (PD) |
 | Worker | `npm run worker` | host de worker (HM) | host de worker (PD) |
 | E-mail | link no terminal (sem Resend) | Resend | Resend |
@@ -14,9 +14,13 @@
 
 Fluxo: feature branch → PR para `develop` (deploy em HM) → PR de `develop` para `main` (deploy em PD).
 
+Cada ambiente tem sua branch: `main` = PD, `develop` = HM, demais branches = DS (só local). O `ignoreCommand` em `vercel.json` faz a Vercel ignorar pushes em qualquer outra branch.
+
 ## DS: rodar localmente
 
 Pré-requisitos: Node 20+, Docker Desktop.
+
+Atalho: `./iniciar-local.sh` faz todos os passos abaixo (e `./iniciar-local.sh parar` desliga o Docker). Manualmente:
 
 ```bash
 cp .env.example .env          # preencha NEXTAUTH_SECRET, CRON_SECRET, ENCRYPTION_KEY (openssl rand -hex 32)
@@ -36,13 +40,19 @@ Alterou o `schema.prisma`? Gere a migration com `npm run db:migrate:dev -- --nam
 Nunca use `prisma db push` em HM/PD. As migrations são aplicadas pelo script, que lê apenas o `DIRECT_URL` de um arquivo local (ignorado pelo git):
 
 ```bash
-# .env.hml  ->  DIRECT_URL=postgresql://postgres.<ref-hml>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres
-# .env.prd  ->  DIRECT_URL=postgresql://postgres.<ref-prd>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres
-npm run db:migrate:hml
-npm run db:migrate:prd        # pede confirmação digitando "prd"
+# .env.hm  ->  DIRECT_URL=postgresql://postgres.<ref-hm>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres
+# .env.pd  ->  DIRECT_URL=postgresql://postgres.<ref-pd>:<senha>@aws-0-<regiao>.pooler.supabase.com:5432/postgres
+npm run db:migrate:hm
+npm run db:migrate:pd        # pede confirmação digitando "pd"
 ```
 
 Ordem no deploy: aplicar a migration no ambiente **antes** de fazer merge do código que depende dela.
+
+## Senhas e segredos
+
+- Cofre oficial: gerenciador de senhas (app Senhas do macOS, 1Password ou Bitwarden), uma entrada por ambiente: `MeuPerfil HM` e `MeuPerfil PD`, com senha do banco, connection strings e chaves geradas.
+- Cópias de uso: Vercel (variáveis do ambiente) e `.env.hm` / `.env.pd` locais, ignorados pelo git.
+- Nunca em commits, issues, prints ou chats. Senha do banco: só letras e números (evita percent-encoding na URL). Se vazar, troque em Supabase → Database → Settings → Reset password e atualize Vercel e `.env.*`.
 
 ## Variáveis na Vercel
 

@@ -114,6 +114,18 @@ The hosted product will focus on agencies and campaign teams:
 
 The core remains public so builders can self-host, audit, fork, and contribute.
 
+## Rodar localmente (atalho)
+
+Com Node 20+ e Docker Desktop instalados:
+
+```bash
+./iniciar-local.sh          # Docker, .env, dependências, migrations, app e worker
+./iniciar-local.sh parar    # desliga Postgres e Redis
+```
+
+O script usa a primeira porta livre a partir de 3000 e mostra o link de login no terminal.
+Ambientes DS/HM/PD: [docs/environments.md](docs/environments.md).
+
 ## Self-Host Quick Start
 
 ### Requirements
@@ -137,7 +149,7 @@ npm install
 ### Start Services
 
 ```bash
-docker-compose up -d
+npm run services:up
 ```
 
 ### Configure Environment

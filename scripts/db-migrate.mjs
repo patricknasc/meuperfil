@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Applies Prisma migrations to a remote environment (HM or PD).
 //
-//   npm run db:migrate:hml   -> reads .env.hml
-//   npm run db:migrate:prd   -> reads .env.prd (asks for confirmation)
+//   npm run db:migrate:hm   -> reads .env.hm
+//   npm run db:migrate:pd   -> reads .env.pd (asks for confirmation)
 //
 // The env file only needs DIRECT_URL (Supabase Session pooler, port 5432).
 // Both DATABASE_URL and DIRECT_URL are forced to that value so the local
@@ -14,8 +14,8 @@ import { parseEnv } from "node:util";
 import { createInterface } from "node:readline/promises";
 
 const target = process.argv[2];
-if (!["hml", "prd"].includes(target)) {
-  console.error("Usage: node scripts/db-migrate.mjs <hml|prd>");
+if (!["hm", "pd"].includes(target)) {
+  console.error("Usage: node scripts/db-migrate.mjs <hm|pd>");
   process.exit(1);
 }
 
@@ -34,11 +34,11 @@ if (!directUrl) {
 const { hostname, username } = new URL(directUrl);
 console.log(`Target: ${target.toUpperCase()} -> ${username}@${hostname}`);
 
-if (target === "prd") {
+if (target === "pd") {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const answer = await rl.question('Type "prd" to apply migrations to PRODUCTION: ');
+  const answer = await rl.question('Type "pd" to apply migrations to PRODUCTION: ');
   rl.close();
-  if (answer.trim() !== "prd") {
+  if (answer.trim() !== "pd") {
     console.log("Aborted.");
     process.exit(1);
   }
