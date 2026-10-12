@@ -1,0 +1,178 @@
+{
+  "common": {
+    "brandName": "meuperfil.me",
+    "signIn": "Sign in",
+    "startFree": "Create My Bio Link Free",
+    "seeWorkflow": "See workflow",
+    "templates": "Templates",
+    "product": "Product",
+    "useCases": "Use cases",
+    "security": "Security",
+    "pricing": "Pricing",
+    "foundingOffer": "Founding offer",
+    "agencies": "Agencies",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "dataDeletion": "Data deletion",
+    "metaReview": "Meta review",
+    "browseTemplates": "Browse templates",
+    "commentToDmTemplates": "Comment-to-DM templates",
+    "commentLinkAutomation": "Comment LINK automation"
+  },
+  "landing": {
+    "badge": "High-Converting Bio Link + Official Instagram Comment Automation",
+    "heroTitle": "Your Ultimate Bio Link with Instagram DM Automation",
+    "heroDescription": "meuperfil.me combines stunning, ultra-fast custom bio links with official Instagram automation to convert post & reel comments into leads.",
+    "stats": {
+      "monitoring": "Comment monitoring",
+      "dmPerComment": "DM per matched comment",
+      "scraping": "Scraping required"
+    },
+    "audiences": {
+      "title": "Designed for teams turning social attention into owned conversations",
+      "items": ["DTC store", "Creator studio", "Agency desk", "Course seller", "Launch team", "Beauty brand", "Fitness coach", "Event team"]
+    },
+    "workflow": {
+      "eyebrow": "Product workflow",
+      "title": "A cleaner way to run Instagram DM campaigns",
+      "description": "The app separates business signup from Instagram connection, then gives each workspace real usage, billing, delivery, and log state.",
+      "steps": [
+        {
+          "eyebrow": "Connect",
+          "title": "Link your Instagram professional account",
+          "description": "Owners sign in by email, connect Instagram once, and manage the account as a workspace integration."
+        },
+        {
+          "eyebrow": "Build",
+          "title": "Choose a post, keywords, and the exact DM",
+          "description": "Create campaigns for reels, posts, launches, product drops, lead magnets, and client work."
+        },
+        {
+          "eyebrow": "Deliver",
+          "title": "Send comment-based private replies safely",
+          "description": "Meta webhooks are deduped, queued, checked against limits, and sent through the private reply flow."
+        }
+      ]
+    },
+    "dashboard": {
+      "eyebrow": "Operator dashboard",
+      "title": "Built to show what happened, not hide it",
+      "description": "Every comment event becomes traceable: queued, matched, sent, skipped, failed, rate-limited, or blocked by plan limits."
+    },
+    "useCases": {
+      "eyebrow": "Use cases",
+      "title": "Campaigns your team can launch without inbox chaos",
+      "cards": [
+        {
+          "title": "Lead magnets",
+          "description": "Send guides, checklists, discount links, webinar links, or gated resources the moment someone asks."
+        },
+        {
+          "title": "Social commerce",
+          "description": "Turn comments like PRICE, LINK, SIZE, or BUY into an instant product conversation inside Instagram."
+        },
+        {
+          "title": "Agency workflows",
+          "description": "Package repeatable comment-to-DM funnels for campaign clients without relying on manual inbox work."
+        },
+        {
+          "title": "Creator launches",
+          "description": "Capture spikes from reels, stories, and launches while the audience is actively engaging."
+        }
+      ]
+    },
+    "trust": {
+      "eyebrow": "Trust and compliance",
+      "title": "Serious foundations for a public B2B product",
+      "description": "The system is designed around official APIs, encrypted tokens, idempotent queue processing, and Stripe-provisioned plans."
+    },
+    "platformFeatures": [
+      "Email magic-link signup",
+      "Workspace-based tenancy",
+      "Agency multi-account support",
+      "Stripe-backed plan limits",
+      "Encrypted Instagram tokens",
+      "Webhook event storage",
+      "Queue-backed delivery worker",
+      "DM logs and statuses",
+      "Token refresh maintenance"
+    ],
+    "pricing": {
+      "eyebrow": "Pricing",
+      "title": "Free to test, simple to scale",
+      "description": "Each plan maps directly to campaign count and monthly DM volume. Stripe webhooks provision the workspace plan after checkout.",
+      "tiers": [
+        {
+          "name": "Free",
+          "price": "$0",
+          "label": "Start testing",
+          "description": "For validating one keyword campaign.",
+          "features": ["1 campaign", "100 DMs per month", "Email sign-in", "Basic DM logs"],
+          "cta": "Start free"
+        },
+        {
+          "name": "Pro",
+          "price": "$19",
+          "label": "Most popular",
+          "description": "For brands and creators running repeatable launches.",
+          "features": ["10 campaigns", "2,000 DMs per month", "Stripe billing portal", "Daily token maintenance"],
+          "cta": "Start Pro"
+        },
+        {
+          "name": "Agency",
+          "price": "$49",
+          "label": "Higher volume",
+          "description": "For operators managing bigger campaign pipelines.",
+          "features": ["Unlimited campaigns", "10 Instagram accounts", "10,000 DMs per month", "Queue-backed worker", "Member roles and reports"],
+          "cta": "Start Agency"
+        }
+      ]
+    },
+    "founding": {
+      "eyebrow": "Founding agency offer",
+      "title": "Bring your first clients before the market gets noisy",
+      "description": "Early agencies get hands-on onboarding, template help, and a say in the agency reporting roadmap. The offer is designed for teams already managing Instagram campaigns for multiple clients.",
+      "cta": "Claim founding access",
+      "whatFoundersGet": "What founders get",
+      "items": [
+        "Founding Agency badge on your client reports during beta",
+        "Manual onboarding for up to 10 Instagram client accounts",
+        "Campaign template setup for your first 3 client campaigns",
+        "Direct feedback channel for shaping agency reports and analytics"
+      ],
+      "referralLoop": "Referral loop",
+      "referralDescription": "Referrals start as a manual founding-agency loop first, then move into Stripe billing credits once abuse controls are proven.",
+      "referralSteps": [
+        "Invite an agency operator",
+        "They launch a tracked campaign",
+        "Both accounts get future billing credit after paid conversion"
+      ]
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Questions before you launch",
+      "items": [
+        {
+          "question": "Does MeuPerfil use the official Meta API?",
+          "answer": "Yes. The product is built around Meta webhooks and Instagram private replies, not scraping, browser automation, or password sharing."
+        },
+        {
+          "question": "What happens when I hit my monthly DM limit?",
+          "answer": "The worker checks workspace plan limits before sending. Over-limit replies are skipped and logged so operators can see what happened."
+        },
+        {
+          "question": "Can users sign up without Instagram first?",
+          "answer": "Yes. Signup uses email magic links. Instagram is connected after the workspace exists, which is cleaner for a B2B SaaS flow."
+        },
+        {
+          "question": "Is this ready for public launch?",
+          "answer": "The app is implementation-ready, but public launch still depends on production credentials, deployment, and Meta App Review approval."
+        }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Ready when your next reel goes live",
+      "title": "Start free and turn keyword comments into private replies"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface InvitationAcceptCardProps {
   token: string;
@@ -15,6 +17,10 @@ export default function InvitationAcceptCard({
 }: InvitationAcceptCardProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const pathname = usePathname();
+  const segments = pathname.split("/").filter(Boolean);
+  const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
+  const prefix = `/${currentLocale}`;
 
   async function acceptInvite() {
     setBusy(true);
@@ -26,7 +32,7 @@ export default function InvitationAcceptCard({
     });
     const payload = await response.json();
     if (payload.success) {
-      window.location.assign("/dashboard");
+      window.location.assign(`${prefix}/dashboard`);
       return;
     }
     setMessage(payload.error ?? "Could not accept invitation");
@@ -35,12 +41,12 @@ export default function InvitationAcceptCard({
 
   if (!isSignedIn) {
     return (
-      <a
-        href="/login"
+      <Link
+        href={`${prefix}/login`}
         className="inline-flex items-center justify-center rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-hover"
       >
         Sign in to accept
-      </a>
+      </Link>
     );
   }
 
@@ -61,4 +67,3 @@ export default function InvitationAcceptCard({
     </div>
   );
 }
-

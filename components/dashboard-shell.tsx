@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import TopBar from "@/components/top-bar";
+import type { Locale } from "@/app/[lang]/dictionaries";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface DashboardShellProps {
   plan: string;
   instagramUsername: string | null;
   instagramAccountCount: number;
+  locale?: Locale;
 }
 
 export default function DashboardShell({
@@ -18,6 +20,7 @@ export default function DashboardShell({
   plan,
   instagramUsername,
   instagramAccountCount,
+  locale = "pt",
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -35,6 +38,7 @@ export default function DashboardShell({
           onMenuClick={() => setSidebarOpen(true)}
           instagramUsername={instagramUsername}
           instagramAccountCount={instagramAccountCount}
+          locale={locale}
         />
 
         <main className="flex-1 overflow-y-auto">
