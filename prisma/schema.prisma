@@ -92,6 +92,7 @@ model Workspace {
   billingEvents     BillingEvent[]
   operationalEvents OperationalEvent[]
   profiles          Profile[]
+  scheduledPosts    ScheduledPost[]
 
   @@index([ownerId])
 }
@@ -148,6 +149,7 @@ model InstagramAccount {
   automations    Automation[]
   dmLogs         DmLog[]
   linkClicks     LinkClick[]
+  scheduledPosts ScheduledPost[]
 
   @@index([workspaceId])
 }
@@ -457,3 +459,69 @@ model ProfileBlockClick {
   @@index([createdAt])
   @@index([profileId, createdAt])
 }
+
+// ─── Post Scheduler Models ──────────────────────────────────────────────────
+
+enum PostPlatform {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  TWITTER
+  LINKEDIN
+}
+
+enum PostMediaType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  REEL
+  STORY
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+model ScheduledPost {
+  id                 String          @id @default(cuid())
+  workspaceId        String
+  instagramAccountId String?
+  
+  caption            String?
+  mediaUrls          String[]        @default([])
+  mediaType          PostMediaType   @default(IMAGE)
+  platform           PostPlatform    @default(INSTAGRAM)
+  
+  scheduledFor       DateTime?
+  publishedAt        DateTime?
+  status             PostStatus      @default(DRAFT)
+  
+  // Meta container tracking
+  metaContainerId    String?
+  publishedPostId    String?
+  publishedPostUrl   String?
+  errorMessage       String?
+  
+  // Integrated auto-campaign
+  autoCampaignEnabled   Boolean      @default(false)
+  autoCampaignKeywords  String[]     @default([])
+  autoCampaignDmMessage String?
+  createdAutomationId   String?
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  workspace          Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  instagramAccount   InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([instagramAccountId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([workspaceId, status])
+}
+
