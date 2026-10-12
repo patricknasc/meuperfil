@@ -48,6 +48,7 @@ Secondary audiences:
 ## Infrastructure Before Real Customers
 
 - Supabase `meuperfil-pd` starts on the Free plan, which pauses the project after 7 days without activity. Fine while there is no real traffic, but **upgrade PD to Supabase Pro before onboarding the first real customer** (also unlocks daily backups). HM can stay on Free.
+- Vercel starts on the Hobby plan, which is for non-commercial use only. **Move to Vercel Pro before charging customers.**
 - Worker hosts (HM and PD) and Upstash Redis per environment.
 - Stripe PD in live mode only after the Meta app is approved.
 
