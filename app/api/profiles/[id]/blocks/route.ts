@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-access";
 import { createBlockSchema, reorderBlocksSchema } from "@/lib/profiles/validation";
 import { createBlock, reorderBlocks } from "@/lib/profiles/service";
+import { ZodError } from "zod";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
@@ -27,16 +28,16 @@ export async function POST(request: NextRequest, { params }: RouteProps) {
 
     const block = await createBlock(profileId, context.workspaceId, validated);
     return NextResponse.json({ success: true, data: block }, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating block:", error);
-    if (error.name === "ZodError") {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.issues[0]?.message || "Dados inválidos" },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao criar bloco" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao criar bloco" },
       { status: 400 }
     );
   }
@@ -62,16 +63,16 @@ export async function PUT(request: NextRequest, { params }: RouteProps) {
 
     await reorderBlocks(profileId, context.workspaceId, validated.blockIds);
     return NextResponse.json({ success: true, message: "Blocos reordenados com sucesso" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error reordering blocks:", error);
-    if (error.name === "ZodError") {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.issues[0]?.message || "Dados inválidos" },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao reordenar blocos" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao reordenar blocos" },
       { status: 400 }
     );
   }

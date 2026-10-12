@@ -40,23 +40,22 @@ export default function ProfilesPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    let cancelled = false;
 
-  async function fetchProfiles() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/profiles");
-      const data = await res.json();
-      if (data.success) {
-        setProfiles(data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch profiles:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+    fetch("/api/profiles")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data.success) setProfiles(data.data);
+      })
+      .catch((err) => console.error("Failed to fetch profiles:", err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -83,8 +82,8 @@ export default function ProfilesPage() {
       setShowCreateModal(false);
       // Navigate straight to the new profile studio
       router.push(`/${lang}/profiles/${data.data.id}`);
-    } catch (err: any) {
-      setFormError(err.message || "Erro ao criar perfil");
+    } catch (err) {
+      setFormError((err instanceof Error && err.message) || "Erro ao criar perfil");
     } finally {
       setCreating(false);
     }
@@ -308,7 +307,7 @@ export default function ProfilesPage() {
                   />
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-1">
-                  Mínimo 3 caracteres (letras, números, '.', '_' e '-')
+                  {"Mínimo 3 caracteres (letras, números, '.', '_' e '-')"}
                 </p>
               </div>
 

@@ -4,6 +4,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import type { Locale } from "@/app/[lang]/dictionaries";
 
+// Remembers the choice for proxy.ts locale negotiation (1 year).
+function persistLocale(locale: Locale) {
+  document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=31536000;SameSite=Lax`;
+}
+
 interface LanguageSwitcherProps {
   currentLocale: Locale;
   variant?: "header" | "footer" | "compact";
@@ -43,8 +48,7 @@ export default function LanguageSwitcher({
       return;
     }
 
-    // Set cookie for persistence (1 year)
-    document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
+    persistLocale(newLocale);
 
     // Compute new pathname
     let newPathname = pathname;

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/client";
-import { ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
+import { Prisma, ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
 import { canCreateProfileForWorkspace, canAddBlockToProfile } from "@/lib/billing/profile-limits";
 import { sanitizeHandle, isValidDestinationUrl } from "@/lib/profiles/validation";
 
@@ -33,7 +33,7 @@ export interface CreateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: any;
+  config?: Prisma.InputJsonValue;
 }
 
 export interface UpdateBlockInput {
@@ -43,7 +43,7 @@ export interface UpdateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: any;
+  config?: Prisma.InputJsonValue;
 }
 
 /**
@@ -170,7 +170,7 @@ export async function updateProfile(
     throw new Error("Perfil não encontrado no workspace");
   }
 
-  const data: any = {};
+  const data: Prisma.ProfileUpdateInput = {};
   if (input.displayName !== undefined) data.displayName = input.displayName;
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
@@ -288,7 +288,7 @@ export async function updateBlock(
     throw new Error("URL de destino inválida. Deve iniciar com http:// ou https://");
   }
 
-  const data: any = {};
+  const data: Prisma.ProfileBlockUpdateInput = {};
   if (input.title !== undefined) data.title = input.title;
   if (input.url !== undefined) data.url = input.url;
   if (input.description !== undefined) data.description = input.description;

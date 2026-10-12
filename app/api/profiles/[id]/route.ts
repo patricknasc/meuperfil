@@ -3,6 +3,7 @@ import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-
 import { updateProfileSchema } from "@/lib/profiles/validation";
 import { getProfileById, updateProfile, deleteProfile } from "@/lib/profiles/service";
 import { getProfileAnalytics } from "@/lib/profiles/analytics";
+import { ZodError } from "zod";
 
 interface RouteProps {
   params: Promise<{ id: string }>;
@@ -30,10 +31,10 @@ export async function GET(_request: NextRequest, { params }: RouteProps) {
         analytics,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao buscar perfil" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao buscar perfil" },
       { status: 500 }
     );
   }
@@ -59,16 +60,16 @@ export async function PATCH(request: NextRequest, { params }: RouteProps) {
 
     const updated = await updateProfile(id, context.workspaceId, validated);
     return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating profile:", error);
-    if (error.name === "ZodError") {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { success: false, error: error.issues[0]?.message || "Dados inválidos" },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao atualizar perfil" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao atualizar perfil" },
       { status: 400 }
     );
   }
@@ -91,10 +92,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteProps) {
   try {
     await deleteProfile(id, context.workspaceId);
     return NextResponse.json({ success: true, message: "Perfil excluído com sucesso" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting profile:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao excluir perfil" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao excluir perfil" },
       { status: 400 }
     );
   }

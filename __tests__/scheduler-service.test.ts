@@ -41,7 +41,7 @@ describe("Scheduler Domain Service", () => {
     const mockPosts = [
       { id: "post_1", workspaceId: "ws_alpha", caption: "Post 1" },
     ];
-    (prisma.scheduledPost.findMany as any).mockResolvedValue(mockPosts);
+    vi.mocked(prisma.scheduledPost.findMany).mockResolvedValue(mockPosts as never);
 
     const result = await listScheduledPosts("ws_alpha");
 
@@ -55,7 +55,7 @@ describe("Scheduler Domain Service", () => {
 
   it("retrieves a scheduled post ensuring workspace ownership", async () => {
     const mockPost = { id: "post_1", workspaceId: "ws_alpha", caption: "Post 1" };
-    (prisma.scheduledPost.findFirst as any).mockResolvedValue(mockPost);
+    vi.mocked(prisma.scheduledPost.findFirst).mockResolvedValue(mockPost as never);
 
     const result = await getScheduledPostById("ws_alpha", "post_1");
 
@@ -68,7 +68,7 @@ describe("Scheduler Domain Service", () => {
   });
 
   it("throws error when attempting to delete a post not belonging to workspace", async () => {
-    (prisma.scheduledPost.findFirst as any).mockResolvedValue(null);
+    vi.mocked(prisma.scheduledPost.findFirst).mockResolvedValue(null as never);
 
     await expect(deleteScheduledPost("ws_hacker", "post_1")).rejects.toThrow(
       "Post agendado não encontrado"

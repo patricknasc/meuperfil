@@ -90,38 +90,45 @@ export default function ProfileStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (profileId) {
-      loadProfile();
-    }
+    if (!profileId) return;
+    let cancelled = false;
+
+    fetch(`/api/profiles/${profileId}`)
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || "Perfil não encontrado");
+        }
+        return json;
+      })
+      .then((json) => {
+        if (cancelled) return;
+        const p: ProfileData = json.data.profile;
+        setProfile(p);
+        setAnalytics(json.data.analytics);
+
+        // Populate local editing state
+        setDisplayName(p.displayName);
+        setHandle(p.handle);
+        setBio(p.bio || "");
+        setAvatarUrl(p.avatarUrl);
+        setTheme(p.theme);
+        setIsPublished(p.isPublished);
+        setBlocks(p.blocks || []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setErrorMessage((err instanceof Error && err.message) || "Erro ao carregar perfil");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [profileId]);
-
-  async function loadProfile() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/profiles/${profileId}`);
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.error || "Perfil não encontrado");
-      }
-
-      const p: ProfileData = json.data.profile;
-      setProfile(p);
-      setAnalytics(json.data.analytics);
-
-      // Populate local editing state
-      setDisplayName(p.displayName);
-      setHandle(p.handle);
-      setBio(p.bio || "");
-      setAvatarUrl(p.avatarUrl);
-      setTheme(p.theme);
-      setIsPublished(p.isPublished);
-      setBlocks(p.blocks || []);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao carregar perfil");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function showToast(msg: string) {
     setToastMessage(msg);
@@ -151,8 +158,8 @@ export default function ProfileStudioPage() {
 
       showToast("Alterações salvas com sucesso!");
       setProfile((prev) => prev ? { ...prev, displayName, handle, bio, avatarUrl, theme, isPublished } : null);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao salvar perfil");
+    } catch (err) {
+      setErrorMessage((err instanceof Error && err.message) || "Erro ao salvar perfil");
     } finally {
       setSaving(false);
     }
@@ -234,8 +241,8 @@ export default function ProfileStudioPage() {
       setNewBlockDescription("");
       setNewBlockImageUrl("");
       showToast("Bloco adicionado!");
-    } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao criar bloco");
+    } catch (err) {
+      setErrorMessage((err instanceof Error && err.message) || "Erro ao criar bloco");
     } finally {
       setAddingBlock(false);
     }
@@ -280,8 +287,8 @@ export default function ProfileStudioPage() {
       );
       setEditingBlock(null);
       showToast("Bloco atualizado!");
-    } catch (err: any) {
-      setErrorMessage(err.message || "Erro ao atualizar bloco");
+    } catch (err) {
+      setErrorMessage((err instanceof Error && err.message) || "Erro ao atualizar bloco");
     } finally {
       setSavingBlock(false);
     }

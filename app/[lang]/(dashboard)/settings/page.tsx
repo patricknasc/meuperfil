@@ -239,6 +239,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-6 pt-4 border-t border-border flex gap-3">
+          {/* API route that starts the OAuth redirect: needs a full page navigation, not <Link>. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/instagram/connect"
             className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-accent text-white hover:bg-accent-hover"

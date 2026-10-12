@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -55,24 +55,25 @@ export default function CampaignDetailPage() {
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCampaign = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/automations`);
-      const data = await res.json();
-      if (!data.success) return;
-
-      const found = (data.data as CampaignDetail[]).find((item) => item.id === campaignId) ?? null;
-      setCampaign(found);
-    } catch (err) {
-      console.error("Failed to fetch campaign detail:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [campaignId]);
-
   useEffect(() => {
-    void fetchCampaign();
-  }, [fetchCampaign]);
+    let cancelled = false;
+
+    fetch(`/api/automations`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.success) return;
+        const found = (data.data as CampaignDetail[]).find((item) => item.id === campaignId) ?? null;
+        setCampaign(found);
+      })
+      .catch((err) => console.error("Failed to fetch campaign detail:", err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignId]);
 
   const overview = useMemo(() => {
     if (!campaign) return null;

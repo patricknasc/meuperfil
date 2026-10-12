@@ -54,10 +54,10 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Content-Type não suportado" },
       { status: 400 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error uploading avatar:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Erro ao processar avatar" },
+      { success: false, error: (error instanceof Error && error.message) || "Erro ao processar avatar" },
       { status: 500 }
     );
   }
