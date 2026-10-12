@@ -1,10 +1,47 @@
-# CampaignCue
+# MeuPerfil
 
 Open-source Instagram comment-to-DM campaign OS for businesses, creators, and agencies.
 
-CampaignCue turns comments like `LINK`, `PRICE`, or `GUIDE` into Meta-compliant private replies. The core engine is MIT licensed and self-hostable. The hosted SaaS layer is being built for agencies that want campaign templates, analytics, client reports, and managed reliability.
+MeuPerfil turns comments like `LINK`, `PRICE`, or `GUIDE` into Meta-compliant private replies. The core engine is MIT licensed and self-hostable. The hosted SaaS layer is being built for agencies that want campaign templates, analytics, client reports, and managed reliability.
 
-[Templates](app/templates) | [Roadmap](ROADMAP.md) | [Deployment](DEPLOYMENT.md) | [Referral plan](docs/referral-program.md) | [Production readiness](docs/production-readiness.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Open-core model](docs/open-core.md)
+[Templates](app/templates) | [Roadmap](ROADMAP.md) | [Pitch](docs/pitch.md) | [Product strategy](docs/product-strategy.md) | [Campaign verticals](docs/campaign-os-verticals.md) | [Deployment](DEPLOYMENT.md) | [Referral plan](docs/referral-program.md) | [Production readiness](docs/production-readiness.md) | [Contributing](CONTRIBUTING.md) | [Security](SECURITY.md) | [Open-core model](docs/open-core.md)
+
+## Pitch
+
+### MeuPerfil is a content-to-conversion platform
+
+We help creators, brands, and businesses turn attention into measurable action.
+
+Instead of managing isolated tools for social posting, DM automation, and bio links, MeuPerfil connects the whole journey:
+
+Content -> Engagement -> CTA -> Conversation -> Lead -> Conversion
+
+We are not a generic social media manager, and we are not trying to be a direct clone of mature tools like Buffer or Manychat.
+
+Our focus is to help every post become a campaign:
+
+- publish content
+- capture engagement
+- trigger automated conversations
+- send tracked links
+- collect leads
+- measure conversion and ROI
+
+### Positioning
+
+MeuPerfil = campaign OS for content-driven growth.
+
+The product should be sold as:
+
+- Content-to-Conversion Platform
+- Campaign OS
+- Turn every post into a campaign
+
+### The core promise
+
+Transform followers into clients automatically.
+
+---
 
 ## Why This Exists
 
@@ -13,12 +50,12 @@ Instagram comment-to-DM is one of the clearest social-commerce loops:
 ```text
 Customer comments "LINK" on a post or reel
 Meta sends a webhook
-CampaignCue matches the keyword
+MeuPerfil matches the keyword
 The worker sends a private reply using the comment ID
 The business gets a warm conversation
 ```
 
-Most tools in this market are broad chatbot platforms. CampaignCue is intentionally narrower: a focused campaign operating system for Instagram comment-triggered DMs.
+Most tools in this market are broad chatbot platforms. MeuPerfil is intentionally narrower: a focused campaign operating system for Instagram comment-triggered DMs.
 
 ## Current Product
 
@@ -54,7 +91,7 @@ Then open:
 http://localhost:3000
 ```
 
-Screenshots and GIFs are planned in issue [#17](https://github.com/im-anishraj/instagram-comment-to-dm/issues/17). Good launch assets to add:
+Screenshots and GIFs are planned in issue [#17](https://github.com/patricknasc/meuperfil/issues/17). Good launch assets to add:
 
 - Landing page hero screenshot.
 - Dashboard overview screenshot.
@@ -92,8 +129,8 @@ The core remains public so builders can self-host, audit, fork, and contribute.
 ### Install
 
 ```bash
-git clone https://github.com/im-anishraj/instagram-comment-to-dm.git
-cd instagram-comment-to-dm
+git clone https://github.com/patricknasc/meuperfil.git
+cd meuperfil
 npm install
 ```
 
@@ -155,14 +192,14 @@ For production deployment, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 The public launch roadmap is tracked in GitHub issues:
 
-- [#7 Production readiness](https://github.com/im-anishraj/instagram-comment-to-dm/issues/7) - done
-- [#8 Campaign OS repositioning](https://github.com/im-anishraj/instagram-comment-to-dm/issues/8) - done
-- [#9 Public campaign templates](https://github.com/im-anishraj/instagram-comment-to-dm/issues/9) - done
-- [#10 Tracked links and analytics](https://github.com/im-anishraj/instagram-comment-to-dm/issues/10) - done
-- [#11 Shareable client reports](https://github.com/im-anishraj/instagram-comment-to-dm/issues/11) - done
-- [#12 Agency multi-account support](https://github.com/im-anishraj/instagram-comment-to-dm/issues/12) - done
-- [#13 Founding agency offer and referrals](https://github.com/im-anishraj/instagram-comment-to-dm/issues/13) - done
-- [#14 SEO landing pages](https://github.com/im-anishraj/instagram-comment-to-dm/issues/14) - done
+- [#7 Production readiness](https://github.com/patricknasc/meuperfil/issues/7) - done
+- [#8 Campaign OS repositioning](https://github.com/patricknasc/meuperfil/issues/8) - done
+- [#9 Public campaign templates](https://github.com/patricknasc/meuperfil/issues/9) - done
+- [#10 Tracked links and analytics](https://github.com/patricknasc/meuperfil/issues/10) - done
+- [#11 Shareable client reports](https://github.com/patricknasc/meuperfil/issues/11) - done
+- [#12 Agency multi-account support](https://github.com/patricknasc/meuperfil/issues/12) - done
+- [#13 Founding agency offer and referrals](https://github.com/patricknasc/meuperfil/issues/13) - done
+- [#14 SEO landing pages](https://github.com/patricknasc/meuperfil/issues/14) - done
 
 See [ROADMAP.md](ROADMAP.md) for the grouped plan.
 
@@ -170,9 +207,9 @@ See [ROADMAP.md](ROADMAP.md) for the grouped plan.
 
 Want to help? Start with the public issue list:
 
-- [Good first issues](https://github.com/im-anishraj/instagram-comment-to-dm/issues?q=is%3Aissue+is%3Aopen+label%3Atype%3Agood-first-issue)
-- [Documentation issues](https://github.com/im-anishraj/instagram-comment-to-dm/issues?q=is%3Aissue+is%3Aopen+label%3Atype%3Adocs)
-- [Template issues](https://github.com/im-anishraj/instagram-comment-to-dm/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%3Atemplates)
+- [Good first issues](https://github.com/patricknasc/meuperfil/issues?q=is%3Aissue+is%3Aopen+label%3Atype%3Agood-first-issue)
+- [Documentation issues](https://github.com/patricknasc/meuperfil/issues?q=is%3Aissue+is%3Aopen+label%3Atype%3Adocs)
+- [Template issues](https://github.com/patricknasc/meuperfil/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%3Atemplates)
 
 If you build a campaign template that works for your niche, open an issue or pull request.
 
