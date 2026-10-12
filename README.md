@@ -116,7 +116,7 @@ The core remains public so builders can self-host, audit, fork, and contribute.
 
 ## Rodar localmente (atalho)
 
-Com Node 20+ e Docker Desktop instalados:
+Com Node 24 e Docker Desktop instalados:
 
 ```bash
 ./iniciar-local.sh          # Docker, .env, dependências, migrations, app e worker
@@ -130,7 +130,7 @@ Ambientes DS/HM/PD: [docs/environments.md](docs/environments.md).
 
 ### Requirements
 
-- Node.js 20+
+- Node.js 24
 - PostgreSQL
 - Redis
 - Meta Developer App

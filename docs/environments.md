@@ -18,7 +18,7 @@ Cada ambiente tem sua branch: `main` = PD, `develop` = HM, demais branches = DS 
 
 ## DS: rodar localmente
 
-Pré-requisitos: Node 20+, Docker Desktop.
+Pré-requisitos: Node 24 (ver `.nvmrc`), Docker Desktop.
 
 Atalho: `./iniciar-local.sh` faz todos os passos abaixo (e `./iniciar-local.sh parar` desliga o Docker). Manualmente:
 
