@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -31,10 +32,18 @@ export default async function LoginPage({
 
   async function sendMagicLink(formData: FormData) {
     "use server";
-    await signIn("resend", {
+    // redirect: false sends the email without following Auth.js' redirect to
+    // /api/auth/verify-request, which the client router cannot render; we go
+    // straight to the localized "check your email" state instead.
+    const resultUrl = await signIn("resend", {
       email: String(formData.get("email") ?? ""),
       redirectTo: callbackUrl,
+      redirect: false,
     });
+    if (new URL(resultUrl, "http://localhost").searchParams.has("error")) {
+      redirect(resultUrl);
+    }
+    redirect(`/${locale}/login?checkEmail=1`);
   }
 
   return (
