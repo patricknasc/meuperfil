@@ -1,5 +1,8 @@
 "use client";
 
+import { useParams } from "next/navigation";
+import { workspaceTranslator, workspaceDateLocale } from "@/lib/i18n/workspace";
+
 import { useEffect, useState } from "react";
 import type { AccountOption } from "@/components/account-select";
 
@@ -54,6 +57,9 @@ interface WorkspaceMembersData {
 }
 
 export default function SettingsPage() {
+  const { lang } = useParams<{ lang: string }>();
+  const t = workspaceTranslator(lang);
+  const dateLocale = workspaceDateLocale(lang);
   const [data, setData] = useState<SettingsData | null>(null);
   const [membersData, setMembersData] = useState<WorkspaceMembersData | null>(
     null
@@ -83,7 +89,7 @@ export default function SettingsPage() {
   }
 
   async function disconnectInstagram(instagramAccountId: string) {
-    if (!confirm("Disconnect Instagram? Campaigns for this account will stop sending DMs.")) {
+    if (!confirm(t("Disconnect Instagram? Campaigns for this account will stop sending DMs."))) {
       return;
     }
 
@@ -110,7 +116,7 @@ export default function SettingsPage() {
       setMembersData(payload.data);
       setInviteEmail("");
     } else {
-      setMemberError(payload.error ?? "Could not invite member");
+      setMemberError(payload.error ?? t("Could not invite member"));
     }
     setBusy(null);
   }
@@ -168,14 +174,14 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <section className="glass rounded-2xl p-6">
-        <h2 className="text-base font-semibold mb-6">Instagram Connection</h2>
+        <h2 className="text-base font-semibold mb-6">{t("Instagram Connection")}</h2>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-border">
             <div>
-              <p className="text-sm font-medium text-foreground">Status</p>
+              <p className="text-sm font-medium text-foreground">{t("Status")}</p>
               <p className="text-xs text-muted mt-0.5">
-                Comment webhooks and private replies depend on this connection.
+                {t("Comment webhooks and private replies depend on this connection.")}
               </p>
             </div>
             <span
@@ -185,26 +191,26 @@ export default function SettingsPage() {
                   : "bg-warning/10 text-warning"
               }`}
             >
-              {accounts.length > 0 ? "Connected" : "Not connected"}
+              {accounts.length > 0 ? t("Connected") : t("Not connected")}
             </span>
           </div>
 
           <div className="flex items-center justify-between py-3 border-b border-border">
             <div>
-              <p className="text-sm font-medium text-foreground">Accounts</p>
+              <p className="text-sm font-medium text-foreground">{t("Accounts")}</p>
               <p className="text-xs text-muted mt-0.5">
-                {accounts.length} / {accountLimit} connected Instagram profiles
+                {accounts.length} / {accountLimit} {t("connected Instagram profiles")}
               </p>
             </div>
             <span className="text-sm text-muted">
-              {accounts.length > 0 ? `${accounts.length} connected` : "None"}
+              {accounts.length > 0 ? `${accounts.length} ${t("connected")}` : t("None")}
             </span>
           </div>
 
           <div className="space-y-3 py-3">
             {accounts.length === 0 && (
               <p className="text-sm text-muted">
-                Connect an Instagram professional account to launch campaigns.
+                {t("Connect an Instagram professional account to launch campaigns.")}
               </p>
             )}
             {accounts.map((account) => (
@@ -217,11 +223,11 @@ export default function SettingsPage() {
                     @{account.username}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    Token expires{" "}
+                    {t("Token expires")}{" "}
                     {account.tokenExpiresAt
-                      ? new Date(account.tokenExpiresAt).toLocaleDateString()
-                      : "not available"}{" "}
-                    · {account.webhookSubscribed ? "Webhook ready" : "Webhook pending"}
+                      ? new Date(account.tokenExpiresAt).toLocaleDateString(dateLocale)
+                      : t("not available")}{" "}
+                    · {account.webhookSubscribed ? t("Webhook ready") : t("Webhook pending")}
                   </p>
                 </div>
                 <button
@@ -230,8 +236,8 @@ export default function SettingsPage() {
                   className="inline-flex items-center justify-center rounded-xl border border-error/20 px-4 py-2 text-sm font-medium text-error transition-all hover:border-error/40 hover:bg-error/10 disabled:opacity-50"
                 >
                   {busy === `disconnect:${account.id}`
-                    ? "Disconnecting..."
-                    : "Disconnect"}
+                    ? t("Disconnecting...")
+                    : t("Disconnect")}
                 </button>
               </div>
             ))}
@@ -245,18 +251,18 @@ export default function SettingsPage() {
             href="/api/instagram/connect"
             className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-accent text-white hover:bg-accent-hover"
           >
-            {accounts.length > 0 ? "Connect another account" : "Connect Instagram"}
+            {accounts.length > 0 ? t("Connect another account") : t("Connect Instagram")}
           </a>
           {accountLimitReached && (
             <p className="self-center text-xs text-muted">
-              Reconnect an existing account or upgrade to Agency for up to 10.
+              {t("Reconnect an existing account or upgrade to Agency for up to 10.")}
             </p>
           )}
         </div>
       </section>
 
       <section className="glass rounded-2xl p-6">
-        <h2 className="text-base font-semibold mb-6">Team</h2>
+        <h2 className="text-base font-semibold mb-6">{t("Team")}</h2>
         <div className="space-y-3">
           {membersData?.members.map((member) => (
             <div
@@ -265,12 +271,12 @@ export default function SettingsPage() {
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">
-                  {member.user.name ?? member.user.email ?? "Unknown member"}
+                  {member.user.name ?? member.user.email ?? t("Unknown member")}
                 </p>
                 <p className="text-xs text-muted">{member.user.email}</p>
               </div>
               <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted">
-                {member.role}
+                {t(member.role === "OWNER" ? "Owner" : member.role === "ADMIN" ? "Admin" : "Member")}
               </span>
             </div>
           ))}
@@ -279,7 +285,7 @@ export default function SettingsPage() {
         {membersData?.invitations.length ? (
           <div className="mt-6 border-t border-border pt-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Pending invites
+              {t("Pending invites")}
             </p>
             <div className="space-y-3">
               {membersData.invitations.map((invitation) => (
@@ -292,7 +298,7 @@ export default function SettingsPage() {
                       {invitation.email}
                     </p>
                     <p className="truncate text-xs text-muted">
-                      {invitation.role} · {invitation.inviteUrl}
+                      {t(invitation.role === "ADMIN" ? "Admin" : "Member")} · {invitation.inviteUrl}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -303,7 +309,7 @@ export default function SettingsPage() {
                       }
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-hover hover:text-foreground"
                     >
-                      Copy
+                      {t("Copy")}
                     </button>
                     <button
                       type="button"
@@ -311,7 +317,7 @@ export default function SettingsPage() {
                       disabled={busy === `invite:${invitation.id}`}
                       className="rounded-lg border border-error/20 px-3 py-1.5 text-xs font-medium text-error transition-colors hover:bg-error/10 disabled:opacity-50"
                     >
-                      Revoke
+                      {t("Revoke")}
                     </button>
                   </div>
                 </div>
@@ -322,8 +328,7 @@ export default function SettingsPage() {
 
         {canManageMembers && memberLimitReached && (
           <p className="mt-6 border-t border-border pt-4 text-sm text-muted">
-            This plan allows {memberLimit} workspace member
-            {memberLimit === 1 ? "" : "s"}. Upgrade to Agency to invite a team.
+            {lang === "en" ? `This plan allows ${memberLimit} workspace members. Upgrade to Agency to invite a team.` : lang === "es" ? `Este plan permite ${memberLimit} miembros. Cambia a Agency para invitar a un equipo.` : `Este plano permite ${memberLimit} membros. Mude para Agency para convidar uma equipe.`}
           </p>
         )}
 
@@ -347,15 +352,15 @@ export default function SettingsPage() {
               }
               className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent/40"
             >
-              <option value="MEMBER">Member</option>
-              <option value="ADMIN">Admin</option>
+              <option value="MEMBER">{t("Member")}</option>
+              <option value="ADMIN">{t("Admin")}</option>
             </select>
             <button
               type="submit"
               disabled={busy === "invite"}
               className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
             >
-              {busy === "invite" ? "Inviting..." : "Invite"}
+              {busy === "invite" ? t("Inviting...") : t("Invite")}
             </button>
             {memberError && (
               <p className="sm:col-span-3 text-sm text-error">{memberError}</p>
@@ -365,16 +370,16 @@ export default function SettingsPage() {
       </section>
 
       <section className="glass rounded-2xl p-6">
-        <h2 className="text-base font-semibold mb-6">Billing</h2>
+        <h2 className="text-base font-semibold mb-6">{t("Billing")}</h2>
 
         <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-accent/15">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {data?.plan ?? "FREE"} Plan
+                {data?.plan ?? "FREE"} {t("Plan")}
               </p>
               <p className="text-xs text-muted mt-0.5">
-                {usage} DMs used this month
+                {usage} {t("DMs used this month")}
               </p>
             </div>
             <button
@@ -382,15 +387,15 @@ export default function SettingsPage() {
               disabled={busy === "portal"}
               className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-foreground hover:border-border-hover transition-colors disabled:opacity-50"
             >
-              Billing Portal
+              {t("Billing Portal")}
             </button>
           </div>
         </div>
 
         <div className="mt-4 space-y-3">
           {[
-            { plan: "PRO" as const, price: "$19/mo", features: "10 campaigns · 2,000 DMs/month" },
-            { plan: "AGENCY" as const, price: "$49/mo", features: "Unlimited campaigns · 10 accounts · 10,000 DMs/month" },
+            { plan: "PRO" as const, price: t("$19/mo"), features: t("10 campaigns · 2,000 DMs/month") },
+            { plan: "AGENCY" as const, price: t("$49/mo"), features: t("Unlimited campaigns · 10 accounts · 10,000 DMs/month") },
           ].map((tier) => (
             <div
               key={tier.plan}
@@ -405,7 +410,7 @@ export default function SettingsPage() {
                 disabled={busy === tier.plan}
                 className="px-4 py-2 rounded-xl text-xs font-semibold bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
               >
-                {busy === tier.plan ? "Opening..." : tier.price}
+                {busy === tier.plan ? t("Opening...") : tier.price}
               </button>
             </div>
           ))}

@@ -1,5 +1,5 @@
 import { createDMWorker } from "@/lib/queue/dm-worker";
-import { createPostPublisherWorker } from "@/lib/queue/post-worker";
+import { createPostPublisherWorker, reconcileScheduledPosts } from "@/lib/queue/post-worker";
 import { recordWorkerHeartbeat } from "@/lib/ops/worker-health";
 import os from "node:os";
 
@@ -23,12 +23,24 @@ async function heartbeat() {
   }
 }
 
+let reconciliationRunning = false;
+async function reconcile() {
+  if (reconciliationRunning) return;
+  reconciliationRunning = true;
+  try { await reconcileScheduledPosts(); }
+  catch (error) { console.error("[Worker] Schedule reconciliation failed", error); }
+  finally { reconciliationRunning = false; }
+}
+void reconcile();
+const reconciliationTimer = setInterval(() => void reconcile(), HEARTBEAT_INTERVAL_MS);
+
 void heartbeat();
 const heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_INTERVAL_MS);
 
 async function shutdown(signal: string) {
   console.log(`[Worker] ${signal} received, closing workers`);
   clearInterval(heartbeatTimer);
+  clearInterval(reconciliationTimer);
   await Promise.allSettled([
     dmWorker.close(),
     postWorker.close(),

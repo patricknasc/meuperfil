@@ -24,6 +24,7 @@ export default function LanguageSwitcher({
   currentLocale,
   variant = "header",
 }: LanguageSwitcherProps) {
+  const selectLanguage = currentLocale === "en" ? "Select language" : currentLocale === "es" ? "Seleccionar idioma" : "Selecionar idioma";
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -73,6 +74,7 @@ export default function LanguageSwitcher({
         {languages.map((lang, idx) => (
           <span key={lang.code} className="flex items-center gap-1">
             <button
+              aria-label={`${selectLanguage}: ${lang.name}`}
               onClick={() => handleLanguageChange(lang.code)}
               className={`font-semibold transition ${
                 currentLocale === lang.code
@@ -97,6 +99,7 @@ export default function LanguageSwitcher({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+        aria-label={`${selectLanguage}: ${currentLang.name}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -124,6 +127,7 @@ export default function LanguageSwitcher({
           {languages.map((lang) => (
             <button
               key={lang.code}
+              aria-label={`${selectLanguage}: ${lang.name}`}
               onClick={() => handleLanguageChange(lang.code)}
               className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium transition ${
                 currentLocale === lang.code

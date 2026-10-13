@@ -396,12 +396,13 @@ export async function recordBlockClick(
         select: {
           id: true,
           workspaceId: true,
+          isPublished: true,
         },
       },
     },
   });
 
-  if (!block || !block.url) {
+  if (!block || !block.url || !block.isActive || !block.profile.isPublished) {
     return null;
   }
 

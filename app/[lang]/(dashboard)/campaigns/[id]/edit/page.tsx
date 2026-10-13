@@ -1,4 +1,5 @@
 "use client";
+import { campaignTranslator } from "@/lib/i18n/campaigns";
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -23,6 +24,7 @@ export default function CampaignEditPage() {
   const segments = pathname.split("/").filter(Boolean);
   const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
   const prefix = `/${currentLocale}`;
+  const t = campaignTranslator(currentLocale);
   const campaignId = segments[segments.length - 2];
 
   const [loading, setLoading] = useState(true);
@@ -42,13 +44,13 @@ export default function CampaignEditPage() {
         const res = await fetch("/api/automations");
         const data = await res.json();
         if (!data.success) {
-          setError(data.error ?? "Failed to load campaign");
+          setError(data.error ?? t("Failed to load campaign"));
           return;
         }
 
         const item = (data.data as CampaignEditPayload[]).find((entry) => entry.id === campaignId) ?? null;
         if (!item) {
-          setError("Campaign not found");
+          setError(t("Campaign not found"));
           return;
         }
 
@@ -60,25 +62,25 @@ export default function CampaignEditPage() {
         setWholeWordMatch(item.wholeWordMatch);
         setIsActive(item.isActive);
       } catch {
-        setError("Failed to load campaign");
+        setError(t("Failed to load campaign"));
       } finally {
         setLoading(false);
       }
     }
 
     void loadCampaign();
-  }, [campaignId]);
+  }, [campaignId, t]);
 
   const title = useMemo(() => {
     if (campaign) return `Edit ${campaign.name}`;
-    return "Edit campaign";
-  }, [campaign]);
+    return t("Edit campaign");
+  }, [campaign, t]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
     if (!name.trim() || !dmMessage.trim() || keywords.length === 0) {
-      setError("Name, message, and at least one keyword are required.");
+      setError(t("Name, message, and at least one keyword are required."));
       return;
     }
 
@@ -101,13 +103,13 @@ export default function CampaignEditPage() {
 
       const data = await res.json();
       if (!data.success) {
-        setError(data.error ?? "Failed to save campaign");
+        setError(data.error ?? t("Failed to save campaign"));
         return;
       }
 
       router.push(`${prefix}/campaigns/${campaignId}`);
     } catch {
-      setError("Failed to save campaign");
+      setError(t("Failed to save campaign"));
     } finally {
       setSaving(false);
     }
@@ -125,11 +127,9 @@ export default function CampaignEditPage() {
   if (!campaign) {
     return (
       <div className="glass rounded-2xl p-10 text-center">
-        <h2 className="text-lg font-semibold">Campaign not found</h2>
-        <p className="mt-2 text-sm text-muted">Try going back to the campaign list.</p>
-        <button onClick={() => router.push(`${prefix}/campaigns`)} className="mt-6 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white">
-          Back to campaigns
-        </button>
+        <h2 className="text-lg font-semibold">{t("Campaign not found")}</h2>
+        <p className="mt-2 text-sm text-muted">{t("Try going back to the campaign list.")}</p>
+        <button onClick={() => router.push(`${prefix}/campaigns`)} className="mt-6 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white">{t("Back to campaigns")}</button>
       </div>
     );
   }
@@ -138,16 +138,14 @@ export default function CampaignEditPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-muted">Campaign settings</p>
+          <p className="text-sm text-muted">{t("Campaign settings")}</p>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
         </div>
         <button
           type="button"
           onClick={() => router.push(`${prefix}/campaigns/${campaignId}`)}
           className="rounded-xl border border-border px-3 py-2 text-sm text-muted hover:text-foreground"
-        >
-          Cancel
-        </button>
+        >{t("Cancel")}</button>
       </div>
 
       <form onSubmit={handleSubmit} className="glass rounded-2xl p-6 space-y-6">
@@ -158,44 +156,44 @@ export default function CampaignEditPage() {
         )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Campaign Name</label>
+          <label className="block text-sm font-medium text-foreground">{t("Campaign Name")}</label>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none focus:border-accent/40"
-            placeholder="Campaign name"
+            placeholder={t("Campaign name")}
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Campaign Goal</label>
+          <label className="block text-sm font-medium text-foreground">{t("Campaign Goal")}</label>
           <select
             value={goal}
             onChange={(event) => setGoal(event.target.value)}
             className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none focus:border-accent/40"
           >
-            <option value="">Select a goal</option>
-            <option value="Lead magnet delivery">Lead magnet delivery</option>
-            <option value="Product link request">Product link request</option>
-            <option value="Price or availability reply">Price or availability reply</option>
-            <option value="Launch waitlist">Launch waitlist</option>
-            <option value="Agency client campaign">Agency client campaign</option>
+            <option value="">{t("Select a goal")}</option>
+            <option value="Lead magnet delivery">{t("Lead magnet delivery")}</option>
+            <option value="Product link request">{t("Product link request")}</option>
+            <option value="Price or availability reply">{t("Price or availability reply")}</option>
+            <option value="Launch waitlist">{t("Launch waitlist")}</option>
+            <option value="Agency client campaign">{t("Agency client campaign")}</option>
           </select>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Keywords</label>
+          <label className="block text-sm font-medium text-foreground">{t("Keywords")}</label>
           <KeywordInput keywords={keywords} onChange={setKeywords} />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-foreground">Private Reply Message</label>
+          <label className="block text-sm font-medium text-foreground">{t("Private Reply Message")}</label>
           <textarea
             value={dmMessage}
             onChange={(event) => setDmMessage(event.target.value)}
             rows={4}
             className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none focus:border-accent/40"
-            placeholder="Hey {username}! Here is your link..."
+            placeholder={t("Hey {username}! Here is your link...")}
           />
         </div>
 
@@ -209,7 +207,7 @@ export default function CampaignEditPage() {
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${wholeWordMatch ? "left-6" : "left-1"}`} />
             </button>
             <div>
-              <span className="text-sm font-medium text-foreground">Whole word match</span>
+              <span className="text-sm font-medium text-foreground">{t("Whole word match")}</span>
             </div>
           </label>
 
@@ -222,7 +220,7 @@ export default function CampaignEditPage() {
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${isActive ? "left-6" : "left-1"}`} />
             </button>
             <div>
-              <span className="text-sm font-medium text-foreground">Campaign active</span>
+              <span className="text-sm font-medium text-foreground">{t("Campaign active")}</span>
             </div>
           </label>
         </div>
@@ -232,15 +230,13 @@ export default function CampaignEditPage() {
             type="button"
             onClick={() => router.push(`${prefix}/campaigns/${campaignId}`)}
             className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted hover:text-foreground"
-          >
-            Back
-          </button>
+          >{t("Back")}</button>
           <button
             type="submit"
             disabled={saving}
             className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 disabled:opacity-60"
           >
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? t("Saving...") : t("Save changes")}
           </button>
         </div>
       </form>

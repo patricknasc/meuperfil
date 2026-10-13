@@ -1,3 +1,7 @@
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
+}
+
 export async function sendBetaWelcomeEmail(input: {
   name: string;
   email: string;
@@ -22,10 +26,10 @@ export async function sendBetaWelcomeEmail(input: {
       to: [input.email],
       subject: "Welcome to the MeuPerfil beta",
       html: `
-        <h2>Welcome, ${input.name}!</h2>
+        <h2>Welcome, ${escapeHtml(input.name)}!</h2>
         <p>Thanks for joining the MeuPerfil beta.</p>
-        <p><strong>Company:</strong> ${input.company || "—"}</p>
-        <p><strong>Goal:</strong> ${input.goal || "—"}</p>
+        <p><strong>Company:</strong> ${escapeHtml(input.company || "—")}</p>
+        <p><strong>Goal:</strong> ${escapeHtml(input.goal || "—")}</p>
         <p>We will contact you with the next onboarding steps.</p>
       `,
     }),

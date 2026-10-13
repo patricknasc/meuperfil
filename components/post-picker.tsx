@@ -1,4 +1,5 @@
 "use client";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -32,6 +33,7 @@ export default function PostPicker({
   instagramAccountId,
   onSelect,
 }: PostPickerProps) {
+  const t = useFlowTranslation();
   const [posts, setPosts] = useState<InstagramPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +57,11 @@ export default function PostPicker({
           if (data.success) {
             setPosts(data.data);
           } else {
-            setError(data.error ?? "Failed to load posts");
+            setError(data.error ?? t("Failed to load posts"));
           }
         })
         .catch(() => {
-          if (!cancelled) setError("Failed to load posts");
+          if (!cancelled) setError(t("Failed to load posts"));
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -70,7 +72,7 @@ export default function PostPicker({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [instagramAccountId]);
+  }, [instagramAccountId, t]);
 
   if (loading) {
     return (
@@ -86,7 +88,7 @@ export default function PostPicker({
     return (
       <div className="text-center py-8">
         <p className="text-sm text-muted">{error}</p>
-        <p className="text-xs text-zinc-500 mt-1">Connect your Instagram account first</p>
+        <p className="text-xs text-zinc-500 mt-1">{t("Connect your Instagram account first")}</p>
       </div>
     );
   }
@@ -94,7 +96,7 @@ export default function PostPicker({
   if (posts.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-muted">No posts found</p>
+        <p className="text-sm text-muted">{t("No posts found")}</p>
       </div>
     );
   }
@@ -117,7 +119,7 @@ export default function PostPicker({
             {thumb ? (
               <img
                 src={thumb}
-                alt={post.caption?.slice(0, 50) ?? "Instagram post"}
+                alt={post.caption?.slice(0, 50) ?? t("Instagram post")}
                 className="w-full h-full object-cover"
               />
             ) : (

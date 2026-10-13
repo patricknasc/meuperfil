@@ -1,3 +1,4 @@
+import { publicTranslator } from "@/lib/i18n/public";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/language-switcher";
 import type { Locale } from "@/app/[lang]/dictionaries";
@@ -17,6 +18,7 @@ export default function LegalShell({
   locale = "pt",
   children,
 }: LegalShellProps) {
+  const t = publicTranslator(locale);
   const prefix = `/${locale}`;
 
   return (
@@ -34,16 +36,13 @@ export default function LegalShell({
             <Link
               href={`${prefix}/login`}
               className="text-sm font-semibold text-zinc-300 transition hover:text-white"
-            >
-              Sign in
-            </Link>
+            >{t("Sign in")}</Link>
           </div>
         </div>
       </header>
 
       <article className="mx-auto max-w-3xl px-5 py-14">
-        <p className="text-sm font-semibold uppercase text-cyan-200">
-          Last updated {updatedAt}
+        <p className="text-sm font-semibold uppercase text-cyan-200">{t("Last updated")} {new Date(updatedAt).toLocaleDateString(locale === "pt" ? "pt-BR" : locale, { timeZone: "UTC", year: "numeric", month: "long", day: "numeric" })}
         </p>
         <h1 className="mt-4 text-4xl font-black text-white sm:text-5xl">
           {title}

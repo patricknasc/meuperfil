@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import SeoPageShell from "@/components/seo-page-shell";
-import { manychatAlternativePage } from "@/lib/seo-pages";
+import { manychatAlternativePage, localizeSeoPage } from "@/lib/seo-pages";
 import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
 
-export const metadata: Metadata = {
-  title: "Manychat Alternative for Instagram Comment-to-DM Campaigns",
-  description:
-    "A focused Manychat alternative for Instagram keyword comments, private replies, tracked links, analytics, and agency client reports.",
-  alternates: { canonical: "/manychat-alternative" },
-  openGraph: {
-    title: "Manychat Alternative for Instagram Comment-to-DM Campaigns",
-    description:
-      "Use MeuPerfil for focused Instagram comment-to-DM campaigns without a broad chatbot flow builder.",
-    url: "/manychat-alternative",
-  },
-};
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const config = localizeSeoPage(manychatAlternativePage, locale);
+  const canonical = `/${locale}/manychat-alternative`;
+  return {
+    title: config.title,
+    description: config.description,
+    alternates: {
+      canonical,
+      languages: { pt: "/pt/manychat-alternative", en: "/en/manychat-alternative", es: "/es/manychat-alternative" },
+    },
+    openGraph: { title: config.title, description: config.description, url: canonical },
+  };
+}
 
 export default async function ManychatAlternativePage({
   params,
@@ -23,5 +28,5 @@ export default async function ManychatAlternativePage({
 }) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
-  return <SeoPageShell config={manychatAlternativePage} locale={locale} />;
+  return <SeoPageShell config={localizeSeoPage(manychatAlternativePage, locale)} locale={locale} />;
 }

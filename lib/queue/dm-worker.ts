@@ -1,4 +1,6 @@
 import { Worker, type Job } from "bullmq";
+import { captureLeadFromInteraction } from "@/lib/crm";
+import { commentJobId } from "./job-ids";
 import { getDMQueue, getRedisConnection, type ProcessCommentJob } from "./client";
 import { prisma } from "@/lib/db/client";
 import { MetaApiError, sendPrivateReply, sendDirectMessage } from "@/lib/meta/client";
@@ -71,6 +73,15 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
     if (!matchResult.matched) {
       continue;
     }
+
+    // Persist the identified person and campaign interaction before any DM side effect.
+    // Repeated webhooks reuse the contact and interaction instead of fabricating leads.
+    await captureLeadFromInteraction({
+      workspaceId: automation.workspaceId,
+      source: mediaId === "direct_message" ? "INSTAGRAM_DM" : "CAMPAIGN",
+      sourceId: automation.id, interactionKey: commentId,
+      instagramId: commenterId, instagramUsername: commenterName,
+    });
 
     const existingLog = await prisma.dmLog.findUnique({
       where: {
@@ -264,7 +275,7 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
           },
           {
             delay: rateLimit.requeueDelayMs,
-            jobId: `comment:${instagramAccountId}:${commentId}:retry:${requeueAttempt + 1}`,
+            jobId: commentJobId(instagramAccountId, commentId, requeueAttempt + 1),
           }
         );
         continue;

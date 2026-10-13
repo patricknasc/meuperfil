@@ -25,7 +25,7 @@ function getDayWindow(daysAgo: number) {
   return { start, end };
 }
 
-export async function getCampaignReportBySlug(shareSlug: string) {
+export async function getCampaignReportBySlug(shareSlug: string, locale = "en") {
   const automation = await prisma.automation.findFirst({
     where: {
       reportShareSlug: shareSlug,
@@ -141,7 +141,7 @@ export async function getCampaignReportBySlug(shareSlug: string) {
       ]);
 
       return {
-        date: start.toLocaleDateString("en-US", {
+        date: start.toLocaleDateString(locale === "pt" ? "pt-BR" : locale, {
           month: "short",
           day: "numeric",
         }),

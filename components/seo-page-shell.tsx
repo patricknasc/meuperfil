@@ -1,3 +1,4 @@
+import { seoTranslator } from "@/lib/i18n/seo";
 import Link from "next/link";
 import PublicSiteHeader from "@/components/public-site-header";
 import type { Locale } from "@/app/[lang]/dictionaries";
@@ -47,6 +48,7 @@ export default function SeoPageShell({
   config: SeoPageConfig;
   locale?: Locale;
 }) {
+  const t = seoTranslator(locale);
   const prefix = `/${locale}`;
 
   return (
@@ -76,14 +78,14 @@ export default function SeoPageShell({
                 href={`${prefix}/templates`}
                 className="inline-flex items-center justify-center border border-white/10 bg-white/[0.04] px-6 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
               >
-                {config.secondaryCta ?? "Browse templates"}
+                {config.secondaryCta ?? t("Browse templates")}
               </Link>
             </div>
           </div>
 
           <div className="border border-white/10 bg-white/[0.035] p-6">
             <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-              Campaign OS checklist
+              {t("Campaign OS checklist")}
             </p>
             <ul className="mt-5 space-y-4">
               {config.bullets.map((bullet) => (
@@ -115,9 +117,9 @@ export default function SeoPageShell({
           <h2 className="text-4xl font-black text-white">{config.comparisonTitle}</h2>
           <div className="mt-8 overflow-hidden border border-white/10">
             <div className="grid grid-cols-[0.8fr_1fr_1fr] border-b border-white/10 bg-zinc-950 text-xs font-bold uppercase tracking-wide text-zinc-500">
-              <div className="p-4">Need</div>
+              <div className="p-4">{t("Need")}</div>
               <div className="p-4 text-cyan-100">MeuPerfil</div>
-              <div className="p-4">Generic automation</div>
+              <div className="p-4">{t("Generic automation")}</div>
             </div>
             {config.comparisons.map((item) => (
               <div
@@ -142,14 +144,13 @@ export default function SeoPageShell({
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
         <div>
           <p className="text-sm font-bold uppercase text-emerald-200">
-            Start from a template
+            {t("Start from a template")}
           </p>
           <h2 className="mt-3 text-4xl font-black text-white">
-            Launch a campaign faster than building a chatbot flow
+            {t("Launch a campaign faster than building a chatbot flow")}
           </h2>
           <p className="mt-5 text-sm leading-7 text-zinc-400">
-            Use a campaign template, connect the right Instagram account, pick
-            the post, and ship a measurable comment-to-DM loop.
+            {t("Use a campaign template, connect the right Instagram account, pick the post, and ship a measurable comment-to-DM loop.")}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -170,7 +171,7 @@ export default function SeoPageShell({
           <div>
             <p className="text-sm font-bold uppercase text-cyan-200">FAQ</p>
             <h2 className="mt-3 text-4xl font-black text-white">
-              Search questions, answered clearly
+              {t("Search questions, answered clearly")}
             </h2>
           </div>
           <div className="grid gap-3">
@@ -187,17 +188,16 @@ export default function SeoPageShell({
       <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-6 lg:px-8">
         <div className="border border-cyan-200/20 bg-cyan-300/10 p-8 text-center">
           <h2 className="text-4xl font-black text-white">
-            Turn the next high-intent comment into a private reply
+            {t("Turn the next high-intent comment into a private reply")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-300">
-            MeuPerfil is built for Instagram professional accounts, official
-            Meta private replies, and campaign reporting teams can show clients.
+            {t("MeuPerfil is built for Instagram professional accounts, official Meta private replies, and campaign reporting teams can show clients.")}
           </p>
           <Link
             href={`${prefix}/login`}
             className="mt-8 inline-flex items-center justify-center bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
           >
-            Start free
+            {t("Start free")}
           </Link>
         </div>
       </section>

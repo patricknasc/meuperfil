@@ -87,7 +87,7 @@ describe("campaign summary helpers", () => {
     });
 
     expect(snapshot.totalClicks).toBe(62);
-    expect(snapshot.leadRate).toBe(25.83);
+    expect(snapshot.clickRate).toBe(25.83);
     expect(snapshot.bestLink).not.toBeNull();
     expect(snapshot.bestLink?.destinationUrl).toBe("https://example.com/offer");
     expect(snapshot.topKeyword).toBe("LINK");
@@ -260,5 +260,14 @@ describe("campaign summary helpers", () => {
     expect(insights.score).toBe("Medium");
     expect(insights.primary).toContain("test");
     expect(insights.actions[0]).toContain("LINK");
+  });
+});
+
+describe("Measured lead conversion", () => {
+  it("does not infer converted leads from repeated clicks", () => {
+    const result = getCampaignOutcomeSummary({ isActive: true, analytics: { sent: 10, clicks: 50, leads: 4, convertedLeads: 1 } });
+    expect(result.conversionRate).toBe(25);
+    const noLeads = getCampaignOutcomeSummary({ isActive: true, analytics: { sent: 10, clicks: 50 } });
+    expect(noLeads.conversionRate).toBe(0);
   });
 });

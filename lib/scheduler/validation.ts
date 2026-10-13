@@ -18,14 +18,17 @@ export const createScheduledPostSchema = z.object({
   caption: z.string().max(2200, "A legenda não pode ultrapassar 2.200 caracteres").optional().nullable(),
   mediaUrls: z.array(z.string().refine(isValidHttpUrl, "URL de mídia inválida")).min(1, "Envie pelo menos uma mídia"),
   mediaType: postMediaTypeEnum.default("IMAGE"),
-  platform: postPlatformEnum.default("INSTAGRAM"),
+  platform: z.literal("INSTAGRAM").default("INSTAGRAM"),
   scheduledFor: z.string().datetime().optional().nullable(), // ISO String
   publishNow: z.boolean().default(false),
   
   // Auto-campaign
   autoCampaignEnabled: z.boolean().default(false),
-  autoCampaignKeywords: z.array(z.string().min(1)).optional().default([]),
+  autoCampaignKeywords: z.array(z.string().trim().min(1).max(50)).max(10).optional().default([]),
   autoCampaignDmMessage: z.string().max(1000).optional().nullable(),
+}).refine((data) => data.mediaType === "CAROUSEL" || data.mediaUrls.length === 1, {
+  message: "Este formato aceita apenas uma mídia",
+  path: ["mediaUrls"],
 }).refine((data) => {
   if (data.mediaType === "CAROUSEL" && data.mediaUrls.length < 2) {
     return false;
@@ -67,11 +70,18 @@ export const updateScheduledPostSchema = z.object({
   mediaUrls: z.array(z.string().refine(isValidHttpUrl, "URL de mídia inválida")).optional(),
   mediaType: postMediaTypeEnum.optional(),
   scheduledFor: z.string().datetime().optional().nullable(),
-  status: postStatusEnum.optional(),
+  status: z.enum(["DRAFT", "SCHEDULED"]).optional(),
   autoCampaignEnabled: z.boolean().optional(),
-  autoCampaignKeywords: z.array(z.string()).optional(),
+  autoCampaignKeywords: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
   autoCampaignDmMessage: z.string().max(1000).optional().nullable(),
 });
 
 export type CreateScheduledPostInput = z.infer<typeof createScheduledPostSchema>;
 export type UpdateScheduledPostInput = z.infer<typeof updateScheduledPostSchema>;
+
+export const scheduledPostFiltersSchema = z.object({
+  status: postStatusEnum.optional(), instagramAccountId: z.string().min(1).optional(),
+  startDate: z.coerce.date().optional(), endDate: z.coerce.date().optional(),
+}).refine((data) => !data.startDate || !data.endDate || data.startDate <= data.endDate, {
+  message: "O início do intervalo deve anteceder o fim.", path: ["endDate"],
+});

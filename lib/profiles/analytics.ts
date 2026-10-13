@@ -44,30 +44,30 @@ export async function getProfileAnalytics(profileId: string, workspaceId: string
     recentClicks,
     blocksWithClicks,
   ] = await Promise.all([
-    prisma.profileVisit.count({ where: { profileId } }),
-    prisma.profileVisit.count({ where: { profileId, createdAt: { gte: todayStart } } }),
-    prisma.profileVisit.count({ where: { profileId, createdAt: { gte: weekAgo } } }),
-    prisma.profileVisit.count({ where: { profileId, createdAt: { gte: monthStart } } }),
+    prisma.profileVisit.count({ where: { profileId, workspaceId } }),
+    prisma.profileVisit.count({ where: { profileId, workspaceId, createdAt: { gte: todayStart } } }),
+    prisma.profileVisit.count({ where: { profileId, workspaceId, createdAt: { gte: weekAgo } } }),
+    prisma.profileVisit.count({ where: { profileId, workspaceId, createdAt: { gte: monthStart } } }),
 
-    prisma.profileBlockClick.count({ where: { profileId } }),
-    prisma.profileBlockClick.count({ where: { profileId, createdAt: { gte: todayStart } } }),
-    prisma.profileBlockClick.count({ where: { profileId, createdAt: { gte: weekAgo } } }),
-    prisma.profileBlockClick.count({ where: { profileId, createdAt: { gte: monthStart } } }),
+    prisma.profileBlockClick.count({ where: { profileId, workspaceId } }),
+    prisma.profileBlockClick.count({ where: { profileId, workspaceId, createdAt: { gte: todayStart } } }),
+    prisma.profileBlockClick.count({ where: { profileId, workspaceId, createdAt: { gte: weekAgo } } }),
+    prisma.profileBlockClick.count({ where: { profileId, workspaceId, createdAt: { gte: monthStart } } }),
 
     prisma.profileVisit.findMany({
-      where: { profileId, createdAt: { gte: weekAgo } },
+      where: { profileId, workspaceId, createdAt: { gte: weekAgo } },
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
 
     prisma.profileBlockClick.findMany({
-      where: { profileId, createdAt: { gte: weekAgo } },
+      where: { profileId, workspaceId, createdAt: { gte: weekAgo } },
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
 
     prisma.profileBlock.findMany({
-      where: { profileId },
+      where: { profileId, profile: { workspaceId } },
       select: {
         id: true,
         title: true,

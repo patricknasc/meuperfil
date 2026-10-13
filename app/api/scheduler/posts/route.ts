@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-access";
-import { createScheduledPostSchema } from "@/lib/scheduler/validation";
-import { listScheduledPosts, createScheduledPost } from "@/lib/scheduler/service";
-import type { PostStatus } from "@/app/generated/prisma/client";
+import { createScheduledPostSchema, scheduledPostFiltersSchema } from "@/lib/scheduler/validation";
+import { listScheduledPosts, createScheduledPost, SchedulerError } from "@/lib/scheduler/service";
+
 
 export async function GET(request: NextRequest) {
   const context = await getCurrentWorkspaceContext();
@@ -10,25 +10,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Não autorizado" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const status = (searchParams.get("status") as PostStatus) || undefined;
-  const instagramAccountId = searchParams.get("instagramAccountId") || undefined;
-  const startDateStr = searchParams.get("startDate");
-  const endDateStr = searchParams.get("endDate");
-
-  const startDate = startDateStr ? new Date(startDateStr) : undefined;
-  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+  const filters = scheduledPostFiltersSchema.safeParse(Object.fromEntries(request.nextUrl.searchParams));
+  if (!filters.success) return NextResponse.json({ success: false, error: "Filtros inválidos" }, { status: 400 });
 
   try {
-    const posts = await listScheduledPosts(context.workspaceId, {
-      status,
-      instagramAccountId,
-      startDate,
-      endDate,
-    });
+    const posts = await listScheduledPosts(context.workspaceId, filters.data);
     return NextResponse.json({ success: true, data: posts });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao buscar posts agendados";
+    const message = "Não foi possível carregar as publicações.";
     console.error("Error fetching scheduled posts:", error);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
@@ -62,7 +51,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const message = error instanceof Error ? error.message : "Erro ao criar post agendado";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    const message = error instanceof SchedulerError ? error.message : "Não foi possível salvar a publicação.";
+    return NextResponse.json({ success: false, error: message }, { status: error instanceof SchedulerError ? 400 : 500 });
   }
 }

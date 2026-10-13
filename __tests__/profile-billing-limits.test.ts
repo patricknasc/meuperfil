@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { PLAN_LIMITS, getEffectivePlan } from "@/lib/billing/plans";
 
 describe("Profile Billing Limits & Plan Capabilities", () => {
