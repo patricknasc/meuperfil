@@ -1,4 +1,4 @@
-// CampaignCue — B2B Instagram Comment → DM SaaS schema
+// MeuPerfil — B2B Instagram Comment → DM SaaS schema
 
 generator client {
   provider = "prisma-client"
@@ -91,6 +91,8 @@ model Workspace {
   webhookEvents     WebhookEvent[]
   billingEvents     BillingEvent[]
   operationalEvents OperationalEvent[]
+  profiles          Profile[]
+  scheduledPosts    ScheduledPost[]
 
   @@index([ownerId])
 }
@@ -143,10 +145,11 @@ model InstagramAccount {
   connectedAt       DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  automations Automation[]
-  dmLogs      DmLog[]
-  linkClicks  LinkClick[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  automations    Automation[]
+  dmLogs         DmLog[]
+  linkClicks     LinkClick[]
+  scheduledPosts ScheduledPost[]
 
   @@index([workspaceId])
 }
@@ -356,3 +359,169 @@ enum OperationalEventLevel {
   WARNING
   ERROR
 }
+
+enum ProfileTheme {
+  MODERN_DARK
+  NEON_CYAN
+  AURORA_PURPLE
+  MINIMAL_LIGHT
+  SUNSET_ORANGE
+  EMERALD_CLEAN
+  MIDNIGHT_VELVET
+  OCEAN_GRADIENT
+}
+
+enum ProfileBlockType {
+  LINK
+  TEXT_DIVIDER
+  SOCIAL_LINKS
+}
+
+model Profile {
+  id              String       @id @default(cuid())
+  workspaceId     String
+  handle          String       @unique
+  displayName     String
+  bio             String?
+  avatarUrl       String?
+  theme           ProfileTheme @default(MODERN_DARK)
+  isPublished     Boolean      @default(true)
+  customDomain    String?      @unique
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  blocks          ProfileBlock[]
+  visits          ProfileVisit[]
+  clicks          ProfileBlockClick[]
+
+  @@index([workspaceId])
+  @@index([handle])
+}
+
+model ProfileBlock {
+  id             String           @id @default(cuid())
+  profileId      String
+  type           ProfileBlockType @default(LINK)
+  title          String?
+  url            String?
+  description    String?
+  imageUrl       String?
+  isActive       Boolean          @default(true)
+  sortOrder      Int              @default(0)
+  config         Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  profile        Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  clicks         ProfileBlockClick[]
+
+  @@index([profileId])
+  @@index([sortOrder])
+}
+
+model ProfileVisit {
+  id          String   @id @default(cuid())
+  profileId   String
+  workspaceId String
+  ipHash      String?
+  userAgent   String?
+  referrer    String?
+  createdAt   DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([profileId, createdAt])
+}
+
+model ProfileBlockClick {
+  id             String   @id @default(cuid())
+  profileId      String
+  blockId        String
+  workspaceId    String
+  destinationUrl String
+  ipHash         String?
+  userAgent      String?
+  referrer       String?
+  createdAt      DateTime @default(now())
+
+  profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  block          ProfileBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([blockId])
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([profileId, createdAt])
+}
+
+// ─── Post Scheduler Models ──────────────────────────────────────────────────
+
+enum PostPlatform {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  TWITTER
+  LINKEDIN
+}
+
+enum PostMediaType {
+  IMAGE
+  VIDEO
+  CAROUSEL
+  REEL
+  STORY
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+model ScheduledPost {
+  id                 String          @id @default(cuid())
+  workspaceId        String
+  instagramAccountId String?
+  
+  caption            String?
+  mediaUrls          String[]        @default([])
+  mediaType          PostMediaType   @default(IMAGE)
+  platform           PostPlatform    @default(INSTAGRAM)
+  
+  scheduledFor       DateTime?
+  publishedAt        DateTime?
+  status             PostStatus      @default(DRAFT)
+  
+  // Meta container tracking
+  metaContainerId    String?
+  publishedPostId    String?
+  publishedPostUrl   String?
+  errorMessage       String?
+  
+  // Integrated auto-campaign
+  autoCampaignEnabled   Boolean      @default(false)
+  autoCampaignKeywords  String[]     @default([])
+  autoCampaignDmMessage String?
+  createdAutomationId   String?
+  
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  workspace          Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  instagramAccount   InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([instagramAccountId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([workspaceId, status])
+}
+

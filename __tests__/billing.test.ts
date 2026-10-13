@@ -31,11 +31,20 @@ describe("billing plan helpers", () => {
       maxDMsPerMonth: 100,
       maxInstagramAccounts: 1,
       maxWorkspaceMembers: 1,
+      maxProfiles: 1,
+      maxBlocksPerProfile: 5,
+      maxScheduledPostsPerMonth: 5,
     });
     expect(PLAN_LIMITS.PRO.maxAutomations).toBe(10);
     expect(PLAN_LIMITS.PRO.maxInstagramAccounts).toBe(1);
+    expect(PLAN_LIMITS.PRO.maxProfiles).toBe(3);
+    expect(PLAN_LIMITS.PRO.maxBlocksPerProfile).toBe(25);
+    expect(PLAN_LIMITS.PRO.maxScheduledPostsPerMonth).toBe(60);
     expect(PLAN_LIMITS.AGENCY.maxInstagramAccounts).toBe(10);
     expect(PLAN_LIMITS.AGENCY.maxWorkspaceMembers).toBe(10);
     expect(PLAN_LIMITS.AGENCY.maxDMsPerMonth).toBe(10000);
+    expect(PLAN_LIMITS.AGENCY.maxProfiles).toBe(20);
+    expect(PLAN_LIMITS.AGENCY.maxBlocksPerProfile).toBe(100);
+    expect(PLAN_LIMITS.AGENCY.maxScheduledPostsPerMonth).toBe(Number.POSITIVE_INFINITY);
   });
 });

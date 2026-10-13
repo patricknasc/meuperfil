@@ -6,12 +6,22 @@ import { ensureWorkspaceForUser, getPrimaryWorkspace } from "@/lib/workspace";
 
 type AdapterPrismaClient = Parameters<typeof PrismaAdapter>[0];
 
+// In local development without a Resend key, print the magic link to the
+// terminal instead of emailing it.
+const logMagicLinkToConsole =
+  process.env.NODE_ENV === "development" && !process.env.RESEND_API_KEY;
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma as unknown as AdapterPrismaClient),
   providers: [
     Resend({
-      apiKey: process.env.RESEND_API_KEY ?? "missing-resend-api-key",
-      from: process.env.EMAIL_FROM ?? "CampaignCue <login@example.com>",
+      apiKey: process.env.RESEND_API_KEY || "missing-resend-api-key",
+      from: process.env.EMAIL_FROM ?? "MeuPerfil <login@meuperfil.me>",
+      ...(logMagicLinkToConsole && {
+        async sendVerificationRequest({ identifier, url }) {
+          console.log(`\n[Auth] Magic link for ${identifier}:\n${url}\n`);
+        },
+      }),
     }),
   ],
   callbacks: {

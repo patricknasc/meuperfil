@@ -4,7 +4,7 @@ This document turns the roadmap into a practical launch sequence.
 
 ## Positioning
 
-CampaignCue should not launch as a generic chatbot builder.
+MeuPerfil should not launch as a generic chatbot builder.
 
 Launch message:
 
@@ -36,7 +36,7 @@ Secondary audiences:
 
 - Merge B2B SaaS foundation.
 - Fix production audit and release blockers.
-- Deploy staging web/API on Vercel.
+- Deploy HM (staging) web/API on Vercel from the `develop` branch.
 - Deploy worker on Railway.
 - Connect managed Postgres and Redis.
 - Configure Resend.
@@ -44,6 +44,13 @@ Secondary audiences:
 - Configure Meta test app and webhook.
 - Complete one real test-account comment-to-DM flow.
 - Add privacy, terms, and data deletion pages.
+
+## Infrastructure Before Real Customers
+
+- Supabase `meuperfil-pd` starts on the Free plan, which pauses the project after 7 days without activity. Fine while there is no real traffic, but **upgrade PD to Supabase Pro before onboarding the first real customer** (also unlocks daily backups). HM can stay on Free.
+- Vercel starts on the Hobby plan, which is for non-commercial use only. **Move to Vercel Pro before charging customers.**
+- Worker hosts (HM and PD) and Upstash Redis per environment.
+- Stripe PD in live mode only after the Meta app is approved.
 
 ## Public Launch Assets
 
@@ -80,7 +87,7 @@ First loop: public templates.
 Second loop: shareable reports.
 
 - Agencies send reports to clients.
-- Free plan reports include subtle CampaignCue branding.
+- Free plan reports include subtle MeuPerfil branding.
 - Reports show campaign proof.
 - Reports expose campaign results only, not workspace controls.
 

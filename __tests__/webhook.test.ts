@@ -91,6 +91,7 @@ describe("parseCommentEvents", () => {
       commenterId: "user_789",
       commenterName: "testuser",
       mediaId: "media_101",
+      eventType: "comment",
     });
   });
 
@@ -120,8 +121,8 @@ describe("parseCommentEvents", () => {
     expect(events).toHaveLength(0);
   });
 
-  it("should ignore non-comment fields", () => {
-    const payload = {
+  it("should parse mentions and direct messages", () => {
+    const mentionPayload = {
       object: "instagram",
       entry: [
         {
@@ -129,12 +130,12 @@ describe("parseCommentEvents", () => {
           time: 1234567890,
           changes: [
             {
-              field: "messages",
+              field: "mentions",
               value: {
-                id: "msg_456",
-                text: "hello",
-                from: { id: "user_789", username: "test" },
-                media: { id: "media_101" },
+                comment_id: "mention_123",
+                text: "Check out @meuperfil",
+                from: { id: "user_789", username: "fan" },
+                media_id: "media_story_99",
               },
             },
           ],
@@ -142,8 +143,35 @@ describe("parseCommentEvents", () => {
       ],
     };
 
-    const events = parseCommentEvents(payload);
-    expect(events).toHaveLength(0);
+    const mentionEvents = parseCommentEvents(mentionPayload);
+    expect(mentionEvents).toHaveLength(1);
+    expect(mentionEvents[0].eventType).toBe("mention");
+
+    const messagePayload = {
+      object: "instagram",
+      entry: [
+        {
+          id: "page_123",
+          time: 1234567890,
+          messaging: [
+            {
+              sender: { id: "user_direct_1" },
+              recipient: { id: "page_123" },
+              timestamp: 1234567890,
+              message: {
+                mid: "mid.123456",
+                text: "QUERO",
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const messageEvents = parseCommentEvents(messagePayload);
+    expect(messageEvents).toHaveLength(1);
+    expect(messageEvents[0].eventType).toBe("message");
+    expect(messageEvents[0].commentText).toBe("QUERO");
   });
 
   it("should handle multiple comment events in one payload", () => {

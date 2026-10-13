@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PublicSiteHeader from "@/components/public-site-header";
+import type { Locale } from "@/app/[lang]/dictionaries";
 
 export interface SeoPageSection {
   title: string;
@@ -17,7 +18,7 @@ export interface SeoPageConfig {
   comparisonTitle: string;
   comparisons: Array<{
     label: string;
-    campaignCue: string;
+    meuPerfil: string;
     other: string;
   }>;
   templateLinks: Array<{
@@ -39,10 +40,18 @@ function CheckIcon() {
   );
 }
 
-export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
+export default function SeoPageShell({
+  config,
+  locale = "pt",
+}: {
+  config: SeoPageConfig;
+  locale?: Locale;
+}) {
+  const prefix = `/${locale}`;
+
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <PublicSiteHeader />
+      <PublicSiteHeader locale={locale} />
 
       <section className="border-b border-white/10 bg-zinc-950/70">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
@@ -58,13 +67,13 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/login"
+                href={`${prefix}/login`}
                 className="inline-flex items-center justify-center bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
               >
                 {config.primaryCta}
               </Link>
               <Link
-                href="/templates"
+                href={`${prefix}/templates`}
                 className="inline-flex items-center justify-center border border-white/10 bg-white/[0.04] px-6 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
               >
                 {config.secondaryCta ?? "Browse templates"}
@@ -107,7 +116,7 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
           <div className="mt-8 overflow-hidden border border-white/10">
             <div className="grid grid-cols-[0.8fr_1fr_1fr] border-b border-white/10 bg-zinc-950 text-xs font-bold uppercase tracking-wide text-zinc-500">
               <div className="p-4">Need</div>
-              <div className="p-4 text-cyan-100">CampaignCue</div>
+              <div className="p-4 text-cyan-100">MeuPerfil</div>
               <div className="p-4">Generic automation</div>
             </div>
             {config.comparisons.map((item) => (
@@ -119,7 +128,7 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
                   {item.label}
                 </div>
                 <div className="p-4 text-sm leading-6 text-zinc-300">
-                  {item.campaignCue}
+                  {item.meuPerfil}
                 </div>
                 <div className="p-4 text-sm leading-6 text-zinc-500">
                   {item.other}
@@ -147,7 +156,7 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
           {config.templateLinks.map((link) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={`${prefix}${link.href}`}
               className="border border-white/10 bg-white/[0.035] p-5 text-sm font-semibold text-white transition hover:border-cyan-200/30 hover:bg-cyan-300/10"
             >
               {link.label}
@@ -181,11 +190,11 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
             Turn the next high-intent comment into a private reply
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-300">
-            CampaignCue is built for Instagram professional accounts, official
+            MeuPerfil is built for Instagram professional accounts, official
             Meta private replies, and campaign reporting teams can show clients.
           </p>
           <Link
-            href="/login"
+            href={`${prefix}/login`}
             className="mt-8 inline-flex items-center justify-center bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
           >
             Start free
@@ -195,4 +204,3 @@ export default function SeoPageShell({ config }: { config: SeoPageConfig }) {
     </main>
   );
 }
-

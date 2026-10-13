@@ -7,6 +7,8 @@
  */
 
 import { usePathname } from "next/navigation";
+import LanguageSwitcher from "@/components/language-switcher";
+import type { Locale } from "@/app/[lang]/dictionaries";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -23,15 +25,18 @@ interface TopBarProps {
   onMenuClick: () => void;
   instagramUsername: string | null;
   instagramAccountCount: number;
+  locale?: Locale;
 }
 
 export default function TopBar({
   onMenuClick,
   instagramUsername,
   instagramAccountCount,
+  locale = "pt",
 }: TopBarProps) {
   const pathname = usePathname();
-  const title = pageTitles[pathname] ?? "Dashboard";
+  const normalizedPath = pathname.replace(/^\/(en|pt|es)/, "") || "/";
+  const title = pageTitles[normalizedPath] ?? "Dashboard";
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 lg:px-8 border-b border-border glass">
@@ -49,7 +54,7 @@ export default function TopBar({
         <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
       </div>
 
-      {/* Right: status */}
+      {/* Right: status and language switcher */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-border text-xs text-muted">
           <div
@@ -63,6 +68,7 @@ export default function TopBar({
               ? `@${instagramUsername}`
               : "Connect Instagram"}
         </div>
+        <LanguageSwitcher currentLocale={locale} variant="compact" />
       </div>
     </header>
   );

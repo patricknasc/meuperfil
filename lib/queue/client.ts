@@ -48,3 +48,30 @@ export function getDMQueue(): Queue<ProcessCommentJob> {
   }
   return dmQueue;
 }
+
+// ─── Post Publishing Queue ───────────────────────────────────────────────────
+
+export interface PublishPostJob {
+  scheduledPostId: string;
+  workspaceId: string;
+}
+
+let postPublishingQueue: Queue<PublishPostJob> | null = null;
+
+export function getPostPublishingQueue(): Queue<PublishPostJob> {
+  if (!postPublishingQueue) {
+    postPublishingQueue = new Queue<PublishPostJob>("post-publishing", {
+      connection: getRedisConnection(),
+      defaultJobOptions: {
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 5000 },
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      },
+    });
+  }
+  return postPublishingQueue;
+}

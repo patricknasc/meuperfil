@@ -31,11 +31,21 @@ export interface WebhookCommentEvent {
   commenterId: string;
   commenterName?: string;
   mediaId: string;
+  eventType?: "comment" | "mention" | "message";
 }
 
 interface WebhookEntry {
   id: string;
   time: number;
+  messaging?: Array<{
+    sender: { id: string };
+    recipient: { id: string };
+    timestamp: number;
+    message?: {
+      mid: string;
+      text?: string;
+    };
+  }>;
   changes?: Array<{
     field: string;
     value: {
@@ -67,26 +77,45 @@ export function parseCommentEvents(payload: WebhookPayload): WebhookCommentEvent
   }
 
   for (const entry of payload.entry ?? []) {
+    // 1. Process standard changes (comments and mentions)
     for (const change of entry.changes ?? []) {
-      if (change.field !== "comments") continue;
+      if (change.field === "comments" || change.field === "mentions") {
+        const value = change.value;
+        const commentId = value?.id ?? value?.comment_id ?? `mention_${entry.id}_${Date.now()}`;
+        const mediaId = value?.media?.id ?? value?.media_id ?? "mention";
+        const commenterId = value?.from?.id;
 
-      const value = change.value;
-      const commentId = value?.id ?? value?.comment_id;
-      const mediaId = value?.media?.id ?? value?.media_id;
-      const commenterId = value?.from?.id;
+        if (!entry.id || !commentId || !commenterId) {
+          continue;
+        }
 
-      if (!entry.id || !commentId || !mediaId || !commenterId) {
-        continue;
+        events.push({
+          instagramAccountId: entry.id,
+          commentId,
+          commentText: value.text ?? "",
+          commenterId,
+          commenterName: value.from?.username,
+          mediaId,
+          eventType: change.field === "mentions" ? "mention" : "comment",
+        });
       }
+    }
 
-      events.push({
-        instagramAccountId: entry.id,
-        commentId,
-        commentText: value.text ?? "",
-        commenterId,
-        commenterName: value.from?.username,
-        mediaId,
-      });
+    // 2. Process incoming direct messages (messaging field)
+    for (const msg of entry.messaging ?? []) {
+      if (msg.message && msg.message.text && msg.sender?.id && msg.recipient?.id) {
+        // Skip self-sent messages
+        if (msg.sender.id === entry.id) continue;
+
+        events.push({
+          instagramAccountId: entry.id,
+          commentId: msg.message.mid,
+          commentText: msg.message.text,
+          commenterId: msg.sender.id,
+          mediaId: "direct_message",
+          eventType: "message",
+        });
+      }
     }
   }
 

@@ -1,0 +1,178 @@
+{
+  "common": {
+    "brandName": "meuperfil.me",
+    "signIn": "Entrar",
+    "startFree": "Criar Meu Perfil Grátis",
+    "seeWorkflow": "Ver como funciona",
+    "templates": "Modelos",
+    "product": "Produto",
+    "useCases": "Casos de uso",
+    "security": "Segurança",
+    "pricing": "Preços",
+    "foundingOffer": "Oferta inaugural",
+    "agencies": "Agências",
+    "privacy": "Privacidade",
+    "terms": "Termos",
+    "dataDeletion": "Exclusão de dados",
+    "metaReview": "Revisão Meta",
+    "browseTemplates": "Ver modelos",
+    "commentToDmTemplates": "Modelos comment-to-DM",
+    "commentLinkAutomation": "Automação comment LINK"
+  },
+  "landing": {
+    "badge": "Link na Bio de Alta Conversão + Automação Oficial do Instagram",
+    "heroTitle": "Seu Link na Bio Definitivo com Automação de Directs",
+    "heroDescription": "O meuperfil.me une uma bio linda, veloz e personalizável com o poder de converter comentários de Reels e Posts em mensagens automáticas na DM.",
+    "stats": {
+      "monitoring": "Monitoramento de comentários",
+      "dmPerComment": "DM por comentário correspondente",
+      "scraping": "Scraping necessário"
+    },
+    "audiences": {
+      "title": "Projetado para equipes que transformam atenção social em conversas reais",
+      "items": ["Loja DTC", "Estúdio de criação", "Mesa de agência", "Vendedor de cursos", "Equipe de lançamento", "Marca de beleza", "Coach fitness", "Equipe de eventos"]
+    },
+    "workflow": {
+      "eyebrow": "Fluxo do produto",
+      "title": "Uma forma mais limpa de rodar campanhas de DM no Instagram",
+      "description": "O app separa o cadastro do negócio da conexão com o Instagram, e dá a cada workspace uso real, cobrança, entrega e logs.",
+      "steps": [
+        {
+          "eyebrow": "Conectar",
+          "title": "Vincule sua conta profissional do Instagram",
+          "description": "Proprietários fazem login por email, conectam o Instagram uma vez, e gerenciam a conta como uma integração do workspace."
+        },
+        {
+          "eyebrow": "Criar",
+          "title": "Escolha um post, palavras-chave e a DM exata",
+          "description": "Crie campanhas para reels, posts, lançamentos, drops de produto, iscas digitais e trabalho de clientes."
+        },
+        {
+          "eyebrow": "Entregar",
+          "title": "Envie respostas privadas baseadas em comentários com segurança",
+          "description": "Webhooks da Meta são deduplicados, enfileirados, verificados contra limites, e enviados pelo fluxo de resposta privada."
+        }
+      ]
+    },
+    "dashboard": {
+      "eyebrow": "Painel do operador",
+      "title": "Feito para mostrar o que aconteceu, não esconder",
+      "description": "Cada evento de comentário se torna rastreável: enfileirado, correspondido, enviado, pulado, falhado, limitado por taxa, ou bloqueado por limites do plano."
+    },
+    "useCases": {
+      "eyebrow": "Casos de uso",
+      "title": "Campanhas que sua equipe pode lançar sem caos na caixa de entrada",
+      "cards": [
+        {
+          "title": "Iscas digitais",
+          "description": "Envie guias, checklists, links de desconto, links de webinar ou recursos protegidos no momento em que alguém pedir."
+        },
+        {
+          "title": "Social commerce",
+          "description": "Transforme comentários como PREÇO, LINK, TAMANHO ou COMPRAR em uma conversa instantânea sobre o produto dentro do Instagram."
+        },
+        {
+          "title": "Fluxos de agência",
+          "description": "Empacote funis repetíveis de comment-to-DM para clientes de campanha sem depender de trabalho manual na caixa de entrada."
+        },
+        {
+          "title": "Lançamentos de criadores",
+          "description": "Capture picos de reels, stories e lançamentos enquanto a audiência está ativamente engajada."
+        }
+      ]
+    },
+    "trust": {
+      "eyebrow": "Confiança e conformidade",
+      "title": "Bases sólidas para um produto B2B público",
+      "description": "O sistema é projetado em torno de APIs oficiais, tokens criptografados, processamento idempotente de filas e planos provisionados pelo Stripe."
+    },
+    "platformFeatures": [
+      "Cadastro com magic-link por email",
+      "Tenância baseada em workspace",
+      "Suporte multi-conta para agências",
+      "Limites de plano via Stripe",
+      "Tokens Instagram criptografados",
+      "Armazenamento de eventos webhook",
+      "Worker de entrega com fila",
+      "Logs e status de DMs",
+      "Manutenção de refresh de tokens"
+    ],
+    "pricing": {
+      "eyebrow": "Preços",
+      "title": "Grátis para testar, simples para escalar",
+      "description": "Cada plano mapeia diretamente para quantidade de campanhas e volume mensal de DMs. Webhooks do Stripe provisionam o plano do workspace após o checkout.",
+      "tiers": [
+        {
+          "name": "Grátis",
+          "price": "R$0",
+          "label": "Comece a testar",
+          "description": "Para validar uma campanha com palavra-chave.",
+          "features": ["1 campanha", "100 DMs por mês", "Login por email", "Logs básicos de DM"],
+          "cta": "Começar grátis"
+        },
+        {
+          "name": "Pro",
+          "price": "R$97",
+          "label": "Mais popular",
+          "description": "Para marcas e criadores rodando lançamentos repetíveis.",
+          "features": ["10 campanhas", "2.000 DMs por mês", "Portal de cobrança Stripe", "Manutenção diária de tokens"],
+          "cta": "Começar Pro"
+        },
+        {
+          "name": "Agência",
+          "price": "R$247",
+          "label": "Maior volume",
+          "description": "Para operadores gerenciando pipelines maiores de campanhas.",
+          "features": ["Campanhas ilimitadas", "10 contas Instagram", "10.000 DMs por mês", "Worker com fila", "Funções de membros e relatórios"],
+          "cta": "Começar Agência"
+        }
+      ]
+    },
+    "founding": {
+      "eyebrow": "Oferta inaugural para agências",
+      "title": "Traga seus primeiros clientes antes do mercado ficar barulhento",
+      "description": "Agências pioneiras recebem onboarding prático, ajuda com modelos e participação no roadmap de relatórios para agências. A oferta é projetada para equipes que já gerenciam campanhas no Instagram para múltiplos clientes.",
+      "cta": "Garantir acesso inaugural",
+      "whatFoundersGet": "O que fundadores recebem",
+      "items": [
+        "Badge de Agência Fundadora nos relatórios de clientes durante o beta",
+        "Onboarding manual para até 10 contas de clientes no Instagram",
+        "Setup de modelos de campanha para suas primeiras 3 campanhas de clientes",
+        "Canal direto de feedback para moldar relatórios e analytics de agência"
+      ],
+      "referralLoop": "Loop de indicação",
+      "referralDescription": "Indicações começam como um loop manual de agência fundadora, depois evoluem para créditos de cobrança no Stripe quando os controles antifraude estiverem provados.",
+      "referralSteps": [
+        "Convide um operador de agência",
+        "Ele lança uma campanha rastreada",
+        "Ambas as contas recebem crédito futuro na cobrança após conversão paga"
+      ]
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Perguntas antes de lançar",
+      "items": [
+        {
+          "question": "O MeuPerfil usa a API oficial da Meta?",
+          "answer": "Sim. O produto é construído em torno de webhooks da Meta e respostas privadas do Instagram, sem scraping, automação de navegador ou compartilhamento de senhas."
+        },
+        {
+          "question": "O que acontece quando atinjo meu limite mensal de DMs?",
+          "answer": "O worker verifica os limites do plano do workspace antes de enviar. Respostas além do limite são puladas e registradas para que operadores possam ver o que aconteceu."
+        },
+        {
+          "question": "Usuários podem se cadastrar sem Instagram primeiro?",
+          "answer": "Sim. O cadastro usa magic links por email. O Instagram é conectado depois que o workspace existe, o que é mais limpo para um fluxo B2B SaaS."
+        },
+        {
+          "question": "Isso está pronto para lançamento público?",
+          "answer": "O app está pronto para implementação, mas o lançamento público ainda depende de credenciais de produção, deploy e aprovação do Meta App Review."
+        }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Pronto quando seu próximo reel for ao ar",
+      "title": "Comece grátis e transforme comentários com palavras-chave em respostas privadas"
+    }
+  }
+}
