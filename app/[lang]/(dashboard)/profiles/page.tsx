@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { profileTranslator } from "@/lib/i18n/profiles";
 import { useParams, useRouter } from "next/navigation";
-import { THEMES, type ProfileTheme } from "@/lib/profiles/themes";
+import { THEMES, getThemeConfig, type ProfileTheme } from "@/lib/profiles/themes";
 
 interface ProfileItem {
   id: string;
@@ -60,6 +60,23 @@ export default function ProfilesPage() {
     };
   }, []);
 
+  async function openCreateModal() {
+    setFormError(null);
+    setHandle("");
+    setDisplayName("");
+    setBio("");
+    setShowCreateModal(true);
+    try {
+      const res = await fetch("/api/profiles/handle-suggestion");
+      const json = await res.json();
+      if (json.success && json.data?.handle) {
+        setHandle((current) => current || json.data.handle);
+      }
+    } catch {
+      // Suggestion is optional; the person can type a handle.
+    }
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
@@ -111,13 +128,7 @@ export default function ProfilesPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setFormError(null);
-            setHandle("");
-            setDisplayName("");
-            setBio("");
-            setShowCreateModal(true);
-          }}
+          onClick={() => void openCreateModal()}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-semibold text-sm transition shadow-lg shadow-indigo-500/20"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -157,7 +168,7 @@ export default function ProfilesPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => void openCreateModal()}
             className="px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-sm transition shadow-lg shadow-indigo-500/20"
           >
             {t("Criar meu primeiro perfil")}
@@ -166,7 +177,7 @@ export default function ProfilesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
           {profiles.map((profile) => {
-            const themeConfig = THEMES[profile.theme] || THEMES.MODERN_DARK;
+            const themeConfig = getThemeConfig(profile.theme);
             const ctr = profile._count.visits > 0
               ? ((profile._count.clicks / profile._count.visits) * 100).toFixed(1)
               : "0";
@@ -211,7 +222,7 @@ export default function ProfilesPage() {
                         {profile.displayName}
                       </h3>
                       <p className="text-xs text-zinc-400 truncate">
-                        {t("Tema:")} {themeConfig.name}
+                        {t("Tema:")} {t(themeConfig.name)}
                       </p>
                     </div>
                   </div>
@@ -273,7 +284,8 @@ export default function ProfilesPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-6 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">{t("Criar Novo Perfil")}</h3>
@@ -311,6 +323,9 @@ export default function ProfilesPage() {
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-1">
                   {t("Mínimo 3 caracteres (letras, números, '.', '_' e '-')")}
+                </p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">
+                  {t("Sugerimos um endereço a partir do seu Instagram conectado ou do seu e-mail. Você pode trocar.")}
                 </p>
               </div>
 
@@ -383,6 +398,7 @@ export default function ProfilesPage() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}

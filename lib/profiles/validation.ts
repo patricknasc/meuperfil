@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
+import { normalizeWebUrl } from "./links";
 
 /**
  * System reserved handles that cannot be registered by users
@@ -99,10 +100,28 @@ export const handleSchema = z
   )
   .refine((val) => !isReservedHandle(val), "Este handle está reservado pelo sistema");
 
-export const safeUrlSchema = z
-  .string()
-  .url("URL inválida")
-  .refine(isValidDestinationUrl, "A URL deve começar com http:// ou https://");
+export const safeUrlSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    const normalized = normalizeWebUrl(value);
+    return normalized.ok ? normalized.url : value;
+  },
+  z
+    .string()
+    .url("URL inválida")
+    .refine(isValidDestinationUrl, "A URL deve começar com http:// ou https://")
+);
+
+const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i, "Cor inválida");
+
+export const customThemeSchema = z.object({
+  background: hexColor,
+  backgroundTo: hexColor.nullable(),
+  text: hexColor,
+  button: hexColor,
+  buttonText: hexColor,
+  buttonShape: z.enum(["rounded", "pill", "square"]),
+});
 
 export const createProfileSchema = z.object({
   handle: handleSchema,
@@ -121,6 +140,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(300).optional().nullable(),
   avatarUrl: z.string().max(2000).optional().nullable(),
   theme: z.nativeEnum(ProfileTheme).optional(),
+  themeSettings: customThemeSchema.nullable().optional(),
   isPublished: z.boolean().optional(),
   seoTitle: z.string().max(100).optional().nullable(),
   seoDescription: z.string().max(200).optional().nullable(),
@@ -147,9 +167,9 @@ export const socialLinkItemSchema = z.object({
 
 export const createBlockSchema = z.object({
   type: z.nativeEnum(ProfileBlockType).default(ProfileBlockType.LINK),
-  title: z.string().min(1, "Título obrigatório").max(100),
+  title: z.string().min(1, "Título obrigatório").max(100, "O título deve ter no máximo 100 caracteres"),
   url: safeUrlSchema.optional().nullable(),
-  description: z.string().max(300).optional().nullable(),
+  description: z.string().max(300, "A descrição deve ter no máximo 300 caracteres").optional().nullable(),
   imageUrl: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().optional().default(0),
@@ -157,9 +177,9 @@ export const createBlockSchema = z.object({
 });
 
 export const updateBlockSchema = z.object({
-  title: z.string().min(1).max(100).optional(),
+  title: z.string().min(1).max(100, "O título deve ter no máximo 100 caracteres").optional(),
   url: safeUrlSchema.optional().nullable(),
-  description: z.string().max(300).optional().nullable(),
+  description: z.string().max(300, "A descrição deve ter no máximo 300 caracteres").optional().nullable(),
   imageUrl: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional(),
   sortOrder: z.number().int().optional(),

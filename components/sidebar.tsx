@@ -9,7 +9,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { dashboardMessages } from "@/lib/i18n/dashboard";
-import LanguageSwitcher from "@/components/language-switcher";
 import type { Locale } from "@/app/[lang]/dictionaries";
 import { signOutAction } from "@/lib/auth-actions";
 
@@ -140,7 +139,6 @@ export default function Sidebar({
             </div>
             <span className="text-lg font-bold tracking-tight">MeuPerfil</span>
           </Link>
-          <LanguageSwitcher currentLocale={currentLocale} variant="compact" />
         </div>
 
         {/* Navigation */}

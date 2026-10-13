@@ -5,8 +5,18 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { profileTranslator } from "@/lib/i18n/profiles";
-import { THEMES, getThemeConfig, type ProfileTheme } from "@/lib/profiles/themes";
+import {
+  THEMES,
+  DEFAULT_CUSTOM_THEME,
+  customThemeStyle,
+  getThemeConfig,
+  parseCustomTheme,
+  type ButtonShape,
+  type CustomThemeSettings,
+  type ProfileTheme,
+} from "@/lib/profiles/themes";
 import type { ProfileAnalyticsSummary } from "@/lib/profiles/analytics";
+import { normalizeSocialLink, normalizeWebUrl, type LinkResult } from "@/lib/profiles/links";
 
 export const ProfileBlockType = {
   LINK: "LINK",
@@ -37,6 +47,7 @@ interface ProfileData {
   bio: string | null;
   avatarUrl: string | null;
   theme: ProfileTheme;
+  themeSettings?: unknown;
   isPublished: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -62,12 +73,14 @@ export default function ProfileStudioPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<ProfileTheme>("MODERN_DARK");
+  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(DEFAULT_CUSTOM_THEME);
   const [isPublished, setIsPublished] = useState(true);
   const [blocks, setBlocks] = useState<ProfileBlockItem[]>([]);
 
   // Feedback notifications
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // New Block Modal
@@ -115,6 +128,7 @@ export default function ProfileStudioPage() {
         setBio(p.bio || "");
         setAvatarUrl(p.avatarUrl);
         setTheme(p.theme);
+        setCustomTheme(parseCustomTheme(p.themeSettings));
         setIsPublished(p.isPublished);
         setBlocks(p.blocks || []);
       })
@@ -150,6 +164,7 @@ export default function ProfileStudioPage() {
           bio: bio || null,
           avatarUrl,
           theme,
+          themeSettings: theme === "CUSTOM" ? customTheme : undefined,
           isPublished,
         }),
       });
@@ -198,24 +213,80 @@ export default function ProfileStudioPage() {
     reader.readAsDataURL(file);
   }
 
+  function socialLabel(platform: string) {
+    return platform === "whatsapp" ? "WhatsApp" : platform === "instagram" ? "Instagram" : platform;
+  }
+
+  function linkErrorText(result: LinkResult, field: string): string {
+    if (result.ok) return "";
+    switch (result.error) {
+      case "empty":
+        return t("Preencha o campo {field}.").replace("{field}", field);
+      case "invalid_phone":
+        return t("Número de WhatsApp inválido. Use DDD + número (ex.: 11 99999-8888) ou +DDI para outros países.");
+      case "invalid_handle":
+        return t("{field}: usuário inválido. Use só letras, números, '.', '_' ou '-' (ex.: @seuperfil).").replace("{field}", field);
+      case "wrong_site":
+        return t("{field}: esse link não é dessa rede. Cole o link do seu perfil ou só o @usuário.").replace("{field}", field);
+      default:
+        return t("{field}: endereço inválido. Ex.: seusite.com.br ou https://seusite.com.br/oferta").replace("{field}", field);
+    }
+  }
+
+  function buildSocialLinks(): { links: Array<{ platform: string; url: string }> } | { error: string } {
+    const filled = socialLinks.filter((s) => s.url.trim().length > 0);
+    if (filled.length === 0) return { error: t("Adicione ao menos um link de rede social") };
+    const links: Array<{ platform: string; url: string }> = [];
+    for (const s of filled) {
+      const result = normalizeSocialLink(s.platform, s.url);
+      if (!result.ok) return { error: linkErrorText(result, socialLabel(s.platform)) };
+      links.push({ platform: s.platform, url: result.url });
+    }
+    return { links };
+  }
+
+  function linkPreview(result: LinkResult, raw: string) {
+    if (!raw.trim()) return null;
+    if (result.ok) {
+      if (result.url === raw.trim()) return null;
+      return (
+        <p className="mt-1.5 text-[11px] text-emerald-400 break-all">
+          {t("Será salvo como:")} <span className="font-mono">{result.url}</span>
+        </p>
+      );
+    }
+    if (result.error === "empty") return null;
+    return <p className="mt-1.5 text-[11px] text-amber-400">{linkErrorText(result, "")
+      .replace(/^:\s*/, "")}</p>;
+  }
+
   async function handleAddBlock(e: React.FormEvent) {
     e.preventDefault();
-    setAddingBlock(true);
-    setErrorMessage(null);
+    setModalError(null);
 
-    let configPayload = null;
-    let finalUrl = newBlockUrl.trim() || null;
+    let configPayload: { links: Array<{ platform: string; url: string }> } | null = null;
+    let finalUrl: string | null = null;
+    let finalImageUrl: string | null = null;
+
+    if (newBlockType === ProfileBlockType.LINK) {
+      const url = normalizeWebUrl(newBlockUrl);
+      if (!url.ok) return setModalError(linkErrorText(url, t("URL de Destino")));
+      finalUrl = url.url;
+      if (newBlockImageUrl.trim()) {
+        const image = normalizeWebUrl(newBlockImageUrl);
+        if (!image.ok) return setModalError(linkErrorText(image, t("URL do Ícone ou Imagem (Opcional)")));
+        finalImageUrl = image.url;
+      }
+    }
 
     if (newBlockType === ProfileBlockType.SOCIAL_LINKS) {
-      const validSocials = socialLinks.filter((s) => s.url.trim().length > 0);
-      if (validSocials.length === 0) {
-        setErrorMessage(t("Adicione ao menos um link de rede social"));
-        setAddingBlock(false);
-        return;
-      }
-      configPayload = { links: validSocials };
-      finalUrl = validSocials[0].url;
+      const socials = buildSocialLinks();
+      if ("error" in socials) return setModalError(socials.error);
+      configPayload = { links: socials.links };
+      finalUrl = socials.links[0].url;
     }
+
+    setAddingBlock(true);
 
     try {
       const res = await fetch(`/api/profiles/${profileId}/blocks`, {
@@ -226,7 +297,7 @@ export default function ProfileStudioPage() {
           title: newBlockTitle,
           url: finalUrl,
           description: newBlockDescription.trim() || null,
-          imageUrl: newBlockImageUrl.trim() || null,
+          imageUrl: finalImageUrl,
           config: configPayload,
         }),
       });
@@ -244,7 +315,7 @@ export default function ProfileStudioPage() {
       setNewBlockImageUrl("");
       showToast(t("Bloco adicionado!"));
     } catch (err) {
-      setErrorMessage((err instanceof Error && err.message) || t("Erro ao criar bloco"));
+      setModalError((err instanceof Error && err.message) || t("Erro ao criar bloco"));
     } finally {
       setAddingBlock(false);
     }
@@ -253,17 +324,33 @@ export default function ProfileStudioPage() {
   async function handleUpdateBlock(e: React.FormEvent) {
     e.preventDefault();
     if (!editingBlock) return;
-    setSavingBlock(true);
-    setErrorMessage(null);
+    setModalError(null);
 
     let configPayload = editingBlock.config;
     let finalUrl = editingBlock.url;
+    let finalImageUrl = editingBlock.imageUrl;
+
+    if (editingBlock.type === ProfileBlockType.LINK) {
+      const url = normalizeWebUrl(editingBlock.url ?? "");
+      if (!url.ok) return setModalError(linkErrorText(url, t("URL de Destino")));
+      finalUrl = url.url;
+      if (editingBlock.imageUrl?.trim()) {
+        const image = normalizeWebUrl(editingBlock.imageUrl);
+        if (!image.ok) return setModalError(linkErrorText(image, t("URL do Ícone / Thumbnail")));
+        finalImageUrl = image.url;
+      } else {
+        finalImageUrl = null;
+      }
+    }
 
     if (editingBlock.type === ProfileBlockType.SOCIAL_LINKS) {
-      const validSocials = socialLinks.filter((s) => s.url.trim().length > 0);
-      configPayload = { links: validSocials };
-      finalUrl = validSocials[0]?.url || null;
+      const socials = buildSocialLinks();
+      if ("error" in socials) return setModalError(socials.error);
+      configPayload = { links: socials.links };
+      finalUrl = socials.links[0].url;
     }
+
+    setSavingBlock(true);
 
     try {
       const res = await fetch(`/api/profiles/${profileId}/blocks/${editingBlock.id}`, {
@@ -273,7 +360,7 @@ export default function ProfileStudioPage() {
           title: editingBlock.title,
           url: finalUrl,
           description: editingBlock.description,
-          imageUrl: editingBlock.imageUrl,
+          imageUrl: finalImageUrl,
           isActive: editingBlock.isActive,
           config: configPayload,
         }),
@@ -290,7 +377,7 @@ export default function ProfileStudioPage() {
       setEditingBlock(null);
       showToast(t("Bloco atualizado!"));
     } catch (err) {
-      setErrorMessage((err instanceof Error && err.message) || t("Erro ao atualizar bloco"));
+      setModalError((err instanceof Error && err.message) || t("Erro ao atualizar bloco"));
     } finally {
       setSavingBlock(false);
     }
@@ -849,7 +936,120 @@ export default function ProfileStudioPage() {
                       </div>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setTheme("CUSTOM")}
+                    className={`p-3 rounded-2xl border text-left transition flex flex-col gap-2 relative ${
+                      theme === "CUSTOM"
+                        ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-white"
+                        : "border-white/10 bg-zinc-950/70 text-zinc-400 hover:border-white/20"
+                    }`}
+                  >
+                    <div
+                      className="w-full h-14 rounded-xl border border-white/10 p-2 flex flex-col justify-between shadow-inner bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]"
+                      style={customThemeStyle(customTheme)}
+                    >
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-[var(--mp-btn)]" />
+                        <div className="w-8 h-1.5 rounded bg-[var(--mp-text)] opacity-40" />
+                      </div>
+                      <div className="w-full h-3 rounded bg-[var(--mp-btn)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{t("Personalizar")}</p>
+                      <p className="text-[10px] text-zinc-500 line-clamp-1">{t("Suas cores e formato dos botões")}</p>
+                    </div>
+                  </button>
                 </div>
+
+                {theme === "CUSTOM" && (
+                  <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(
+                        [
+                          ["background", t("Fundo")],
+                          ["text", t("Texto")],
+                          ["button", t("Botões")],
+                          ["buttonText", t("Texto dos botões")],
+                        ] as Array<[keyof CustomThemeSettings, string]>
+                      ).map(([key, label]) => (
+                        <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
+                          <span className="text-xs text-zinc-300">{label}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-[11px] font-mono text-zinc-500">{customTheme[key] as string}</span>
+                            <input
+                              type="color"
+                              value={customTheme[key] as string}
+                              onChange={(e) => setCustomTheme({ ...customTheme, [key]: e.target.value })}
+                              className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                            />
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
+                      <label className="flex items-center gap-2 text-xs text-zinc-300">
+                        <input
+                          type="checkbox"
+                          checked={customTheme.backgroundTo !== null}
+                          onChange={(e) =>
+                            setCustomTheme({
+                              ...customTheme,
+                              backgroundTo: e.target.checked ? DEFAULT_CUSTOM_THEME.backgroundTo : null,
+                            })
+                          }
+                        />
+                        {t("Fundo em degradê")}
+                      </label>
+                      {customTheme.backgroundTo !== null && (
+                        <span className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono text-zinc-500">{customTheme.backgroundTo}</span>
+                          <input
+                            type="color"
+                            value={customTheme.backgroundTo}
+                            onChange={(e) => setCustomTheme({ ...customTheme, backgroundTo: e.target.value })}
+                            className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                          />
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-zinc-300 mb-2">{t("Formato dos botões")}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            ["rounded", t("Arredondado"), "rounded-xl"],
+                            ["pill", t("Pílula"), "rounded-full"],
+                            ["square", t("Reto"), "rounded-sm"],
+                          ] as Array<[ButtonShape, string, string]>
+                        ).map(([shape, label, radius]) => (
+                          <button
+                            key={shape}
+                            type="button"
+                            onClick={() => setCustomTheme({ ...customTheme, buttonShape: shape })}
+                            className={`py-2 text-xs font-semibold border transition ${radius} ${
+                              customTheme.buttonShape === shape
+                                ? "border-accent bg-accent/20 text-white"
+                                : "border-white/10 text-zinc-400 hover:border-white/20"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setCustomTheme(DEFAULT_CUSTOM_THEME)}
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                    >
+                      {t("Restaurar cores padrão")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -988,7 +1188,10 @@ export default function ProfileStudioPage() {
               {/* Smartphone Screen Viewport */}
               <div
                 className={`w-full h-full rounded-[38px] overflow-y-auto ${themeConfig.classes.background} ${themeConfig.classes.container} flex flex-col justify-between p-5 pt-12 relative transition-all duration-300`}
-                style={{ scrollbarWidth: "none" }}
+                style={{
+                  scrollbarWidth: "none",
+                  ...(theme === "CUSTOM" ? customThemeStyle(customTheme) : {}),
+                }}
               >
                 <div>
                   {/* Avatar + Identity */}
@@ -1057,7 +1260,7 @@ export default function ProfileStudioPage() {
                         return (
                           <div
                             key={block.id}
-                            className={`w-full p-3.5 rounded-2xl flex items-center gap-3 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover}`}
+                            className={`w-full p-3.5 ${themeConfig.classes.linkRadius ?? "rounded-2xl"} flex items-center gap-3 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover}`}
                           >
                             {block.imageUrl && (
                               <Image unoptimized width={32} height={32}
@@ -1096,12 +1299,13 @@ export default function ProfileStudioPage() {
 
       {/* MODAL: ADD BLOCK */}
       {showAddBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">{t("Adicionar Novo Bloco")}</h3>
               <button
-                onClick={() => setShowAddBlockModal(false)}
+                onClick={() => { setShowAddBlockModal(false); setModalError(null); }}
                 className="text-zinc-400 hover:text-white p-1"
               >
                 ✕
@@ -1153,6 +1357,7 @@ export default function ProfileStudioPage() {
                 <input
                   type="text"
                   required
+                  maxLength={100}
                   value={newBlockTitle}
                   onChange={(e) => setNewBlockTitle(e.target.value)}
                   placeholder={
@@ -1162,6 +1367,7 @@ export default function ProfileStudioPage() {
                   }
                   className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
                 />
+                <p className="mt-1 text-right text-[11px] text-zinc-500">{newBlockTitle.length}/100</p>
               </div>
 
               {newBlockType === ProfileBlockType.LINK && (
@@ -1171,13 +1377,17 @@ export default function ProfileStudioPage() {
                       {t("URL de Destino")}
                     </label>
                     <input
-                      type="url"
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       required
                       value={newBlockUrl}
                       onChange={(e) => setNewBlockUrl(e.target.value)}
-                      placeholder={t("https://seusite.com.br/oferta")}
+                      placeholder={t("seusite.com.br/oferta")}
                       className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white font-mono focus:border-accent focus:outline-none transition"
                     />
+                    {linkPreview(normalizeWebUrl(newBlockUrl), newBlockUrl)}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
@@ -1185,6 +1395,7 @@ export default function ProfileStudioPage() {
                     </label>
                     <input
                       type="text"
+                      maxLength={300}
                       value={newBlockDescription}
                       onChange={(e) => setNewBlockDescription(e.target.value)}
                       placeholder={t("Ex: Acesso instantâneo e 100% gratuito")}
@@ -1196,12 +1407,16 @@ export default function ProfileStudioPage() {
                       {t("URL do Ícone ou Imagem (Opcional)")}
                     </label>
                     <input
-                      type="url"
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       value={newBlockImageUrl}
                       onChange={(e) => setNewBlockImageUrl(e.target.value)}
-                      placeholder="https://..."
+                      placeholder="seusite.com/imagem.png"
                       className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
                     />
+                    {linkPreview(normalizeWebUrl(newBlockImageUrl), newBlockImageUrl)}
                   </div>
                 </>
               )}
@@ -1210,30 +1425,46 @@ export default function ProfileStudioPage() {
                 <div className="space-y-3">
                   <p className="text-xs text-zinc-400">{t("Preencha os links das suas redes sociais:")}</p>
                   {socialLinks.map((s, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
-                        {s.platform}
-                      </span>
-                      <input
-                        type="url"
-                        placeholder={`https://${s.platform}.com/...`}
-                        value={s.url}
-                        onChange={(e) => {
-                          const updated = [...socialLinks];
-                          updated[idx].url = e.target.value;
-                          setSocialLinks(updated);
-                        }}
-                        className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
-                      />
+                    <div key={idx}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
+                          {socialLabel(s.platform)}
+                        </span>
+                        <input
+                          type="text"
+                          inputMode={s.platform === "whatsapp" ? "tel" : "url"}
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          placeholder={
+                            s.platform === "whatsapp"
+                              ? t("DDD + número, ex.: 11 99999-8888")
+                              : t("@seuperfil ou link do perfil")
+                          }
+                          value={s.url}
+                          onChange={(e) => {
+                            const updated = [...socialLinks];
+                            updated[idx] = { ...updated[idx], url: e.target.value };
+                            setSocialLinks(updated);
+                          }}
+                          className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                      <div className="pl-[6.5rem]">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {modalError && (
+                <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                  {modalError}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
                 <button
                   type="button"
-                  onClick={() => setShowAddBlockModal(false)}
+                  onClick={() => { setShowAddBlockModal(false); setModalError(null); }}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white"
                 >
                   {t("Cancelar")}
@@ -1248,16 +1479,18 @@ export default function ProfileStudioPage() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
       {/* MODAL: EDIT BLOCK */}
       {editingBlock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">{t("Editar Bloco")}</h3>
-              <button onClick={() => setEditingBlock(null)} className="text-zinc-400 hover:text-white p-1">
+              <button onClick={() => { setEditingBlock(null); setModalError(null); }} className="text-zinc-400 hover:text-white p-1">
                 ✕
               </button>
             </div>
@@ -1270,10 +1503,12 @@ export default function ProfileStudioPage() {
                 <input
                   type="text"
                   required
+                  maxLength={100}
                   value={editingBlock.title || ""}
                   onChange={(e) => setEditingBlock({ ...editingBlock, title: e.target.value })}
                   className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
                 />
+                <p className="mt-1 text-right text-[11px] text-zinc-500">{(editingBlock.title || "").length}/100</p>
               </div>
 
               {editingBlock.type === ProfileBlockType.LINK && (
@@ -1283,12 +1518,16 @@ export default function ProfileStudioPage() {
                       {t("URL de Destino")}
                     </label>
                     <input
-                      type="url"
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       required
                       value={editingBlock.url || ""}
                       onChange={(e) => setEditingBlock({ ...editingBlock, url: e.target.value })}
                       className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white font-mono focus:border-accent focus:outline-none transition"
                     />
+                    {linkPreview(normalizeWebUrl(editingBlock.url || ""), editingBlock.url || "")}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
@@ -1296,6 +1535,7 @@ export default function ProfileStudioPage() {
                     </label>
                     <input
                       type="text"
+                      maxLength={300}
                       value={editingBlock.description || ""}
                       onChange={(e) =>
                         setEditingBlock({ ...editingBlock, description: e.target.value })
@@ -1308,13 +1548,17 @@ export default function ProfileStudioPage() {
                       {t("URL do Ícone / Thumbnail")}
                     </label>
                     <input
-                      type="url"
+                      type="text"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       value={editingBlock.imageUrl || ""}
                       onChange={(e) =>
                         setEditingBlock({ ...editingBlock, imageUrl: e.target.value })
                       }
                       className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
                     />
+                    {linkPreview(normalizeWebUrl(editingBlock.imageUrl || ""), editingBlock.imageUrl || "")}
                   </div>
                 </>
               )}
@@ -1323,30 +1567,46 @@ export default function ProfileStudioPage() {
                 <div className="space-y-3">
                   <p className="text-xs text-zinc-400">{t("Links das suas redes sociais:")}</p>
                   {socialLinks.map((s, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
-                        {s.platform}
-                      </span>
-                      <input
-                        type="url"
-                        placeholder={`https://${s.platform}.com/...`}
-                        value={s.url}
-                        onChange={(e) => {
-                          const updated = [...socialLinks];
-                          updated[idx].url = e.target.value;
-                          setSocialLinks(updated);
-                        }}
-                        className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
-                      />
+                    <div key={idx}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
+                          {socialLabel(s.platform)}
+                        </span>
+                        <input
+                          type="text"
+                          inputMode={s.platform === "whatsapp" ? "tel" : "url"}
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          placeholder={
+                            s.platform === "whatsapp"
+                              ? t("DDD + número, ex.: 11 99999-8888")
+                              : t("@seuperfil ou link do perfil")
+                          }
+                          value={s.url}
+                          onChange={(e) => {
+                            const updated = [...socialLinks];
+                            updated[idx] = { ...updated[idx], url: e.target.value };
+                            setSocialLinks(updated);
+                          }}
+                          className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                      <div className="pl-[6.5rem]">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {modalError && (
+                <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                  {modalError}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
                 <button
                   type="button"
-                  onClick={() => setEditingBlock(null)}
+                  onClick={() => { setEditingBlock(null); setModalError(null); }}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white"
                 >
                   {t("Cancelar")}
@@ -1360,6 +1620,7 @@ export default function ProfileStudioPage() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}
