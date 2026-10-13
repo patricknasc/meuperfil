@@ -80,7 +80,7 @@ export default function TopBar({
               ? `@${instagramUsername}`
               : t("Connect Instagram")}
         </div>
-        <LanguageSwitcher currentLocale={locale} variant="compact" />
+        <LanguageSwitcher currentLocale={locale} />
       </div>
     </header>
   );

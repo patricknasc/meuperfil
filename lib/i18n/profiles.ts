@@ -503,7 +503,17 @@ const entries: Record<string, [string, string]> = {
   "Ondas azuis safira e turquesa com sensação fluida e refrescante": [
     "Sapphire and turquoise waves with a fresh, flowing feel",
     "Ondas de zafiro y turquesa con una sensación fluida y refrescante"
-  ]
+  ],
+  "Preencha o campo {field}.": ["Fill in the {field} field.", "Completa el campo {field}."],
+  "Número de WhatsApp inválido. Use DDD + número (ex.: 11 99999-8888) ou +DDI para outros países.": ["Invalid WhatsApp number. Use area code + number (e.g. 11 99999-8888) or +country code for other countries.", "Número de WhatsApp inválido. Usa código de área + número (ej.: 11 99999-8888) o +código de país para otros países."],
+  "{field}: usuário inválido. Use só letras, números, '.', '_' ou '-' (ex.: @seuperfil).": ["{field}: invalid username. Use only letters, numbers, '.', '_' or '-' (e.g. @yourprofile).", "{field}: usuario inválido. Usa solo letras, números, '.', '_' o '-' (ej.: @tuperfil)."],
+  "{field}: esse link não é dessa rede. Cole o link do seu perfil ou só o @usuário.": ["{field}: this link is not from that network. Paste your profile link or just the @username.", "{field}: este enlace no es de esa red. Pega el enlace de tu perfil o solo el @usuario."],
+  "{field}: endereço inválido. Ex.: seusite.com.br ou https://seusite.com.br/oferta": ["{field}: invalid address. E.g. yoursite.com or https://yoursite.com/offer", "{field}: dirección inválida. Ej.: tusitio.com o https://tusitio.com/oferta"],
+  "Será salvo como:": ["Will be saved as:", "Se guardará como:"],
+  "seusite.com.br/oferta": ["yoursite.com/offer", "tusitio.com/oferta"],
+  "DDD + número, ex.: 11 99999-8888": ["Number with area code, e.g. +1 415 555 0100", "Número con código de área, ej.: +34 600 000 000"],
+  "@seuperfil ou link do perfil": ["@yourprofile or profile link", "@tuperfil o enlace del perfil"],
+  "Sugerimos um endereço a partir do seu Instagram conectado ou do seu e-mail. Você pode trocar.": ["We suggest an address from your connected Instagram or your email. You can change it.", "Sugerimos una dirección a partir de tu Instagram conectado o de tu email. Puedes cambiarla."],
 };
 const translators = {
   pt: (source: string) => source === "Taxa de Conversão (CTR)" ? "Taxa de cliques (CTR)" : source,
