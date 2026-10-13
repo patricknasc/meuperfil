@@ -372,6 +372,7 @@ enum ProfileTheme {
   EMERALD_CLEAN
   MIDNIGHT_VELVET
   OCEAN_GRADIENT
+  CUSTOM
 }
 
 enum ProfileBlockType {
@@ -388,6 +389,7 @@ model Profile {
   bio             String?
   avatarUrl       String?
   theme           ProfileTheme @default(MODERN_DARK)
+  themeSettings   Json?
   isPublished     Boolean      @default(true)
   customDomain    String?      @unique
   seoTitle        String?

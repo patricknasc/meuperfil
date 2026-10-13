@@ -5,7 +5,16 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { profileTranslator } from "@/lib/i18n/profiles";
-import { THEMES, getThemeConfig, type ProfileTheme } from "@/lib/profiles/themes";
+import {
+  THEMES,
+  DEFAULT_CUSTOM_THEME,
+  customThemeStyle,
+  getThemeConfig,
+  parseCustomTheme,
+  type ButtonShape,
+  type CustomThemeSettings,
+  type ProfileTheme,
+} from "@/lib/profiles/themes";
 import type { ProfileAnalyticsSummary } from "@/lib/profiles/analytics";
 import { normalizeSocialLink, normalizeWebUrl, type LinkResult } from "@/lib/profiles/links";
 
@@ -38,6 +47,7 @@ interface ProfileData {
   bio: string | null;
   avatarUrl: string | null;
   theme: ProfileTheme;
+  themeSettings?: unknown;
   isPublished: boolean;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -63,6 +73,7 @@ export default function ProfileStudioPage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<ProfileTheme>("MODERN_DARK");
+  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(DEFAULT_CUSTOM_THEME);
   const [isPublished, setIsPublished] = useState(true);
   const [blocks, setBlocks] = useState<ProfileBlockItem[]>([]);
 
@@ -117,6 +128,7 @@ export default function ProfileStudioPage() {
         setBio(p.bio || "");
         setAvatarUrl(p.avatarUrl);
         setTheme(p.theme);
+        setCustomTheme(parseCustomTheme(p.themeSettings));
         setIsPublished(p.isPublished);
         setBlocks(p.blocks || []);
       })
@@ -152,6 +164,7 @@ export default function ProfileStudioPage() {
           bio: bio || null,
           avatarUrl,
           theme,
+          themeSettings: theme === "CUSTOM" ? customTheme : undefined,
           isPublished,
         }),
       });
@@ -923,7 +936,120 @@ export default function ProfileStudioPage() {
                       </div>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setTheme("CUSTOM")}
+                    className={`p-3 rounded-2xl border text-left transition flex flex-col gap-2 relative ${
+                      theme === "CUSTOM"
+                        ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-white"
+                        : "border-white/10 bg-zinc-950/70 text-zinc-400 hover:border-white/20"
+                    }`}
+                  >
+                    <div
+                      className="w-full h-14 rounded-xl border border-white/10 p-2 flex flex-col justify-between shadow-inner bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]"
+                      style={customThemeStyle(customTheme)}
+                    >
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-[var(--mp-btn)]" />
+                        <div className="w-8 h-1.5 rounded bg-[var(--mp-text)] opacity-40" />
+                      </div>
+                      <div className="w-full h-3 rounded bg-[var(--mp-btn)]" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{t("Personalizar")}</p>
+                      <p className="text-[10px] text-zinc-500 line-clamp-1">{t("Suas cores e formato dos botões")}</p>
+                    </div>
+                  </button>
                 </div>
+
+                {theme === "CUSTOM" && (
+                  <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(
+                        [
+                          ["background", t("Fundo")],
+                          ["text", t("Texto")],
+                          ["button", t("Botões")],
+                          ["buttonText", t("Texto dos botões")],
+                        ] as Array<[keyof CustomThemeSettings, string]>
+                      ).map(([key, label]) => (
+                        <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
+                          <span className="text-xs text-zinc-300">{label}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-[11px] font-mono text-zinc-500">{customTheme[key] as string}</span>
+                            <input
+                              type="color"
+                              value={customTheme[key] as string}
+                              onChange={(e) => setCustomTheme({ ...customTheme, [key]: e.target.value })}
+                              className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                            />
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
+                      <label className="flex items-center gap-2 text-xs text-zinc-300">
+                        <input
+                          type="checkbox"
+                          checked={customTheme.backgroundTo !== null}
+                          onChange={(e) =>
+                            setCustomTheme({
+                              ...customTheme,
+                              backgroundTo: e.target.checked ? DEFAULT_CUSTOM_THEME.backgroundTo : null,
+                            })
+                          }
+                        />
+                        {t("Fundo em degradê")}
+                      </label>
+                      {customTheme.backgroundTo !== null && (
+                        <span className="flex items-center gap-2">
+                          <span className="text-[11px] font-mono text-zinc-500">{customTheme.backgroundTo}</span>
+                          <input
+                            type="color"
+                            value={customTheme.backgroundTo}
+                            onChange={(e) => setCustomTheme({ ...customTheme, backgroundTo: e.target.value })}
+                            className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                          />
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-zinc-300 mb-2">{t("Formato dos botões")}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(
+                          [
+                            ["rounded", t("Arredondado"), "rounded-xl"],
+                            ["pill", t("Pílula"), "rounded-full"],
+                            ["square", t("Reto"), "rounded-sm"],
+                          ] as Array<[ButtonShape, string, string]>
+                        ).map(([shape, label, radius]) => (
+                          <button
+                            key={shape}
+                            type="button"
+                            onClick={() => setCustomTheme({ ...customTheme, buttonShape: shape })}
+                            className={`py-2 text-xs font-semibold border transition ${radius} ${
+                              customTheme.buttonShape === shape
+                                ? "border-accent bg-accent/20 text-white"
+                                : "border-white/10 text-zinc-400 hover:border-white/20"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setCustomTheme(DEFAULT_CUSTOM_THEME)}
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                    >
+                      {t("Restaurar cores padrão")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1062,7 +1188,10 @@ export default function ProfileStudioPage() {
               {/* Smartphone Screen Viewport */}
               <div
                 className={`w-full h-full rounded-[38px] overflow-y-auto ${themeConfig.classes.background} ${themeConfig.classes.container} flex flex-col justify-between p-5 pt-12 relative transition-all duration-300`}
-                style={{ scrollbarWidth: "none" }}
+                style={{
+                  scrollbarWidth: "none",
+                  ...(theme === "CUSTOM" ? customThemeStyle(customTheme) : {}),
+                }}
               >
                 <div>
                   {/* Avatar + Identity */}
@@ -1131,7 +1260,7 @@ export default function ProfileStudioPage() {
                         return (
                           <div
                             key={block.id}
-                            className={`w-full p-3.5 rounded-2xl flex items-center gap-3 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover}`}
+                            className={`w-full p-3.5 ${themeConfig.classes.linkRadius ?? "rounded-2xl"} flex items-center gap-3 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover}`}
                           >
                             {block.imageUrl && (
                               <Image unoptimized width={32} height={32}

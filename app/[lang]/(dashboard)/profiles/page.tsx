@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { profileTranslator } from "@/lib/i18n/profiles";
 import { useParams, useRouter } from "next/navigation";
-import { THEMES, type ProfileTheme } from "@/lib/profiles/themes";
+import { THEMES, getThemeConfig, type ProfileTheme } from "@/lib/profiles/themes";
 
 interface ProfileItem {
   id: string;
@@ -177,7 +177,7 @@ export default function ProfilesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
           {profiles.map((profile) => {
-            const themeConfig = THEMES[profile.theme] || THEMES.MODERN_DARK;
+            const themeConfig = getThemeConfig(profile.theme);
             const ctr = profile._count.visits > 0
               ? ((profile._count.clicks / profile._count.visits) * 100).toFixed(1)
               : "0";
@@ -222,7 +222,7 @@ export default function ProfilesPage() {
                         {profile.displayName}
                       </h3>
                       <p className="text-xs text-zinc-400 truncate">
-                        {t("Tema:")} {themeConfig.name}
+                        {t("Tema:")} {t(themeConfig.name)}
                       </p>
                     </div>
                   </div>

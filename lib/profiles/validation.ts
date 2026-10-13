@@ -112,6 +112,17 @@ export const safeUrlSchema = z.preprocess(
     .refine(isValidDestinationUrl, "A URL deve começar com http:// ou https://")
 );
 
+const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i, "Cor inválida");
+
+export const customThemeSchema = z.object({
+  background: hexColor,
+  backgroundTo: hexColor.nullable(),
+  text: hexColor,
+  button: hexColor,
+  buttonText: hexColor,
+  buttonShape: z.enum(["rounded", "pill", "square"]),
+});
+
 export const createProfileSchema = z.object({
   handle: handleSchema,
   displayName: z.string().min(1, "Nome de exibição obrigatório").max(60),
@@ -129,6 +140,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(300).optional().nullable(),
   avatarUrl: z.string().max(2000).optional().nullable(),
   theme: z.nativeEnum(ProfileTheme).optional(),
+  themeSettings: customThemeSchema.nullable().optional(),
   isPublished: z.boolean().optional(),
   seoTitle: z.string().max(100).optional().nullable(),
   seoDescription: z.string().max(200).optional().nullable(),

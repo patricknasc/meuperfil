@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { getPublicProfileByHandle, recordProfileVisit } from "@/lib/profiles/service";
-import { getThemeConfig } from "@/lib/profiles/themes";
+import { getThemeConfig, themeStyle } from "@/lib/profiles/themes";
 import { ProfileBlockType } from "@/app/generated/prisma/client";
 import { hashClickIp } from "@/lib/tracking/server";
 
@@ -79,6 +79,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   return (
     <main
       className={`min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 ${themeConfig.classes.background} ${themeConfig.classes.container} selection:bg-indigo-500 selection:text-white transition-colors duration-300`}
+      style={themeStyle(profile.theme, profile.themeSettings)}
     >
       <div className="w-full max-w-md mx-auto flex flex-col items-center pt-8 sm:pt-14 pb-12">
         {/* Profile Avatar & Header */}
@@ -161,7 +162,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 href={`/p/c/${block.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-full p-4 rounded-2xl flex items-center gap-3.5 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} group`}
+                className={`w-full p-4 ${themeConfig.classes.linkRadius ?? "rounded-2xl"} flex items-center gap-3.5 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} group`}
               >
                 {block.imageUrl && (
                   <Image unoptimized width={40} height={40}

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/client";
 import { Prisma, ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
 import { canCreateProfileForWorkspace, canAddBlockToProfile } from "@/lib/billing/profile-limits";
 import { sanitizeHandle, isValidDestinationUrl } from "@/lib/profiles/validation";
+import type { CustomThemeSettings } from "@/lib/profiles/themes";
 
 export interface CreateProfileInput {
   handle: string;
@@ -20,6 +21,7 @@ export interface UpdateProfileInput {
   bio?: string | null;
   avatarUrl?: string | null;
   theme?: ProfileTheme;
+  themeSettings?: CustomThemeSettings | null;
   isPublished?: boolean;
   seoTitle?: string | null;
   seoDescription?: string | null;
@@ -175,6 +177,9 @@ export async function updateProfile(
   if (input.bio !== undefined) data.bio = input.bio;
   if (input.avatarUrl !== undefined) data.avatarUrl = input.avatarUrl;
   if (input.theme !== undefined) data.theme = input.theme;
+  if (input.themeSettings !== undefined) {
+    data.themeSettings = input.themeSettings === null ? Prisma.DbNull : { ...input.themeSettings };
+  }
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
   if (input.seoTitle !== undefined) data.seoTitle = input.seoTitle;
   if (input.seoDescription !== undefined) data.seoDescription = input.seoDescription;
