@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { publicTranslator } from "@/lib/i18n/public";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
@@ -37,10 +38,18 @@ export default async function LoginPage({
 
   async function sendMagicLink(formData: FormData) {
     "use server";
-    await signIn("resend", {
+    // redirect: false sends the email without following Auth.js' redirect to
+    // /api/auth/verify-request, which the client router cannot render; we go
+    // straight to the localized "check your email" state instead.
+    const resultUrl = await signIn("resend", {
       email: String(formData.get("email") ?? ""),
       redirectTo: callbackUrl,
+      redirect: false,
     });
+    if (new URL(resultUrl, "http://localhost").searchParams.has("error")) {
+      redirect(resultUrl);
+    }
+    redirect(`/${locale}/login?checkEmail=1`);
   }
 
   return (
@@ -59,8 +68,8 @@ export default async function LoginPage({
           </h1>
           <p className="text-muted text-sm leading-relaxed mt-2">
             {selectedTemplate
-              ? t("Sign in to use the {template} template.", { template: selectedTemplate.title })
-              : t("Sign in by email, then connect your Instagram professional account.")}
+              ? t("Sign in or create your account to use the {template} template.", { template: selectedTemplate.title })
+              : t("Sign in or create your account with your email. Then connect your Instagram professional account.")}
           </p>
         </div>
 
@@ -85,14 +94,14 @@ export default async function LoginPage({
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-foreground"
-                >{t("Work email")}</label>
+                >{t("Your email")}</label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   required
                   autoComplete="email"
-                  placeholder="you@company.com"
+                  placeholder={t("you@email.com")}
                   className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
                 />
               </div>
@@ -100,7 +109,7 @@ export default async function LoginPage({
               <button
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
-              >{t("Email me a magic link")}</button>
+              >{t("Email me a sign-in link")}</button>
             </form>
           )}
         </div>
