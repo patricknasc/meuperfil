@@ -174,5 +174,15 @@
       "eyebrow": "Ready when your next reel goes live",
       "title": "Start free and turn keyword comments into private replies"
     }
+  },
+  "login": {
+    "subtitle": "Sign in or create your account with your email. Then connect your Instagram professional account.",
+    "templateSubtitle": "Sign in or create your account to use the {template} template.",
+    "templateSelected": "Template selected",
+    "emailLabel": "Your email",
+    "emailPlaceholder": "you@email.com",
+    "submit": "Email me a sign-in link",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We sent you a secure sign-in link. Open it on this device to continue."
   }
 }
