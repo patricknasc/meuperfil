@@ -186,7 +186,7 @@ export default function NewCampaignPage() {
               value={selectedAccountId}
               onChange={handleAccountChange}
               includeAll={false}
-              label="Connected profile"
+              label={t("Connected profile")}
             />
           ) : (
             <div className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground">{t("Connect Instagram before launching a campaign")}</div>

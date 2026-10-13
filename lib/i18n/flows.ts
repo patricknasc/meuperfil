@@ -81,6 +81,7 @@ const entries: Record<string, [string, string, string]> = {
   "Product link request": ["Link de produto", "Product link request", "Enlace de producto"], "Price or availability reply": ["Preço ou disponibilidade", "Price or availability reply", "Precio o disponibilidad"],
   "Launch waitlist": ["Lista de espera", "Launch waitlist", "Lista de espera"], "Agency client campaign": ["Campanha de cliente", "Agency client campaign", "Campaña de cliente"],
   "Instagram Account": ["Conta do Instagram", "Instagram account", "Cuenta de Instagram"],
+  "Connected profile": ["Perfil conectado", "Connected profile", "Perfil conectado"],
   "Connect Instagram before launching a campaign": ["Conecte o Instagram antes de iniciar a campanha", "Connect Instagram before launching a campaign", "Conecta Instagram antes de iniciar la campaña"],
   "Campaign Post Or Reel": ["Publicação ou Reel", "Campaign post or Reel", "Publicación o Reel"],
   "Choose which Instagram post or reel should trigger the campaign.": ["Escolha a publicação que acionará a campanha.", "Choose the post that will trigger the campaign.", "Elige la publicación que activará la campaña."],
