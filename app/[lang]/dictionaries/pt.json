@@ -174,5 +174,15 @@
       "eyebrow": "Pronto quando seu próximo reel for ao ar",
       "title": "Comece grátis e transforme comentários com palavras-chave em respostas privadas"
     }
+  },
+  "login": {
+    "subtitle": "Entre ou crie sua conta com seu e-mail. Depois, conecte seu Instagram profissional.",
+    "templateSubtitle": "Entre ou crie sua conta para usar o modelo {template}.",
+    "templateSelected": "Modelo selecionado",
+    "emailLabel": "Seu e-mail",
+    "emailPlaceholder": "voce@email.com",
+    "submit": "Enviar link de acesso",
+    "checkEmailTitle": "Confira seu e-mail",
+    "checkEmailBody": "Enviamos um link seguro de acesso. Abra-o neste dispositivo para continuar."
   }
 }

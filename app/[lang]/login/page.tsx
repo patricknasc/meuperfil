@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
 import LanguageSwitcher from "@/components/language-switcher";
-import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
+import { hasLocale, defaultLocale, getDictionary, type Locale } from "../dictionaries";
 
 export const metadata = {
   title: "Login - MeuPerfil",
@@ -22,6 +22,7 @@ export default async function LoginPage({
 }) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const t = (await getDictionary(locale)).login;
   const sParams = await searchParams;
   const checkEmail = sParams.checkEmail === "1";
   const selectedTemplate = getCampaignTemplate(sParams.template);
@@ -62,8 +63,8 @@ export default async function LoginPage({
           </h1>
           <p className="text-muted text-sm leading-relaxed mt-2">
             {selectedTemplate
-              ? `Sign in to use the ${selectedTemplate.title} template.`
-              : "Sign in by email, then connect your Instagram professional account."}
+              ? t.templateSubtitle.replace("{template}", selectedTemplate.title)
+              : t.subtitle}
           </p>
         </div>
 
@@ -71,7 +72,7 @@ export default async function LoginPage({
           {selectedTemplate && !checkEmail && (
             <div className="mb-5 border border-cyan-200/20 bg-cyan-300/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">
-                Template selected
+                {t.templateSelected}
               </p>
               <p className="mt-2 text-sm font-semibold text-white">
                 {selectedTemplate.title}
@@ -81,11 +82,8 @@ export default async function LoginPage({
 
           {checkEmail ? (
             <div className="text-center py-4">
-              <h2 className="text-lg font-semibold mb-2">Check your email</h2>
-              <p className="text-sm text-muted">
-                We sent you a secure sign-in link. Open it on this device to
-                continue.
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t.checkEmailTitle}</h2>
+              <p className="text-sm text-muted">{t.checkEmailBody}</p>
             </div>
           ) : (
             <form action={sendMagicLink} className="space-y-5">
@@ -94,7 +92,7 @@ export default async function LoginPage({
                   htmlFor="email"
                   className="block text-sm font-medium text-foreground"
                 >
-                  Work email
+                  {t.emailLabel}
                 </label>
                 <input
                   id="email"
@@ -102,7 +100,7 @@ export default async function LoginPage({
                   type="email"
                   required
                   autoComplete="email"
-                  placeholder="you@company.com"
+                  placeholder={t.emailPlaceholder}
                   className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
                 />
               </div>
@@ -111,7 +109,7 @@ export default async function LoginPage({
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
               >
-                Email me a magic link
+                {t.submit}
               </button>
             </form>
           )}
