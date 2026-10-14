@@ -90,6 +90,8 @@ export default function ProfileStudioPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [utmSource, setUtmSource] = useState("instagram");
+  const [utmCampaign, setUtmCampaign] = useState("");
 
   // New Block Modal
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
@@ -502,6 +504,15 @@ export default function ProfileStudioPage() {
   }
 
   const themeConfig = getThemeConfig(theme);
+  const utmLink = (() => {
+    const params = new URLSearchParams();
+    const slug = (v: string) => v.trim().toLowerCase().replace(/\s+/g, "-");
+    if (utmSource.trim()) params.set("utm_source", slug(utmSource));
+    if (utmCampaign.trim()) params.set("utm_campaign", slug(utmCampaign));
+    const query = params.toString();
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://meuperfil.me";
+    return `${origin}/${handle}${query ? `?${query}` : ""}`;
+  })();
   const previewIconStyle: IconStyle = theme === "CUSTOM" ? customTheme.iconStyle : themeConfig.iconStyle ?? "theme";
 
   return (
@@ -1247,6 +1258,91 @@ export default function ProfileStudioPage() {
                 </div>
               </div>
 
+              {/* Audience breakdowns */}
+              {analytics?.breakdowns && (
+                <div className="glass rounded-2xl p-6 space-y-5">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white">{t("Quem visitou")}</h3>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {t("Últimos {days} dias. Dados anônimos: não identificam a pessoa.").replace("{days}", String(analytics.breakdowns.days))}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {(
+                      [
+                        [t("Origem"), analytics.breakdowns.sources],
+                        [t("Aparelho"), analytics.breakdowns.devices],
+                        [t("Navegador / app"), analytics.breakdowns.browsers],
+                        [t("País"), analytics.breakdowns.countries],
+                        [t("Cidade"), analytics.breakdowns.cities],
+                        [t("Campanhas (UTM)"), analytics.breakdowns.campaigns],
+                      ] as Array<[string, Array<{ label: string; count: number }>]>
+                    ).map(([title, items]) => {
+                      const max = Math.max(1, ...items.map((i) => i.count));
+                      return (
+                        <div key={title}>
+                          <p className="text-xs font-semibold text-zinc-300 mb-2">{title}</p>
+                          {items.length === 0 ? (
+                            <p className="text-[11px] text-zinc-600">{t("Sem dados ainda")}</p>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {items.map((item) => (
+                                <li key={item.label} className="text-xs">
+                                  <div className="flex justify-between gap-2 text-zinc-300">
+                                    <span className="truncate">{t(item.label)}</span>
+                                    <span className="font-mono text-zinc-400">{item.count}</span>
+                                  </div>
+                                  <div className="mt-0.5 h-1.5 rounded-full bg-white/5">
+                                    <div className="h-1.5 rounded-full bg-accent" style={{ width: `${(item.count / max) * 100}%` }} />
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* UTM link builder */}
+              <div className="glass rounded-2xl p-6 space-y-3">
+                <h3 className="text-sm font-semibold text-white">{t("Link com rastreamento de campanha")}</h3>
+                <p className="text-xs text-zinc-500">
+                  {t("Use um link diferente em cada lugar (bio do Instagram, post, anúncio) para saber de onde vieram as visitas.")}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    value={utmSource}
+                    onChange={(e) => setUtmSource(e.target.value)}
+                    placeholder={t("Origem, ex.: instagram")}
+                    className="rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                  />
+                  <input
+                    value={utmCampaign}
+                    onChange={(e) => setUtmCampaign(e.target.value)}
+                    placeholder={t("Campanha, ex.: black-friday")}
+                    className="rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 min-w-0 truncate rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-[11px] text-zinc-300">
+                    {utmLink}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(utmLink);
+                      showToast(t("Link copiado!"));
+                    }}
+                    className="px-3 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold"
+                  >
+                    {t("Copiar")}
+                  </button>
+                </div>
+              </div>
+
               {/* Clicks by Block Table */}
               <div className="glass rounded-2xl p-6">
                 <h3 className="text-sm font-semibold text-white mb-4">{t("Cliques por Bloco")}</h3>
@@ -1263,6 +1359,15 @@ export default function ProfileStudioPage() {
                           <p className="text-sm font-medium text-white truncate">{b.title}</p>
                           {b.url && (
                             <p className="text-xs text-zinc-500 font-mono truncate">{b.url}</p>
+                          )}
+                          {b.channels && b.channels.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {b.channels.map((c) => (
+                                <span key={c.label} className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-zinc-300">
+                                  {t(c.label)}: <b className="text-emerald-400">{c.count}</b>
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </div>
                         <span className="text-sm font-bold text-emerald-400 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { getPublicProfileByHandle, recordProfileVisit } from "@/lib/profiles/service";
 import { getThemeConfig, themeIconStyle, themeStyle } from "@/lib/profiles/themes";
+import { geoFromHeaders, utmFromParams } from "@/lib/tracking/visitor";
 import { profileFontVariables } from "@/lib/profiles/fonts";
 import { getSocialPlatform } from "@/lib/profiles/social-platforms";
 import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
@@ -13,6 +14,7 @@ import { hashClickIp } from "@/lib/tracking/server";
 
 interface PageProps {
   params: Promise<{ lang: string; handle: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -52,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function PublicProfilePage({ params }: PageProps) {
+export default async function PublicProfilePage({ params, searchParams }: PageProps) {
   const { lang, handle } = await params;
   const t = profileTranslator(lang);
   const profile = await getPublicProfileByHandle(handle);
@@ -75,6 +77,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
     ipHash,
     userAgent,
     referrer,
+    ...geoFromHeaders(headerList),
+    ...utmFromParams(await searchParams),
   });
 
   const themeConfig = getThemeConfig(profile.theme);

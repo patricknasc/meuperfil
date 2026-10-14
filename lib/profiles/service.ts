@@ -3,6 +3,7 @@ import { Prisma, ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/c
 import { canCreateProfileForWorkspace, canAddBlockToProfile } from "@/lib/billing/profile-limits";
 import { sanitizeHandle, isValidDestinationUrl } from "@/lib/profiles/validation";
 import { isSafeSocialUrl } from "@/lib/profiles/links";
+import type { VisitContext } from "@/lib/tracking/visitor";
 import type { CustomThemeSettings } from "@/lib/profiles/themes";
 
 export interface CreateProfileInput {
@@ -366,7 +367,7 @@ export async function recordProfileVisit(
     ipHash?: string | null;
     userAgent?: string | null;
     referrer?: string | null;
-  }
+  } & Partial<VisitContext>
 ) {
   try {
     return await prisma.profileVisit.create({
@@ -376,6 +377,12 @@ export async function recordProfileVisit(
         ipHash: meta.ipHash,
         userAgent: meta.userAgent,
         referrer: meta.referrer,
+        country: meta.country,
+        region: meta.region,
+        city: meta.city,
+        utmSource: meta.utmSource,
+        utmMedium: meta.utmMedium,
+        utmCampaign: meta.utmCampaign,
       },
     });
   } catch (error) {
@@ -393,7 +400,7 @@ export async function recordBlockClick(
     ipHash?: string | null;
     userAgent?: string | null;
     referrer?: string | null;
-  },
+  } & Partial<VisitContext>,
   /** Position of the clicked icon in a SOCIAL_LINKS block. */
   linkIndex?: number
 ) {
@@ -437,6 +444,12 @@ export async function recordBlockClick(
         ipHash: meta.ipHash,
         userAgent: meta.userAgent,
         referrer: meta.referrer,
+        country: meta.country,
+        region: meta.region,
+        city: meta.city,
+        utmSource: meta.utmSource,
+        utmMedium: meta.utmMedium,
+        utmCampaign: meta.utmCampaign,
       },
     });
   } catch (error) {
