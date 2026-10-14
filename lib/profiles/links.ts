@@ -14,7 +14,14 @@ export type LinkError =
   | "invalid_email"
   | "wrong_site";
 
-export type LinkResult = { ok: true; url: string } | { ok: false; error: LinkError };
+export type LinkResult =
+  | {
+      ok: true;
+      url: string;
+      /** Set when a WhatsApp number without "+" was assumed to be Brazilian. */
+      assumedBrazil?: boolean;
+    }
+  | { ok: false; error: LinkError };
 
 const HANDLE = /^[A-Za-z0-9._-]{1,60}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -66,11 +73,10 @@ export function normalizeWhatsApp(input: string): LinkResult {
 
   if (!/^\+?[\d\s().-]+$/.test(value)) return { ok: false, error: "invalid_phone" };
   let digits = value.replace(/\D/g, "");
-  if (!value.startsWith("+") && (digits.length === 10 || digits.length === 11)) {
-    digits = `55${digits}`;
-  }
+  const assumedBrazil = !value.startsWith("+") && (digits.length === 10 || digits.length === 11);
+  if (assumedBrazil) digits = `55${digits}`;
   if (digits.length < 10 || digits.length > 15) return { ok: false, error: "invalid_phone" };
-  return { ok: true, url: `https://wa.me/${digits}` };
+  return assumedBrazil ? { ok: true, url: `https://wa.me/${digits}`, assumedBrazil } : { ok: true, url: `https://wa.me/${digits}` };
 }
 
 export function normalizeEmail(input: string): LinkResult {
