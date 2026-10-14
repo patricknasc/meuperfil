@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { getPublicProfileByHandle, recordProfileVisit } from "@/lib/profiles/service";
-import { getThemeConfig, themeStyle } from "@/lib/profiles/themes";
+import { getThemeConfig, themeIconStyle, themeStyle } from "@/lib/profiles/themes";
+import { profileFontVariables } from "@/lib/profiles/fonts";
+import { getSocialPlatform } from "@/lib/profiles/social-platforms";
+import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
 import { ProfileBlockType } from "@/app/generated/prisma/client";
 import { hashClickIp } from "@/lib/tracking/server";
 
@@ -75,13 +78,14 @@ export default async function PublicProfilePage({ params }: PageProps) {
   });
 
   const themeConfig = getThemeConfig(profile.theme);
+  const iconStyle = themeIconStyle(profile.theme, profile.themeSettings);
 
   return (
     <main
-      className={`min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 ${themeConfig.classes.background} ${themeConfig.classes.container} selection:bg-indigo-500 selection:text-white transition-colors duration-300`}
+      className={`min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 ${themeConfig.classes.background} ${themeConfig.classes.container} selection:bg-indigo-500 selection:text-white transition-colors duration-300 ${profileFontVariables}`}
       style={themeStyle(profile.theme, profile.themeSettings)}
     >
-      <div className="w-full max-w-md mx-auto flex flex-col items-center pt-8 sm:pt-14 pb-12">
+      <div className="w-full max-w-md mx-auto flex flex-col items-center pt-8 sm:pt-14 pb-12 [zoom:var(--mp-zoom,1)]">
         {/* Profile Avatar & Header */}
         <div className="flex flex-col items-center text-center space-y-3 mb-8">
           {profile.avatarUrl ? (
@@ -139,18 +143,24 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
               return (
                 <div key={block.id} className="flex items-center justify-center gap-3 py-2 flex-wrap">
-                  {links.map((s, idx) => (
-                    <a
-                      key={idx}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold ${themeConfig.classes.socialIconBg} ${themeConfig.classes.socialIconText} shadow-md transition-all hover:scale-110 active:scale-95`}
-                      title={s.platform}
-                    >
-                      {s.platform.slice(0, 2).toUpperCase()}
-                    </a>
-                  ))}
+                  {links.map((s, idx) => {
+                    const button = socialButtonProps(s.platform, iconStyle, themeConfig);
+                    const label = getSocialPlatform(s.platform).label;
+                    return (
+                      <a
+                        key={idx}
+                        href={`/p/c/${block.id}?i=${idx}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={button.className}
+                        style={button.style}
+                        title={label}
+                        aria-label={label}
+                      >
+                        <SocialGlyph platform={s.platform} />
+                      </a>
+                    );
+                  })}
                 </div>
               );
             }

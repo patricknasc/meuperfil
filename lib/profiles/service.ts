@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/client";
 import { Prisma, ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
 import { canCreateProfileForWorkspace, canAddBlockToProfile } from "@/lib/billing/profile-limits";
 import { sanitizeHandle, isValidDestinationUrl } from "@/lib/profiles/validation";
+import { isSafeSocialUrl } from "@/lib/profiles/links";
 import type { CustomThemeSettings } from "@/lib/profiles/themes";
 
 export interface CreateProfileInput {
@@ -35,7 +36,7 @@ export interface CreateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: Prisma.InputJsonValue;
+  config?: Prisma.InputJsonValue | null;
 }
 
 export interface UpdateBlockInput {
@@ -45,7 +46,7 @@ export interface UpdateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: Prisma.InputJsonValue;
+  config?: Prisma.InputJsonValue | null;
 }
 
 /**
@@ -300,7 +301,7 @@ export async function updateBlock(
   if (input.imageUrl !== undefined) data.imageUrl = input.imageUrl;
   if (input.isActive !== undefined) data.isActive = input.isActive;
   if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
-  if (input.config !== undefined) data.config = input.config;
+  if (input.config !== undefined) data.config = input.config === null ? Prisma.DbNull : input.config;
 
   return prisma.profileBlock.update({
     where: { id: blockId },
@@ -392,7 +393,9 @@ export async function recordBlockClick(
     ipHash?: string | null;
     userAgent?: string | null;
     referrer?: string | null;
-  }
+  },
+  /** Position of the clicked icon in a SOCIAL_LINKS block. */
+  linkIndex?: number
 ) {
   const block = await prisma.profileBlock.findUnique({
     where: { id: blockId },
@@ -407,11 +410,20 @@ export async function recordBlockClick(
     },
   });
 
-  if (!block || !block.url || !block.isActive || !block.profile.isPublished) {
+  if (!block || !block.isActive || !block.profile.isPublished) {
     return null;
   }
 
-  if (!isValidDestinationUrl(block.url)) {
+  let destinationUrl: string | null = null;
+  if (block.type === ProfileBlockType.SOCIAL_LINKS) {
+    const links = (block.config as { links?: Array<{ url?: unknown }> } | null)?.links ?? [];
+    const url = links[linkIndex ?? 0]?.url;
+    if (typeof url === "string" && isSafeSocialUrl(url)) destinationUrl = url;
+  } else if (block.url && isValidDestinationUrl(block.url)) {
+    destinationUrl = block.url;
+  }
+
+  if (!destinationUrl) {
     return null;
   }
 
@@ -421,7 +433,7 @@ export async function recordBlockClick(
         profileId: block.profile.id,
         blockId: block.id,
         workspaceId: block.profile.workspaceId,
-        destinationUrl: block.url,
+        destinationUrl,
         ipHash: meta.ipHash,
         userAgent: meta.userAgent,
         referrer: meta.referrer,
@@ -431,5 +443,5 @@ export async function recordBlockClick(
     console.error("Error recording block click:", error);
   }
 
-  return block.url;
+  return destinationUrl;
 }

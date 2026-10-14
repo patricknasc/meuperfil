@@ -1,3 +1,5 @@
+import { getSocialPlatform } from "./social-platforms";
+
 /**
  * Normalizes what people type into link fields so they do not need to know
  * URL syntax: "www.site.com" becomes "https://www.site.com", "@user" becomes
@@ -9,37 +11,13 @@ export type LinkError =
   | "invalid_url"
   | "invalid_handle"
   | "invalid_phone"
+  | "invalid_email"
   | "wrong_site";
 
 export type LinkResult = { ok: true; url: string } | { ok: false; error: LinkError };
 
-export type SocialPlatform =
-  | "instagram"
-  | "whatsapp"
-  | "tiktok"
-  | "youtube"
-  | "twitter"
-  | "linkedin"
-  | "github"
-  | "facebook"
-  | "telegram"
-  | "spotify"
-  | "website";
-
 const HANDLE = /^[A-Za-z0-9._-]{1,60}$/;
-
-/** Host suffixes accepted when the person pastes a full profile URL. */
-const PROFILE_SITES: Partial<Record<SocialPlatform, { hosts: string[]; build: (handle: string) => string }>> = {
-  instagram: { hosts: ["instagram.com"], build: (h) => `https://instagram.com/${h}` },
-  tiktok: { hosts: ["tiktok.com"], build: (h) => `https://www.tiktok.com/@${h}` },
-  youtube: { hosts: ["youtube.com", "youtu.be"], build: (h) => `https://www.youtube.com/@${h}` },
-  twitter: { hosts: ["x.com", "twitter.com"], build: (h) => `https://x.com/${h}` },
-  linkedin: { hosts: ["linkedin.com"], build: (h) => `https://www.linkedin.com/in/${h}` },
-  github: { hosts: ["github.com"], build: (h) => `https://github.com/${h}` },
-  facebook: { hosts: ["facebook.com", "fb.com"], build: (h) => `https://facebook.com/${h}` },
-  telegram: { hosts: ["t.me", "telegram.me"], build: (h) => `https://t.me/${h}` },
-  spotify: { hosts: ["spotify.com"], build: () => "" },
-};
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function matchesHost(hostname: string, hosts: string[]) {
   const host = hostname.toLowerCase().replace(/^www\./, "");
@@ -95,24 +73,46 @@ export function normalizeWhatsApp(input: string): LinkResult {
   return { ok: true, url: `https://wa.me/${digits}` };
 }
 
-export function normalizeSocialLink(platform: string, input: string): LinkResult {
+export function normalizeEmail(input: string): LinkResult {
+  const value = input.trim().replace(/^mailto:/i, "");
+  if (!value) return { ok: false, error: "empty" };
+  return EMAIL.test(value) ? { ok: true, url: `mailto:${value}` } : { ok: false, error: "invalid_email" };
+}
+
+export function normalizeSocialLink(platformId: string, input: string): LinkResult {
   const value = input.trim();
   if (!value) return { ok: false, error: "empty" };
 
-  if (platform === "whatsapp") return normalizeWhatsApp(value);
-  if (platform === "website") return normalizeWebUrl(value);
+  const platform = getSocialPlatform(platformId);
+  switch (platform.kind) {
+    case "phone":
+      return normalizeWhatsApp(value);
+    case "email":
+      return normalizeEmail(value);
+    case "web":
+      return normalizeWebUrl(value);
+  }
 
-  const site = PROFILE_SITES[platform as SocialPlatform];
-  if (!site) return normalizeWebUrl(value);
-
-  const looksLikeUrl = /^[a-z][a-z0-9+.-]*:/i.test(value) || /^(www\.)?[a-z0-9-]+\.[a-z]{2,}\//i.test(value);
-  if (looksLikeUrl || platform === "spotify") {
+  const hosts = platform.hosts ?? [];
+  const looksLikeUrl = /^[a-z][a-z0-9+.-]*:/i.test(value) || /^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}\//i.test(value);
+  if (looksLikeUrl || platform.kind === "site-url" || !platform.build) {
     const web = normalizeWebUrl(value);
     if (!web.ok) return web;
-    return matchesHost(new URL(web.url).hostname, site.hosts) ? web : { ok: false, error: "wrong_site" };
+    return matchesHost(new URL(web.url).hostname, hosts) ? web : { ok: false, error: "wrong_site" };
   }
 
   const handle = value.replace(/^@+/, "");
   if (!HANDLE.test(handle)) return { ok: false, error: "invalid_handle" };
-  return { ok: true, url: site.build(handle) };
+  return { ok: true, url: platform.build(handle) };
+}
+
+/** Safe destinations for social links: http(s) or a single mailto address. */
+export function isSafeSocialUrl(url: string): boolean {
+  if (/^mailto:/i.test(url)) return EMAIL.test(url.slice(7));
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
 }

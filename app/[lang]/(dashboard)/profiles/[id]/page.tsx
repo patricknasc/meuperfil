@@ -11,12 +11,20 @@ import {
   customThemeStyle,
   getThemeConfig,
   parseCustomTheme,
+  PROFILE_FONTS,
   type ButtonShape,
   type CustomThemeSettings,
+  type IconStyle,
+  type ProfileFont,
+  type TextSize,
   type ProfileTheme,
 } from "@/lib/profiles/themes";
 import type { ProfileAnalyticsSummary } from "@/lib/profiles/analytics";
 import { normalizeSocialLink, normalizeWebUrl, type LinkResult } from "@/lib/profiles/links";
+import { SOCIAL_PLATFORMS, getSocialPlatform } from "@/lib/profiles/social-platforms";
+import { profileFontVariables } from "@/lib/profiles/fonts";
+import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
+import { ModalScrollLock } from "@/components/modal-scroll-lock";
 
 export const ProfileBlockType = {
   LINK: "LINK",
@@ -214,7 +222,31 @@ export default function ProfileStudioPage() {
   }
 
   function socialLabel(platform: string) {
-    return platform === "whatsapp" ? "WhatsApp" : platform === "instagram" ? "Instagram" : platform;
+    return t(getSocialPlatform(platform).label);
+  }
+
+  function socialPlaceholder(platform: string) {
+    switch (getSocialPlatform(platform).kind) {
+      case "phone":
+        return t("DDD + número, ex.: 11 99999-8888");
+      case "email":
+        return t("contato@seusite.com.br");
+      case "web":
+        return t("seusite.com.br");
+      case "site-url":
+        return t("Cole o link completo");
+      default:
+        return t("@seuperfil ou link do perfil");
+    }
+  }
+
+  function openAddBlockModal() {
+    setModalError(null);
+    setSocialLinks([
+      { platform: "instagram", url: "" },
+      { platform: "whatsapp", url: "" },
+    ]);
+    setShowAddBlockModal(true);
   }
 
   function linkErrorText(result: LinkResult, field: string): string {
@@ -226,6 +258,8 @@ export default function ProfileStudioPage() {
         return t("Número de WhatsApp inválido. Use DDD + número (ex.: 11 99999-8888) ou +DDI para outros países.");
       case "invalid_handle":
         return t("{field}: usuário inválido. Use só letras, números, '.', '_' ou '-' (ex.: @seuperfil).").replace("{field}", field);
+      case "invalid_email":
+        return t("{field}: e-mail inválido. Ex.: contato@seusite.com.br").replace("{field}", field);
       case "wrong_site":
         return t("{field}: esse link não é dessa rede. Cole o link do seu perfil ou só o @usuário.").replace("{field}", field);
       default:
@@ -468,6 +502,7 @@ export default function ProfileStudioPage() {
   }
 
   const themeConfig = getThemeConfig(theme);
+  const previewIconStyle: IconStyle = theme === "CUSTOM" ? customTheme.iconStyle : themeConfig.iconStyle ?? "theme";
 
   return (
     <div className="space-y-6">
@@ -629,7 +664,7 @@ export default function ProfileStudioPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowAddBlockModal(true)}
+                  onClick={openAddBlockModal}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent/15 hover:bg-accent/25 text-accent border border-accent/30 font-semibold text-xs transition"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -646,7 +681,7 @@ export default function ProfileStudioPage() {
                     {t("Clique em &quot;Adicionar Bloco&quot; acima para incluir seu primeiro link com destino rastreado.")}
                   </p>
                   <button
-                    onClick={() => setShowAddBlockModal(true)}
+                    onClick={openAddBlockModal}
                     className="px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold transition"
                   >
                     {t("Adicionar Bloco Agora")}
@@ -1041,6 +1076,83 @@ export default function ProfileStudioPage() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="block text-xs text-zinc-300 mb-2">{t("Fonte")}</span>
+                        <select
+                          value={customTheme.font}
+                          onChange={(e) => setCustomTheme({ ...customTheme, font: e.target.value as ProfileFont })}
+                          className={`w-full rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none ${profileFontVariables}`}
+                          style={{ fontFamily: PROFILE_FONTS[customTheme.font].family }}
+                        >
+                          {(Object.keys(PROFILE_FONTS) as ProfileFont[]).map((key) => (
+                            <option key={key} value={key}>{t(PROFILE_FONTS[key].label)}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <div>
+                        <p className="text-xs text-zinc-300 mb-2">{t("Tamanho do texto")}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(
+                            [
+                              ["sm", t("Pequeno"), "text-[11px]"],
+                              ["md", t("Médio"), "text-xs"],
+                              ["lg", t("Grande"), "text-sm"],
+                            ] as Array<[TextSize, string, string]>
+                          ).map(([size, label, cls]) => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => setCustomTheme({ ...customTheme, textSize: size })}
+                              className={`py-2 rounded-xl font-semibold border transition ${cls} ${
+                                customTheme.textSize === size
+                                  ? "border-accent bg-accent/20 text-white"
+                                  : "border-white/10 text-zinc-400 hover:border-white/20"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-zinc-300 mb-2">{t("Ícones das redes")}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {(
+                          [
+                            ["brand", t("Cor da marca")],
+                            ["theme", t("Cor dos botões")],
+                            ["outline", t("Contorno")],
+                            ["plain", t("Só o ícone")],
+                          ] as Array<[IconStyle, string]>
+                        ).map(([style, label]) => {
+                          const sample = socialButtonProps("instagram", style, themeConfig);
+                          return (
+                            <button
+                              key={style}
+                              type="button"
+                              onClick={() => setCustomTheme({ ...customTheme, iconStyle: style })}
+                              className={`flex flex-col items-center gap-1.5 py-2 rounded-xl border transition ${
+                                customTheme.iconStyle === style
+                                  ? "border-accent bg-accent/20 text-white"
+                                  : "border-white/10 text-zinc-400 hover:border-white/20"
+                              }`}
+                            >
+                              <span
+                                className={`${sample.className.replace("w-11 h-11", "w-8 h-8")} bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)] text-[var(--mp-text)]`}
+                                style={{ ...customThemeStyle(customTheme), ...sample.style }}
+                              >
+                                <SocialGlyph platform="instagram" className="w-4 h-4" />
+                              </span>
+                              <span className="text-[11px]">{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => setCustomTheme(DEFAULT_CUSTOM_THEME)}
@@ -1187,13 +1299,13 @@ export default function ProfileStudioPage() {
 
               {/* Smartphone Screen Viewport */}
               <div
-                className={`w-full h-full rounded-[38px] overflow-y-auto ${themeConfig.classes.background} ${themeConfig.classes.container} flex flex-col justify-between p-5 pt-12 relative transition-all duration-300`}
+                className={`w-full h-full rounded-[38px] overflow-y-auto ${themeConfig.classes.background} ${themeConfig.classes.container} flex flex-col justify-between p-5 pt-12 relative transition-all duration-300 ${profileFontVariables}`}
                 style={{
                   scrollbarWidth: "none",
                   ...(theme === "CUSTOM" ? customThemeStyle(customTheme) : {}),
                 }}
               >
-                <div>
+                <div className="[zoom:var(--mp-zoom,1)]">
                   {/* Avatar + Identity */}
                   <div className="flex flex-col items-center text-center space-y-2.5 mb-6">
                     {avatarUrl ? (
@@ -1245,14 +1357,19 @@ export default function ProfileStudioPage() {
                           const links = block.config.links as Array<{ platform: string; url: string }>;
                           return (
                             <div key={block.id} className="flex items-center justify-center gap-2 py-2 flex-wrap">
-                              {links.map((s, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${themeConfig.classes.socialIconBg} ${themeConfig.classes.socialIconText} shadow-md transition`}
-                                >
-                                  {s.platform.slice(0, 2).toUpperCase()}
-                                </div>
-                              ))}
+                              {links.map((s, idx) => {
+                                const button = socialButtonProps(s.platform, previewIconStyle, themeConfig);
+                                return (
+                                  <div
+                                    key={idx}
+                                    title={getSocialPlatform(s.platform).label}
+                                    className={button.className.replace("w-11 h-11", "w-9 h-9")}
+                                    style={button.style}
+                                  >
+                                    <SocialGlyph platform={s.platform} className="w-4 h-4" />
+                                  </div>
+                                );
+                              })}
                             </div>
                           );
                         }
@@ -1299,7 +1416,8 @@ export default function ProfileStudioPage() {
 
       {/* MODAL: ADD BLOCK */}
       {showAddBlockModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm animate-fade-in">
+          <ModalScrollLock />
           <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
@@ -1427,31 +1545,60 @@ export default function ProfileStudioPage() {
                   {socialLinks.map((s, idx) => (
                     <div key={idx}>
                       <div className="flex items-center gap-2">
-                        <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
-                          {socialLabel(s.platform)}
+                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
+                          <SocialGlyph platform={s.platform} className="w-4 h-4" />
                         </span>
+                        <select
+                          value={s.platform}
+                          onChange={(e) => {
+                            const updated = [...socialLinks];
+                            updated[idx] = { ...updated[idx], platform: e.target.value };
+                            setSocialLinks(updated);
+                          }}
+                          aria-label={t("Rede")}
+                          className="w-32 shrink-0 rounded-xl bg-zinc-950 border border-white/10 px-2 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                        >
+                          {SOCIAL_PLATFORMS.map((p) => (
+                            <option key={p.id} value={p.id}>{t(p.label)}</option>
+                          ))}
+                        </select>
                         <input
                           type="text"
-                          inputMode={s.platform === "whatsapp" ? "tel" : "url"}
+                          inputMode={getSocialPlatform(s.platform).kind === "phone" ? "tel" : getSocialPlatform(s.platform).kind === "email" ? "email" : "url"}
                           autoCapitalize="none"
                           spellCheck={false}
-                          placeholder={
-                            s.platform === "whatsapp"
-                              ? t("DDD + número, ex.: 11 99999-8888")
-                              : t("@seuperfil ou link do perfil")
-                          }
+                          placeholder={socialPlaceholder(s.platform)}
                           value={s.url}
                           onChange={(e) => {
                             const updated = [...socialLinks];
                             updated[idx] = { ...updated[idx], url: e.target.value };
                             setSocialLinks(updated);
                           }}
-                          className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setSocialLinks(socialLinks.filter((_, i) => i !== idx))}
+                          aria-label={t("Remover")}
+                          className="p-1.5 text-zinc-500 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <div className="pl-[6.5rem]">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
+                      <div className="pl-10">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
                     </div>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const used = new Set(socialLinks.map((l) => l.platform));
+                      const next = SOCIAL_PLATFORMS.find((p) => !used.has(p.id))?.id ?? "website";
+                      setSocialLinks([...socialLinks, { platform: next, url: "" }]);
+                    }}
+                    className="w-full rounded-xl border border-dashed border-white/15 py-2 text-xs font-semibold text-zinc-400 hover:border-accent hover:text-white transition"
+                  >
+                    + {t("Adicionar rede ou canal")}
+                  </button>
                 </div>
               )}
 
@@ -1485,7 +1632,8 @@ export default function ProfileStudioPage() {
 
       {/* MODAL: EDIT BLOCK */}
       {editingBlock && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm animate-fade-in">
+          <ModalScrollLock />
           <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
@@ -1569,31 +1717,60 @@ export default function ProfileStudioPage() {
                   {socialLinks.map((s, idx) => (
                     <div key={idx}>
                       <div className="flex items-center gap-2">
-                        <span className="w-24 text-xs font-semibold uppercase font-mono text-zinc-400">
-                          {socialLabel(s.platform)}
+                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
+                          <SocialGlyph platform={s.platform} className="w-4 h-4" />
                         </span>
+                        <select
+                          value={s.platform}
+                          onChange={(e) => {
+                            const updated = [...socialLinks];
+                            updated[idx] = { ...updated[idx], platform: e.target.value };
+                            setSocialLinks(updated);
+                          }}
+                          aria-label={t("Rede")}
+                          className="w-32 shrink-0 rounded-xl bg-zinc-950 border border-white/10 px-2 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                        >
+                          {SOCIAL_PLATFORMS.map((p) => (
+                            <option key={p.id} value={p.id}>{t(p.label)}</option>
+                          ))}
+                        </select>
                         <input
                           type="text"
-                          inputMode={s.platform === "whatsapp" ? "tel" : "url"}
+                          inputMode={getSocialPlatform(s.platform).kind === "phone" ? "tel" : getSocialPlatform(s.platform).kind === "email" ? "email" : "url"}
                           autoCapitalize="none"
                           spellCheck={false}
-                          placeholder={
-                            s.platform === "whatsapp"
-                              ? t("DDD + número, ex.: 11 99999-8888")
-                              : t("@seuperfil ou link do perfil")
-                          }
+                          placeholder={socialPlaceholder(s.platform)}
                           value={s.url}
                           onChange={(e) => {
                             const updated = [...socialLinks];
                             updated[idx] = { ...updated[idx], url: e.target.value };
                             setSocialLinks(updated);
                           }}
-                          className="flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setSocialLinks(socialLinks.filter((_, i) => i !== idx))}
+                          aria-label={t("Remover")}
+                          className="p-1.5 text-zinc-500 hover:text-red-400"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <div className="pl-[6.5rem]">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
+                      <div className="pl-10">{linkPreview(normalizeSocialLink(s.platform, s.url), s.url)}</div>
                     </div>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const used = new Set(socialLinks.map((l) => l.platform));
+                      const next = SOCIAL_PLATFORMS.find((p) => !used.has(p.id))?.id ?? "website";
+                      setSocialLinks([...socialLinks, { platform: next, url: "" }]);
+                    }}
+                    className="w-full rounded-xl border border-dashed border-white/15 py-2 text-xs font-semibold text-zinc-400 hover:border-accent hover:text-white transition"
+                  >
+                    + {t("Adicionar rede ou canal")}
+                  </button>
                 </div>
               )}
 

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { profileTranslator } from "@/lib/i18n/profiles";
 import { useParams, useRouter } from "next/navigation";
 import { THEMES, getThemeConfig, type ProfileTheme } from "@/lib/profiles/themes";
+import { ModalScrollLock } from "@/components/modal-scroll-lock";
 
 interface ProfileItem {
   id: string;
@@ -284,7 +285,8 @@ export default function ProfilesPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm animate-fade-in">
+          <ModalScrollLock />
           <div className="flex min-h-full items-center justify-center p-4">
           <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-6 border border-white/10 shadow-2xl">
             <div className="flex items-center justify-between">
