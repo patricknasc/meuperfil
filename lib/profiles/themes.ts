@@ -34,7 +34,11 @@ export interface ThemeConfig {
     /** Corner style for link cards; defaults to rounded-2xl. */
     linkRadius?: string;
   };
+  /** How social icons are drawn; defaults to "theme". */
+  iconStyle?: IconStyle;
 }
+
+export type IconStyle = "theme" | "brand" | "outline" | "plain";
 
 export const THEMES: Record<Exclude<ProfileTheme, "CUSTOM">, ThemeConfig> = {
   MODERN_DARK: {
@@ -63,6 +67,7 @@ export const THEMES: Record<Exclude<ProfileTheme, "CUSTOM">, ThemeConfig> = {
   },
   NEON_CYAN: {
     id: "NEON_CYAN",
+    iconStyle: "outline",
     name: "Neon Cyan",
     description: "Cyberpunk moderno com bordas ciano brilhantes e alto contraste",
     previewBg: "bg-black",
@@ -111,6 +116,7 @@ export const THEMES: Record<Exclude<ProfileTheme, "CUSTOM">, ThemeConfig> = {
   },
   MINIMAL_LIGHT: {
     id: "MINIMAL_LIGHT",
+    iconStyle: "brand",
     name: "Minimal Light",
     description: "Estilo nórdico editorial limpo, claro e sofisticado",
     previewBg: "bg-zinc-100",
@@ -263,6 +269,20 @@ const CUSTOM_THEME: ThemeConfig = {
 };
 
 export type ButtonShape = "rounded" | "pill" | "square";
+export type TextSize = "sm" | "md" | "lg";
+
+export const PROFILE_FONTS = {
+  inter: { label: "Inter", family: "var(--mp-font-inter), system-ui, sans-serif" },
+  poppins: { label: "Poppins", family: "var(--mp-font-poppins), system-ui, sans-serif" },
+  montserrat: { label: "Montserrat", family: "var(--mp-font-montserrat), system-ui, sans-serif" },
+  space: { label: "Space Grotesk", family: "var(--mp-font-space), system-ui, sans-serif" },
+  playfair: { label: "Playfair Display", family: "var(--mp-font-playfair), Georgia, serif" },
+  lora: { label: "Lora", family: "var(--mp-font-lora), Georgia, serif" },
+  system: { label: "Sistema", family: "system-ui, -apple-system, 'Segoe UI', sans-serif" },
+} as const;
+export type ProfileFont = keyof typeof PROFILE_FONTS;
+
+const TEXT_ZOOM: Record<TextSize, string> = { sm: "0.92", md: "1", lg: "1.12" };
 
 export interface CustomThemeSettings {
   background: string;
@@ -272,6 +292,9 @@ export interface CustomThemeSettings {
   button: string;
   buttonText: string;
   buttonShape: ButtonShape;
+  font: ProfileFont;
+  textSize: TextSize;
+  iconStyle: IconStyle;
 }
 
 export const DEFAULT_CUSTOM_THEME: CustomThemeSettings = {
@@ -281,6 +304,9 @@ export const DEFAULT_CUSTOM_THEME: CustomThemeSettings = {
   button: "#ffffff",
   buttonText: "#0f172a",
   buttonShape: "rounded",
+  font: "inter",
+  textSize: "md",
+  iconStyle: "brand",
 };
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -299,6 +325,12 @@ export function parseCustomTheme(value: unknown): CustomThemeSettings {
     button: color("button"),
     buttonText: color("buttonText"),
     buttonShape: v.buttonShape === "pill" || v.buttonShape === "square" ? v.buttonShape : "rounded",
+    font: typeof v.font === "string" && v.font in PROFILE_FONTS ? (v.font as ProfileFont) : DEFAULT_CUSTOM_THEME.font,
+    textSize: v.textSize === "sm" || v.textSize === "lg" ? v.textSize : "md",
+    iconStyle:
+      v.iconStyle === "theme" || v.iconStyle === "outline" || v.iconStyle === "plain" || v.iconStyle === "brand"
+        ? v.iconStyle
+        : DEFAULT_CUSTOM_THEME.iconStyle,
   };
 }
 
@@ -313,11 +345,18 @@ export function customThemeStyle(settings: CustomThemeSettings): Record<string, 
     "--mp-btn": settings.button,
     "--mp-btn-text": settings.buttonText,
     "--mp-radius": RADIUS[settings.buttonShape],
+    "--mp-zoom": TEXT_ZOOM[settings.textSize],
+    fontFamily: PROFILE_FONTS[settings.font].family,
   };
 }
 
 export function themeStyle(themeName: string | null | undefined, settings: unknown): Record<string, string> | undefined {
   return themeName === "CUSTOM" ? customThemeStyle(parseCustomTheme(settings)) : undefined;
+}
+
+export function themeIconStyle(themeName: string | null | undefined, settings: unknown): IconStyle {
+  if (themeName === "CUSTOM") return parseCustomTheme(settings).iconStyle;
+  return getThemeConfig(themeName).iconStyle ?? "theme";
 }
 
 export function getThemeConfig(themeName: ProfileTheme | string | null | undefined): ThemeConfig {

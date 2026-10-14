@@ -434,6 +434,12 @@ model ProfileVisit {
   ipHash      String?
   userAgent   String?
   referrer    String?
+  country     String?
+  region      String?
+  city        String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
   createdAt   DateTime @default(now())
 
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -453,6 +459,12 @@ model ProfileBlockClick {
   ipHash         String?
   userAgent      String?
   referrer       String?
+  country        String?
+  region         String?
+  city           String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
   createdAt      DateTime @default(now())
 
   profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)

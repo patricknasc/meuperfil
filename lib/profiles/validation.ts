@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
-import { normalizeWebUrl } from "./links";
+import { isSafeSocialUrl, normalizeWebUrl } from "./links";
+import { SOCIAL_PLATFORM_IDS } from "./social-platforms";
 
 /**
  * System reserved handles that cannot be registered by users
@@ -121,6 +122,9 @@ export const customThemeSchema = z.object({
   button: hexColor,
   buttonText: hexColor,
   buttonShape: z.enum(["rounded", "pill", "square"]),
+  font: z.enum(["inter", "poppins", "montserrat", "space", "playfair", "lora", "system"]).default("inter"),
+  textSize: z.enum(["sm", "md", "lg"]).default("md"),
+  iconStyle: z.enum(["theme", "brand", "outline", "plain"]).default("brand"),
 });
 
 export const createProfileSchema = z.object({
@@ -147,23 +151,16 @@ export const updateProfileSchema = z.object({
 });
 
 export const socialLinkItemSchema = z.object({
-  platform: z.enum([
-    "instagram",
-    "whatsapp",
-    "tiktok",
-    "youtube",
-    "twitter",
-    "linkedin",
-    "github",
-    "facebook",
-    "email",
-    "telegram",
-    "spotify",
-    "website",
-  ]),
-  url: safeUrlSchema,
+  platform: z.enum(SOCIAL_PLATFORM_IDS),
+  url: z.string().max(2000).refine(isSafeSocialUrl, "Link de rede social inválido"),
   label: z.string().max(50).optional(),
 });
+
+/** Block config: social link lists are validated, other blocks keep no config. */
+const blockConfigSchema = z
+  .object({ links: z.array(socialLinkItemSchema).min(1, "Adicione ao menos um link de rede social").max(30) })
+  .nullable()
+  .optional();
 
 export const createBlockSchema = z.object({
   type: z.nativeEnum(ProfileBlockType).default(ProfileBlockType.LINK),
@@ -173,7 +170,7 @@ export const createBlockSchema = z.object({
   imageUrl: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().optional().default(0),
-  config: z.any().optional().nullable(),
+  config: blockConfigSchema,
 });
 
 export const updateBlockSchema = z.object({
@@ -183,7 +180,7 @@ export const updateBlockSchema = z.object({
   imageUrl: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
-  config: z.any().optional().nullable(),
+  config: blockConfigSchema,
 });
 
 export const reorderBlocksSchema = z.object({

@@ -68,3 +68,17 @@ describe("toHandleCandidate", () => {
     expect(toHandleCandidate("_loja.da.ana_")).toBe("loja.da.ana");
   });
 });
+
+describe("more channels", () => {
+  it("handles email, shop and site-url platforms", async () => {
+    const { normalizeSocialLink, isSafeSocialUrl } = await import("@/lib/profiles/links");
+    expect(normalizeSocialLink("email", "contato@loja.com.br")).toEqual({ ok: true, url: "mailto:contato@loja.com.br" });
+    expect(normalizeSocialLink("email", "contato@")).toEqual({ ok: false, error: "invalid_email" });
+    expect(normalizeSocialLink("shop", "minhaloja.com.br")).toEqual({ ok: true, url: "https://minhaloja.com.br" });
+    expect(normalizeSocialLink("spotify", "open.spotify.com/artist/1")).toEqual({ ok: true, url: "https://open.spotify.com/artist/1" });
+    expect(normalizeSocialLink("spotify", "artista")).toEqual({ ok: false, error: "invalid_url" });
+    expect(normalizeSocialLink("youtube", "@canal")).toEqual({ ok: true, url: "https://www.youtube.com/@canal" });
+    expect(isSafeSocialUrl("javascript:alert(1)")).toBe(false);
+    expect(isSafeSocialUrl("mailto:a@b.co")).toBe(true);
+  });
+});
