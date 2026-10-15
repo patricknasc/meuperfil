@@ -230,7 +230,7 @@ export default function ProfileStudioPage() {
   function socialPlaceholder(platform: string) {
     switch (getSocialPlatform(platform).kind) {
       case "phone":
-        return t("DDD + número, ex.: 11 99999-8888");
+        return t("+55 11 99999-8888 (com + e código do país)");
       case "email":
         return t("contato@seusite.com.br");
       case "web":
@@ -257,7 +257,7 @@ export default function ProfileStudioPage() {
       case "empty":
         return t("Preencha o campo {field}.").replace("{field}", field);
       case "invalid_phone":
-        return t("Número de WhatsApp inválido. Use DDD + número (ex.: 11 99999-8888) ou +DDI para outros países.");
+        return t("Número de WhatsApp inválido. Use + e o código do país, ex.: +55 11 99999-8888 ou +66 93 417 8294.");
       case "invalid_handle":
         return t("{field}: usuário inválido. Use só letras, números, '.', '_' ou '-' (ex.: @seuperfil).").replace("{field}", field);
       case "invalid_email":
@@ -286,9 +286,16 @@ export default function ProfileStudioPage() {
     if (result.ok) {
       if (result.url === raw.trim()) return null;
       return (
-        <p className="mt-1.5 text-[11px] text-emerald-400 break-all">
-          {t("Será salvo como:")} <span className="font-mono">{result.url}</span>
-        </p>
+        <>
+          <p className="mt-1.5 text-[11px] text-emerald-400 break-all">
+            {t("Será salvo como:")} <span className="font-mono">{result.url}</span>
+          </p>
+          {result.assumedBrazil && (
+            <p className="mt-1 text-[11px] text-amber-400">
+              {t("Sem o + consideramos um número do Brasil (+55). Se for de outro país, comece com + e o código do país, ex.: +66 93 417 8294.")}
+            </p>
+          )}
+        </>
       );
     }
     if (result.error === "empty") return null;

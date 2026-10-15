@@ -17,7 +17,7 @@
     "db:migrate:hm": "node scripts/db-migrate.mjs hm",
     "db:migrate:pd": "node scripts/db-migrate.mjs pd",
     "db:studio": "prisma studio",
-    "worker": "tsx worker/dm-worker.ts",
+    "worker": "tsx --env-file-if-exists=.env worker/dm-worker.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "services:up": "docker compose up -d --wait",

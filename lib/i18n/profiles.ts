@@ -570,6 +570,9 @@ const entries: Record<string, [string, string]> = {
   "Direto": ["Direct", "Directo"],
   "Busca": ["Search", "Búsqueda"],
   "Outro": ["Other", "Otro"],
+  "Sem o + consideramos um número do Brasil (+55). Se for de outro país, comece com + e o código do país, ex.: +66 93 417 8294.": ["Without + we treat it as a Brazilian number (+55). For another country, start with + and the country code, e.g. +66 93 417 8294.", "Sin el + lo consideramos un número de Brasil (+55). Si es de otro país, empieza con + y el código del país, ej.: +66 93 417 8294."],
+  "+55 11 99999-8888 (com + e código do país)": ["+1 415 555 0100 (with + and country code)", "+34 600 000 000 (con + y código de país)"],
+  "Número de WhatsApp inválido. Use + e o código do país, ex.: +55 11 99999-8888 ou +66 93 417 8294.": ["Invalid WhatsApp number. Use + and the country code, e.g. +1 415 555 0100 or +66 93 417 8294.", "Número de WhatsApp inválido. Usa + y el código del país, ej.: +34 600 000 000 o +66 93 417 8294."],
 };
 const translators = {
   pt: (source: string) => source === "Taxa de Conversão (CTR)" ? "Taxa de cliques (CTR)" : source,

@@ -27,7 +27,8 @@ describe("normalizeWhatsApp", () => {
   });
 
   it("assumes Brazil for 10–11 digit numbers without country code", () => {
-    expect(normalizeWhatsApp("11 99999-8888")).toEqual({ ok: true, url: "https://wa.me/5511999998888" });
+    expect(normalizeWhatsApp("11 99999-8888")).toEqual({ ok: true, url: "https://wa.me/5511999998888", assumedBrazil: true });
+    expect(normalizeWhatsApp("+66 93 417 8294")).toEqual({ ok: true, url: "https://wa.me/66934178294" });
   });
 
   it("accepts existing wa.me links", () => {
