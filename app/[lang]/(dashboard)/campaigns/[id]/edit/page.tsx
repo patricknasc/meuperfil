@@ -1,4 +1,5 @@
 "use client";
+import CampaignExtraOptions, { endOfDayIso, isoToDateInput } from "@/components/campaign-extra-options";
 import { campaignTranslator } from "@/lib/i18n/campaigns";
 
 import { useEffect, useMemo, useState } from "react";
@@ -13,6 +14,8 @@ interface CampaignEditPayload {
   dmMessage: string;
   isActive: boolean;
   wholeWordMatch: boolean;
+  typoTolerance?: boolean;
+  endsAt?: string | null;
   instagramAccount: {
     username: string;
   };
@@ -37,6 +40,8 @@ export default function CampaignEditPage() {
   const [dmMessage, setDmMessage] = useState("");
   const [wholeWordMatch, setWholeWordMatch] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [typoTolerance, setTypoTolerance] = useState(false);
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     async function loadCampaign() {
@@ -61,6 +66,8 @@ export default function CampaignEditPage() {
         setDmMessage(item.dmMessage);
         setWholeWordMatch(item.wholeWordMatch);
         setIsActive(item.isActive);
+        setTypoTolerance(Boolean(item.typoTolerance));
+        setEndDate(isoToDateInput(item.endsAt));
       } catch {
         setError(t("Failed to load campaign"));
       } finally {
@@ -98,6 +105,8 @@ export default function CampaignEditPage() {
           dmMessage: dmMessage.trim(),
           wholeWordMatch,
           isActive,
+          typoTolerance,
+          endsAt: endOfDayIso(endDate),
         }),
       });
 
@@ -223,6 +232,12 @@ export default function CampaignEditPage() {
               <span className="text-sm font-medium text-foreground">{t("Campaign active")}</span>
             </div>
           </label>
+          <CampaignExtraOptions
+            typoTolerance={typoTolerance}
+            onTypoToleranceChange={setTypoTolerance}
+            endDate={endDate}
+            onEndDateChange={setEndDate}
+          />
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-border pt-4">

@@ -184,19 +184,38 @@ export async function getUserInfo(accessToken: string): Promise<InstagramUser> {
 
 export async function getUserMedia(
   accessToken: string,
-  limit = 25
-): Promise<InstagramMedia[]> {
+  limit = 25,
+  after?: string | null
+): Promise<{ posts: InstagramMedia[]; nextCursor: string | null }> {
   const url = new URL(`${instagramGraphBase()}/me/media`);
   url.searchParams.set(
     "fields",
     "id,caption,media_type,media_url,thumbnail_url,timestamp,permalink"
   );
   url.searchParams.set("limit", limit.toString());
+  if (after) url.searchParams.set("after", after);
   url.searchParams.set("access_token", accessToken);
 
   const response = await fetch(url.toString());
-  const data = await handleResponse<{ data: InstagramMedia[] }>(response);
-  return data.data;
+  const data = await handleResponse<{
+    data: InstagramMedia[];
+    paging?: { cursors?: { after?: string }; next?: string };
+  }>(response);
+  return {
+    posts: data.data,
+    // Instagram only sends "next" when there is another page.
+    nextCursor: data.paging?.next ? data.paging.cursors?.after ?? null : null,
+  };
+}
+
+/** One post or reel (thumbnail, link, caption) by its media id. */
+export async function getMediaDetails(accessToken: string, mediaId: string): Promise<InstagramMedia> {
+  const url = new URL(`${instagramGraphBase()}/${encodeURIComponent(mediaId)}`);
+  url.searchParams.set("fields", "id,caption,media_type,media_url,thumbnail_url,timestamp,permalink");
+  url.searchParams.set("access_token", accessToken);
+
+  const response = await fetch(url.toString());
+  return handleResponse<InstagramMedia>(response);
 }
 
 export async function getLongLivedToken(

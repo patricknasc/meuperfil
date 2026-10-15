@@ -31,6 +31,8 @@ interface Campaign {
   dmMessage: string;
   isActive: boolean;
   wholeWordMatch: boolean;
+  typoTolerance?: boolean;
+  endsAt?: string | null;
   instagramAccount: {
     username: string;
     instagramId: string;
@@ -365,16 +367,26 @@ export default function CampaignsPage() {
                   <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted">
                     @{auto.instagramAccount.username}
                   </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      auto.isActive
-                        ? "bg-success/10 text-success"
-                        : "bg-zinc-500/10 text-zinc-400"
-                    }`}
-                  >
-                    {auto.isActive ? t("Active") : t("Paused")}
-                  </span>
+                  {(() => {
+                    const ended = Boolean(auto.endsAt && new Date(auto.endsAt) <= new Date());
+                    return (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          auto.isActive && !ended
+                            ? "bg-success/10 text-success"
+                            : "bg-zinc-500/10 text-zinc-400"
+                        }`}
+                      >
+                        {ended ? t("Ended") : auto.isActive ? t("Active") : t("Paused")}
+                      </span>
+                    );
+                  })()}
                 </div>
+                <p className="mb-2 text-xs text-muted">
+                  {auto.postId === "ALL_POSTS" || auto.postId === "ALL" ? t("All posts and reels") : t("Specific post")}
+                  {auto.endsAt && ` · ${t("Ends on")} ${new Date(auto.endsAt).toLocaleDateString()}`}
+                  {auto.typoTolerance && ` · ${t("Accepts typos")}`}
+                </p>
 
                 {auto.goal && (
                   <p className="mb-3 text-xs font-medium uppercase tracking-wide text-accent">
