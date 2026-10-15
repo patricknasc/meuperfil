@@ -279,8 +279,8 @@ export default function NewCampaignPage() {
               <span className="text-sm font-medium text-foreground">{t("Whole word match")}</span>
               <p className="text-xs text-muted">
                 {wholeWordMatch
-                  ? '"linking" won\'t trigger "LINK"'
-                  : '"linking" WILL trigger "LINK"'}
+                  ? t("Exact word: \"linking\" will not trigger \"LINK\"")
+                  : t("Partial match: \"linking\" will trigger \"LINK\"")}
               </p>
             </div>
           </label>
@@ -303,7 +303,7 @@ export default function NewCampaignPage() {
             <div>
               <span className="text-sm font-medium text-foreground">{t("Launch active")}</span>
               <p className="text-xs text-muted">
-                {isActive ? "Campaign starts listening after creation" : "Campaign is saved paused"}
+                {isActive ? t("Campaign starts listening after creation") : t("Campaign is saved paused")}
               </p>
             </div>
           </label>
