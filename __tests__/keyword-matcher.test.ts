@@ -132,3 +132,20 @@ describe("matchKeywords — edge cases", () => {
     expect(result.matched).toBe(true);
   });
 });
+
+describe("accent-insensitive matching", () => {
+  it("matches with or without accents on either side", () => {
+    expect(matchKeywords("Quero a promoção!", ["PROMOCAO"]).matched).toBe(true);
+    expect(matchKeywords("quero a promocao", ["PROMOÇÃO"]).matched).toBe(true);
+    expect(matchKeywords("QUÉRO", ["quero"]).matched).toBe(true);
+  });
+
+  it("keeps whole-word boundaries around accented letters", () => {
+    expect(matchKeywords("promoçãozinha", ["promoção"]).matched).toBe(false);
+    expect(matchKeywords("promoçãozinha", ["promoção"], false).matched).toBe(true);
+  });
+
+  it("does not match typos", () => {
+    expect(matchKeywords("qero", ["QUERO"]).matched).toBe(false);
+  });
+});
