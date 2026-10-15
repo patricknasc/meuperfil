@@ -23,6 +23,8 @@ const createAutomationSchema = z.object({
   trackedDestinationUrl: z.string().url().optional().nullable(),
   isActive: z.boolean().optional().default(true),
   wholeWordMatch: z.boolean().optional().default(true),
+  typoTolerance: z.boolean().optional().default(false),
+  endsAt: z.coerce.date().optional().nullable(),
 });
 
 const updateAutomationSchema = z.object({
@@ -32,6 +34,8 @@ const updateAutomationSchema = z.object({
   dmMessage: z.string().min(1).max(1000).optional(),
   isActive: z.boolean().optional(),
   wholeWordMatch: z.boolean().optional(),
+  typoTolerance: z.boolean().optional(),
+  endsAt: z.coerce.date().optional().nullable(),
   reportShareEnabled: z.boolean().optional(),
 });
 
@@ -261,6 +265,8 @@ export async function POST(request: NextRequest) {
         dmMessage: parsed.data.dmMessage,
         isActive: parsed.data.isActive,
         wholeWordMatch: parsed.data.wholeWordMatch,
+        typoTolerance: parsed.data.typoTolerance,
+        endsAt: parsed.data.endsAt ?? null,
         workspaceId,
         instagramAccountId: instagramAccount.id,
         reportShareSlug: generateReportShareSlug(),

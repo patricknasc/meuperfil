@@ -22,6 +22,9 @@ interface InstagramPost {
   timestamp: string;
 }
 
+/** postId used by campaigns that answer comments on any post or reel. */
+export const ALL_POSTS = "ALL_POSTS";
+
 interface PostPickerProps {
   selectedPostId: string | null;
   instagramAccountId?: string | null;
@@ -37,6 +40,24 @@ export default function PostPicker({
   const [posts, setPosts] = useState<InstagramPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  async function loadMore() {
+    if (!nextCursor) return;
+    setLoadingMore(true);
+    const params = new URLSearchParams({ after: nextCursor });
+    if (instagramAccountId) params.set("instagramAccountId", instagramAccountId);
+    try {
+      const data = await fetch(`/api/instagram/posts?${params}`).then((r) => r.json());
+      if (data.success) {
+        setPosts((current) => [...current, ...data.data]);
+        setNextCursor(data.nextCursor ?? null);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +77,7 @@ export default function PostPicker({
           if (cancelled) return;
           if (data.success) {
             setPosts(data.data);
+            setNextCursor(data.nextCursor ?? null);
           } else {
             setError(data.error ?? t("Failed to load posts"));
           }
@@ -93,16 +115,27 @@ export default function PostPicker({
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-sm text-muted">{t("No posts found")}</p>
-      </div>
-    );
-  }
+  const allSelected = selectedPostId === ALL_POSTS;
+  const typeLabel: Record<string, string> = { VIDEO: t("Video"), CAROUSEL_ALBUM: t("Carousel"), REELS: "Reel" };
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1">
+    <div className="space-y-3">
+    <button
+      type="button"
+      onClick={() => onSelect(ALL_POSTS)}
+      className={`w-full text-left rounded-xl border-2 px-4 py-3 transition ${
+        allSelected ? "border-accent bg-accent/10" : "border-border hover:border-border-hover"
+      }`}
+    >
+      <p className="text-sm font-semibold text-foreground">{t("All posts and reels")}</p>
+      <p className="text-xs text-muted mt-0.5">
+        {t("Answers the keyword on any current or future post. A campaign for a specific post takes priority.")}
+      </p>
+    </button>
+    {posts.length === 0 ? (
+      <p className="text-center text-sm text-muted py-4">{t("No posts found")}</p>
+    ) : (
+    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-80 overflow-y-auto p-1">
       {posts.map((post) => {
         const isSelected = selectedPostId === post.id;
         const thumb = post.thumbnail_url ?? post.media_url;
@@ -129,6 +162,11 @@ export default function PostPicker({
                 </svg>
               </div>
             )}
+            {typeLabel[post.media_type] && (
+              <span className="absolute top-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                {typeLabel[post.media_type]}
+              </span>
+            )}
             {isSelected && (
               <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -139,6 +177,18 @@ export default function PostPicker({
           </button>
         );
       })}
+    </div>
+    )}
+    {nextCursor && (
+      <button
+        type="button"
+        onClick={() => void loadMore()}
+        disabled={loadingMore}
+        className="w-full rounded-xl border border-dashed border-border py-2 text-xs font-semibold text-muted hover:text-foreground hover:border-border-hover transition disabled:opacity-50"
+      >
+        {loadingMore ? t("Loading...") : t("Load more posts")}
+      </button>
+    )}
     </div>
   );
 }

@@ -169,6 +169,10 @@ model Automation {
   dmMessage      String
   isActive       Boolean @default(true)
   wholeWordMatch Boolean @default(true)
+  /// Accept one wrong letter in keywords of 5+ characters.
+  typoTolerance  Boolean @default(false)
+  /// Optional end of the campaign; null means it never expires.
+  endsAt         DateTime?
   reportShareSlug    String? @unique
   reportShareEnabled Boolean @default(true)
 
@@ -198,6 +202,8 @@ model DmLog {
   commentText   String
   commentId     String
   matchedKeyword String?
+  /// Post or reel the comment was made on (useful for "all posts" campaigns).
+  mediaId        String?
   status        DmStatus @default(PENDING)
   attempts      Int      @default(0)
   dmSentAt      DateTime?

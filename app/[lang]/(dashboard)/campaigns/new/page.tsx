@@ -1,4 +1,5 @@
 "use client";
+import CampaignExtraOptions, { endOfDayIso } from "@/components/campaign-extra-options";
 import { campaignTranslator } from "@/lib/i18n/campaigns";
 import { localizeCampaignTemplate } from "@/lib/i18n/templates";
 
@@ -57,6 +58,8 @@ export default function NewCampaignPage() {
   );
   const [wholeWordMatch, setWholeWordMatch] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [typoTolerance, setTypoTolerance] = useState(false);
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     fetch("/api/dashboard/stats")
@@ -116,6 +119,8 @@ export default function NewCampaignPage() {
           trackedDestinationUrl: trackedDestinationUrl || null,
           wholeWordMatch,
           isActive,
+          typoTolerance,
+          endsAt: endOfDayIso(endDate),
         }),
       });
 
@@ -314,6 +319,12 @@ export default function NewCampaignPage() {
               </p>
             </div>
           </label>
+          <CampaignExtraOptions
+            typoTolerance={typoTolerance}
+            onTypoToleranceChange={setTypoTolerance}
+            endDate={endDate}
+            onEndDateChange={setEndDate}
+          />
         </div>
 
         {/* Submit */}

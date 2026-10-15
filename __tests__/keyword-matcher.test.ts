@@ -149,3 +149,28 @@ describe("accent-insensitive matching", () => {
     expect(matchKeywords("qero", ["QUERO"]).matched).toBe(false);
   });
 });
+
+describe("typo tolerance", () => {
+  const opts = { typoTolerance: true };
+
+  it("is off by default", () => {
+    expect(matchKeywords("qero", ["QUERO"]).matched).toBe(false);
+  });
+
+  it("accepts one missing, extra, wrong or swapped letter", () => {
+    expect(matchKeywords("qero", ["QUERO"], true, opts).matched).toBe(true);
+    expect(matchKeywords("eu queiro!", ["QUERO"], true, opts).matched).toBe(true);
+    expect(matchKeywords("qurro", ["QUERO"], true, opts).matched).toBe(true);
+    expect(matchKeywords("qeuro", ["QUERO"], true, opts).matched).toBe(true);
+    expect(matchKeywords("quero o ebok", ["EBOOK"], true, opts).matched).toBe(true);
+  });
+
+  it("rejects two edits and short keywords", () => {
+    expect(matchKeywords("qeiro", ["QUERO"], true, opts).matched).toBe(false);
+    expect(matchKeywords("lnk", ["LINK"], true, opts).matched).toBe(false);
+  });
+
+  it("works with multi-word keywords", () => {
+    expect(matchKeywords("me manda o link ebok gratis", ["EBOOK GRATIS"], true, opts).matched).toBe(true);
+  });
+});
