@@ -14,35 +14,57 @@ interface PublicSiteHeaderProps {
     signIn?: string;
     startFree?: string;
   };
+  ctaHref?: string;
+  ctaLabel?: string;
 }
 
 export default function PublicSiteHeader({
   active,
   locale = "pt",
   dict,
+  ctaHref,
+  ctaLabel,
 }: PublicSiteHeaderProps) {
   const t = publicTranslator(locale);
   const prefix = `/${locale}`;
 
   const navLinks = [
-    { label: dict?.templates ?? t("Templates"), href: `${prefix}/templates`, key: "templates" },
+    {
+      label: dict?.templates ?? t("Templates"),
+      href: `${prefix}/templates`,
+      key: "templates",
+    },
     {
       label: dict?.agencies ?? t("Agencies"),
       href: `${prefix}/instagram-dm-automation-agencies`,
       key: "agencies",
     },
-    { label: dict?.pricing ?? t("Pricing"), href: `${prefix}#pricing`, key: "pricing" },
-    { label: dict?.security ?? t("Security"), href: `${prefix}#security`, key: "security" },
+    {
+      label: dict?.pricing ?? t("Pricing"),
+      href: `${prefix}#pricing`,
+      key: "pricing",
+    },
+    {
+      label: dict?.security ?? t("Security"),
+      href: `${prefix}#security`,
+      key: "security",
+    },
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-background/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#101112]/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-        <Link href={prefix} className="flex items-center gap-2.5" aria-label="meuperfil.me home">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-black text-white shadow-md shadow-indigo-500/20">
+        <Link
+          href={prefix}
+          className="flex items-center gap-2.5"
+          aria-label="meuperfil.me home"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ffcf9b] text-xs font-black text-[#20160e] shadow-md shadow-[#ffcf9b]/10">
             MP
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">meuperfil<span className="text-accent">.me</span></span>
+          <span className="text-lg font-bold tracking-tight text-white">
+            meuperfil<span className="text-[#ffcf9b]">.me</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
@@ -51,7 +73,9 @@ export default function PublicSiteHeader({
               key={link.key}
               href={link.href}
               className={`text-sm font-medium transition ${
-                active === link.key ? "text-white" : "text-zinc-400 hover:text-white"
+                active === link.key
+                  ? "text-white"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               {link.label}
@@ -68,10 +92,13 @@ export default function PublicSiteHeader({
             {dict?.signIn ?? t("Sign in")}
           </Link>
           <Link
-            href={`${prefix}/login`}
-            className="inline-flex items-center justify-center bg-cyan-300 px-4 py-2 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
+            href={ctaHref ?? `${prefix}/login`}
+            className="inline-flex shrink-0 items-center justify-center bg-[#ffcf9b] px-3 py-2 text-sm font-bold text-[#20160e] transition hover:bg-[#ffe0bd] sm:px-4"
           >
-            {dict?.startFree ?? t("Start free")}
+            <span className="sm:hidden">Beta</span>
+            <span className="hidden sm:inline">
+              {ctaLabel ?? dict?.startFree ?? t("Start free")}
+            </span>
           </Link>
         </div>
       </div>
