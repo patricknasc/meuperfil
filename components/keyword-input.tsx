@@ -67,12 +67,15 @@ export default function KeywordInput({ keywords, onChange, max = 10 }: KeywordIn
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          // Typed but not confirmed with Enter: keep it when leaving the field
+          // (e.g. clicking "Create campaign") instead of silently dropping it.
+          onBlur={() => addKeyword(input)}
           placeholder={keywords.length === 0 ? t("Type keyword and press Enter...") : ""}
           className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-zinc-500 outline-none"
         />
       </div>
       <p className="text-xs text-muted">
-        {keywords.length}/{max}{t("keywords · Press Enter or comma to add")}</p>
+        {keywords.length}/{max} {t("keywords · Press Enter or comma to add")}</p>
     </div>
   );
 }

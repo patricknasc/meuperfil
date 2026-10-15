@@ -86,8 +86,15 @@ export default function NewCampaignPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name || !goal || !postId || keywords.length === 0 || !dmMessage) {
-      setError(t("Please fill in all required fields"));
+    const missing = [
+      !name && t("Campaign name"),
+      !goal && t("Campaign goal"),
+      !postId && t("Post or Reel"),
+      keywords.length === 0 && t("Comment keywords"),
+      !dmMessage && t("DM message"),
+    ].filter(Boolean);
+    if (missing.length > 0) {
+      setError(`${t("Fill in:")} ${missing.join(", ")}`);
       return;
     }
 
@@ -310,6 +317,11 @@ export default function NewCampaignPage() {
         </div>
 
         {/* Submit */}
+        {error && (
+          <div role="alert" className="p-4 rounded-xl bg-error/10 border border-error/20 text-error text-sm">
+            {error}
+          </div>
+        )}
         <div className="flex items-center gap-4 pt-4 border-t border-border">
           <button
             type="submit"
