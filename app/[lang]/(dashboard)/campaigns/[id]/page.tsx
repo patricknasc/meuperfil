@@ -1,4 +1,5 @@
 "use client";
+import CampaignTopPosts from "@/components/campaign-top-posts";
 
 import { campaignTranslator } from "@/lib/i18n/campaigns";
 
@@ -271,6 +272,8 @@ export default function CampaignDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <CampaignTopPosts campaignId={campaign.id} />
+
           <div className="glass rounded-2xl p-5">
             <p className="text-xs uppercase tracking-wide text-muted">{t("Performance")}</p>
             <div className="mt-4 space-y-3 text-sm text-foreground">

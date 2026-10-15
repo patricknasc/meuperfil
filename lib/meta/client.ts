@@ -208,6 +208,16 @@ export async function getUserMedia(
   };
 }
 
+/** One post or reel (thumbnail, link, caption) by its media id. */
+export async function getMediaDetails(accessToken: string, mediaId: string): Promise<InstagramMedia> {
+  const url = new URL(`${instagramGraphBase()}/${encodeURIComponent(mediaId)}`);
+  url.searchParams.set("fields", "id,caption,media_type,media_url,thumbnail_url,timestamp,permalink");
+  url.searchParams.set("access_token", accessToken);
+
+  const response = await fetch(url.toString());
+  return handleResponse<InstagramMedia>(response);
+}
+
 export async function getLongLivedToken(
   shortLivedToken: string
 ): Promise<{ accessToken: string; expiresIn: number }> {
