@@ -119,18 +119,15 @@ export default function ProfilesPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("Link na Bio")}</h1>
-          <p className="text-sm text-muted mt-1">
-            {t("Crie e personalize sua página pública com links, temas premium e rastreamento de conversão.")}
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-6 text-muted">
+          {t("Crie e personalize sua página pública com links, temas premium e rastreamento de conversão.")}
+        </p>
         <button
           onClick={() => void openCreateModal()}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-semibold text-sm transition shadow-lg shadow-coral/20"
+          className="inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white font-semibold text-sm transition shadow-sm"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

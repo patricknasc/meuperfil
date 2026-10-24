@@ -14,8 +14,8 @@ interface StatCardProps {
 
 export default function StatCard({ icon, label, value, trend, trendUp }: StatCardProps) {
   return (
-    <div className="glass rounded-2xl p-5 hover:border-border-hover transition-all duration-300 animate-fade-in group">
-      <div className="flex items-start justify-between mb-4">
+    <div className="glass rounded-2xl p-4 sm:p-5 hover:border-border-hover transition-all duration-300 animate-fade-in group">
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent/10 text-accent border border-accent/10 group-hover:border-accent/20 transition-colors">
           {icon}
         </div>

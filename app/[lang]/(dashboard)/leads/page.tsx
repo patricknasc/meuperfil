@@ -24,7 +24,7 @@ export default async function LeadsPage({ params, searchParams }: { params: Prom
     return `/${locale}/leads?${values}`;
   }
   return <div className="space-y-6">
-    <div><h1 className="text-2xl font-bold">{t.leads}</h1><p className="mt-2 text-sm text-muted">{t.leadDescription}</p></div>
+    <p className="max-w-2xl text-sm leading-6 text-muted">{t.leadDescription}</p>
     <form className="flex flex-wrap gap-3">
       <input name="search" defaultValue={search} placeholder={t.search} aria-label={t.search} className="min-w-64 flex-1 rounded-xl border border-border bg-surface px-4 py-2" />
       {campaignId && <input type="hidden" name="campaignId" value={campaignId} />}

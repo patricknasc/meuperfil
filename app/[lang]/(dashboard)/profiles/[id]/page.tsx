@@ -562,7 +562,7 @@ export default function ProfileStudioPage() {
           </Link>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-foreground truncate">{displayName}</h1>
+              <h2 className="text-lg font-bold text-foreground truncate">{displayName}</h2>
               <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-surface-hover text-muted">
                 @{handle}
               </span>
