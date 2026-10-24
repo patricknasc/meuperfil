@@ -1,727 +1,509 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import PublicSiteHeader from "@/components/public-site-header";
-import LanguageSwitcher from "@/components/language-switcher";
-import { landingTranslator } from "@/lib/i18n/landing";
-import {
-  betaWaitlistSchema,
-  normalizeBetaWaitlistEntry,
-} from "@/lib/beta/waitlist";
+import SiteHeader from "@/components/site/site-header";
+import SiteFooter from "@/components/site/site-footer";
+import { SocialGlyph } from "@/components/social-icon";
+import { getSiteCopy, type SiteCopy } from "@/lib/i18n/site";
+import { siteFontVariables } from "@/lib/site/fonts";
+import { betaWaitlistSchema, normalizeBetaWaitlistEntry } from "@/lib/beta/waitlist";
 import { saveBetaWaitlistEntry } from "@/lib/beta/storage";
 import { sendBetaWelcomeEmail } from "@/lib/beta/email";
-import {
-  getDictionary,
-  hasLocale,
-  defaultLocale,
-  type Locale,
-} from "./dictionaries";
+import { hasLocale, defaultLocale, type Locale } from "./dictionaries";
 
-export async function generateMetadata({
-  params,
-}: {
+type Props = {
   params: Promise<{ lang: string }>;
-}): Promise<Metadata> {
+  searchParams?: Promise<{ beta?: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
-  const dict = await getDictionary(locale);
-  return {
-    title: `${dict.common.brandName} — ${dict.landing.heroTitle}`,
-    description: dict.landing.heroDescription,
-  };
+  const copy = getSiteCopy(hasLocale(lang) ? lang : defaultLocale);
+  return { title: copy.meta.title, description: copy.meta.description };
 }
 
 async function submitWaitlist(formData: FormData) {
   "use server";
   const localeValue = String(formData.get("locale") ?? defaultLocale);
   const locale = hasLocale(localeValue) ? localeValue : defaultLocale;
-  const raw = {
+  const parsed = betaWaitlistSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     company: String(formData.get("company") ?? ""),
-    goal: String(formData.get("goal") ?? ""),
+    goal: "",
     source: "landing-page",
-  };
-  const parsed = betaWaitlistSchema.safeParse(raw);
-  if (!parsed.success) redirect(`/${locale}?beta=invalid#early-access`);
+  });
+  if (!parsed.success) redirect(`/${locale}?beta=invalid#contato`);
   const entry = normalizeBetaWaitlistEntry(parsed.data);
   await saveBetaWaitlistEntry(entry);
-  await sendBetaWelcomeEmail({
-    name: entry.name,
-    email: entry.email,
-    company: entry.company,
-    goal: entry.goal,
-  });
-  redirect(`/${locale}?beta=success#early-access`);
+  await sendBetaWelcomeEmail({ name: entry.name, email: entry.email, company: entry.company, goal: entry.goal });
+  redirect(`/${locale}?beta=success#contato`);
 }
 
-function ArrowIcon() {
+/* ─── Small pieces ─────────────────────────────────────────────────────────── */
+
+function Arrow() {
   return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 12h14m-6-6 6 6-6 6"
-      />
-    </svg>
-  );
-}
-function CheckIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2.3}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m5 12 4.2 4.2L19.5 6"
-      />
-    </svg>
-  );
-}
-function FlowIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M7 3v4m0 10v4M3 7h4m10 0h4M17 17h4m-4 0v4M7 17H3m4 0v4M12 7.5A4.5 4.5 0 1 0 12 16.5 4.5 4.5 0 0 0 12 7.5Z"
-      />
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-5-5 5 5-5 5" />
     </svg>
   );
 }
 
-function CommentToDmCanvas({ locale }: { locale: Locale }) {
-  const t = landingTranslator(locale);
+function Check({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <div className="relative mx-auto w-full max-w-[590px] text-left">
-      <div className="absolute -inset-5 -z-10 rounded-[2.5rem] bg-[radial-gradient(circle_at_20%_20%,rgba(245,112,89,.34),transparent_36%),radial-gradient(circle_at_78%_62%,rgba(113,130,255,.25),transparent_42%)] blur-2xl" />
-      <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#151617] shadow-[0_32px_90px_rgba(0,0,0,.48)]">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-[conic-gradient(from_210deg,#f5bd6a,#ef5d87,#784eeb,#f5bd6a)] p-[2px]">
-              <div className="h-full w-full rounded-full bg-[#1b1c1e]" />
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2.4}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m5 12.5 4.5 4.5L19 7.5" />
+    </svg>
+  );
+}
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-xs font-semibold uppercase tracking-[.16em] text-coral-dark">{children}</p>;
+}
+
+function SectionTitle({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <h2 className={`mt-4 text-balance font-heading text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl ${className}`}>
+      {children}
+    </h2>
+  );
+}
+
+const SOCIAL_ROW = ["instagram", "whatsapp", "tiktok", "youtube"];
+
+/* ─── Product visuals (illustrative, built with real UI primitives) ───────── */
+
+function HeroVisual({ copy }: { copy: SiteCopy }) {
+  return (
+    <div className="relative mx-auto w-full max-w-[520px] px-4 pb-16 pt-6 sm:px-0 lg:mx-0 lg:ml-auto">
+      <div aria-hidden="true" className="absolute inset-x-0 top-16 bottom-0 -z-10 rounded-[3rem] bg-coral-soft" />
+      {/* Floating cards are positioned around the phone, never over its content. */}
+      <div className="relative mx-auto w-[260px] sm:w-[290px]">
+        <div className="rounded-[2.8rem] bg-ink p-2.5 shadow-[0_40px_80px_-30px_rgba(22,18,15,.55)]">
+          <div className="overflow-hidden rounded-[2.3rem] bg-[linear-gradient(170deg,#fff6ee,#fde4da_55%,#f9cdbd)] px-5 pb-8 pt-10">
+            <div className="mx-auto h-[68px] w-[68px] rounded-full bg-[conic-gradient(from_200deg,#ee4f2b,#f7a35c,#ee4f2b)] p-[3px]">
+              <div className="grid h-full w-full place-items-center rounded-full bg-paper font-heading text-xl font-bold text-coral-dark">AL</div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-white">studio.maré</p>
-              <p className="text-xs text-white/45">
-                Instagram · {t("Reel campaign")}
-              </p>
-            </div>
-          </div>
-          <span className="rounded-full bg-[#b9f7df] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-[#123f31]">
-            {t("Live")}
-          </span>
-        </div>
-        <div className="grid gap-0 md:grid-cols-[.96fr_1.04fr]">
-          <div className="border-b border-white/10 p-4 md:border-b-0 md:border-r">
-            <div className="relative aspect-[4/4.55] overflow-hidden rounded-xl bg-[linear-gradient(145deg,#f6b866_0%,#ed7c72_47%,#7955dd_100%)] p-5">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_22%,rgba(255,255,255,.45),transparent_16%),radial-gradient(circle_at_28%_70%,rgba(33,20,66,.33),transparent_35%)]" />
-              <div className="relative flex h-full flex-col justify-between rounded-lg border border-white/30 bg-[#18151d]/15 p-4 text-white">
-                <span className="text-[10px] font-bold uppercase tracking-[.18em] text-white/75">
-                  {t("New drop")}
+            <p className="mt-3 text-center font-heading text-lg font-bold text-ink">{copy.demo.name}</p>
+            <p className="mx-auto mt-1 max-w-[200px] text-center text-xs leading-5 text-ink-soft">{copy.demo.bio}</p>
+            <div className="mt-4 flex justify-center gap-2">
+              {SOCIAL_ROW.map((platform) => (
+                <span key={platform} className="grid h-8 w-8 place-items-center rounded-full bg-ink text-paper">
+                  <SocialGlyph platform={platform} className="h-3.5 w-3.5" />
                 </span>
-                <div>
-                  <p className="max-w-[11rem] text-3xl font-black leading-[.91] tracking-[-.075em]">
-                    {t("Comment LINK")}
-                  </p>
-                  <p className="mt-3 max-w-[12rem] text-sm leading-5 text-white/85">
-                    {t("Get the full guide in your inbox.")}
-                  </p>
+              ))}
+            </div>
+            <div className="mt-5 space-y-2.5">
+              {copy.demo.links.map((label, i) => (
+                <div
+                  key={label}
+                  className={`rounded-2xl px-4 py-3 text-center text-[13px] font-semibold ${
+                    i === 0 ? "bg-ink text-paper" : "bg-white/80 text-ink ring-1 ring-ink/10"
+                  }`}
+                >
+                  {label}
                 </div>
-              </div>
-            </div>
-            <div className="mt-3 flex items-start gap-2.5">
-              <div className="mt-0.5 h-7 w-7 shrink-0 rounded-full bg-[#d8d8d8]" />
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white">maya.co</p>
-                <p className="mt-0.5 text-sm text-white/70">
-                  {t("LINK please")}
-                </p>
-              </div>
+              ))}
             </div>
           </div>
-          <div className="flex flex-col p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-white/40">
-              {t("Campaign builder")}
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#ffdbb8] text-xs font-black text-[#6a3a16]">
-                01
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {t("Matched keyword")}
-                </p>
-                <p className="text-xs text-white/45">LINK</p>
-              </div>
-            </div>
-            <div className="my-2 ml-4 h-5 border-l border-dashed border-white/20" />
-            <div className="flex items-center gap-3">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#c4ccff] text-xs font-black text-[#303a81]">
-                02
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {t("Private reply")}
-                </p>
-                <p className="text-xs text-white/45">
-                  {t("Queued private reply")}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 rounded-xl border border-white/10 bg-white/[.045] p-3.5">
-              <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/40">
-                Instagram Direct
-              </p>
-              <div className="mt-3 rounded-lg rounded-tl-sm bg-[#31343a] px-3 py-2.5 text-sm leading-5 text-white/90">
-                {t("Hey {username}, here is the product guide you asked for:")}{" "}
-                <span className="font-medium text-[#c4ccff]">
-                  shop.link/guide
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#b9f7df]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#b9f7df]" />{" "}
-                {t("Sent")}
-              </div>
-            </div>
+        </div>
+
+        {/* Comment: above-left of the phone */}
+        <div className="absolute -left-6 -top-4 w-[190px] rounded-2xl bg-white p-3 shadow-[0_20px_40px_-18px_rgba(22,18,15,.35)] ring-1 ring-line sm:-left-48 sm:top-8 sm:w-[215px] sm:p-3.5">
+          <div className="flex items-center gap-2">
+            <span className="h-6 w-6 rounded-full bg-[linear-gradient(135deg,#7c5cff,#ee4f2b)]" />
+            <p className="text-xs font-semibold text-ink">{copy.demo.commentUser}</p>
           </div>
+          <p className="mt-2 text-sm text-ink">{copy.demo.comment}</p>
+          <p className="mt-2 flex items-start gap-1 text-[11px] font-medium leading-4 text-moss">
+            <Check className="mt-px h-3 w-3 shrink-0" /> {copy.demo.matched}
+          </p>
+        </div>
+
+        {/* DM: below-right of the phone */}
+        <div className="absolute -bottom-12 -right-6 w-[210px] rounded-2xl rounded-br-md bg-ink p-3.5 text-paper shadow-[0_20px_40px_-18px_rgba(22,18,15,.55)] sm:-right-36 sm:-bottom-10 sm:w-[225px]">
+          <div className="flex items-center gap-1.5 text-[11px] text-paper/60">
+            <SocialGlyph platform="instagram" className="h-3 w-3" /> Direct
+          </div>
+          <p className="mt-1.5 text-[13px] leading-5">{copy.demo.dmGreeting}</p>
+          <p className="mt-1 text-[13px] font-semibold text-[#ffb59f] underline decoration-[#ffb59f]/40 underline-offset-2">{copy.demo.dmLink}</p>
+        </div>
+
+        {/* Clicks: right side, mid-height (desktop only) */}
+        <div className="absolute -right-32 top-40 hidden rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-ink shadow-[0_12px_30px_-14px_rgba(22,18,15,.35)] ring-1 ring-line sm:block">
+          <span className="text-moss">+48</span> {copy.demo.clicksToday}
         </div>
       </div>
     </div>
   );
 }
 
-function OperationsCanvas({ locale }: { locale: Locale }) {
-  const t = landingTranslator(locale);
-  const events = [
-    [
-      "@maya.co",
-      t("Product guide reply"),
-      t("Sent"),
-      "bg-[#b9f7df] text-[#123f31]",
-    ],
-    [
-      "@founder.ray",
-      t("Price request"),
-      t("Sent"),
-      "bg-[#b9f7df] text-[#123f31]",
-    ],
-    ["@shop.ava", t("Lead magnet"), t("Queued"), "bg-[#c4ccff] text-[#303a81]"],
-  ];
+const THEME_SWATCHES = [
+  ["#16120f", "#ee4f2b"],
+  ["#0b0b10", "#32e0e0"],
+  ["#1c1238", "#a78bfa"],
+  ["#fbf8f3", "#16120f"],
+  ["#3b1410", "#fb923c"],
+  ["#0e2a24", "#34d399"],
+];
+
+function ThemesVisual({ copy }: { copy: SiteCopy }) {
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-[#1d2028] bg-[#111214] shadow-[0_24px_70px_rgba(0,0,0,.35)]">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-        <div>
-          <p className="text-sm font-semibold text-white">MeuPerfil</p>
-          <p className="mt-0.5 text-xs text-white/45">{t("Live logs")}</p>
-        </div>
-        <span className="flex items-center gap-2 text-xs font-medium text-[#b9f7df]">
-          <span className="h-2 w-2 rounded-full bg-[#b9f7df]" /> {t("Live")}
-        </span>
-      </div>
-      <div className="grid gap-px bg-white/10 sm:grid-cols-3">
-        {[
-          [t("Active campaigns"), "08"],
-          [t("DMs this month"), "1.284"],
-          [t("Delivery status"), "99%"],
-        ].map(([label, value]) => (
-          <div key={label} className="bg-[#111214] p-5">
-            <p className="text-xs text-white/45">{label}</p>
-            <p className="mt-3 text-3xl font-black tracking-[-.06em] text-white">
-              {value}
-            </p>
+    <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      {THEME_SWATCHES.map(([bg, accent], i) => (
+        <div key={bg} className="rounded-2xl bg-white p-2 ring-1 ring-line">
+          <div className="rounded-xl p-3" style={{ backgroundColor: bg }}>
+            <div className="mx-auto h-6 w-6 rounded-full" style={{ backgroundColor: accent }} />
+            <div className="mt-3 space-y-1.5">
+              <div className="h-2.5 rounded-full opacity-90" style={{ backgroundColor: accent }} />
+              <div className="h-2.5 rounded-full opacity-40" style={{ backgroundColor: accent }} />
+            </div>
           </div>
+          <p className="mt-2 text-center text-[11px] font-medium text-ink-muted">{copy.demoCards.themes[i]}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CampaignVisual({ copy }: { copy: SiteCopy }) {
+  const rows = [copy.demoCards.allPosts, copy.demoCards.typo, copy.demoCards.endsOn];
+  return (
+    <div className="rounded-3xl bg-white p-6 ring-1 ring-line">
+      <p className="text-xs font-semibold uppercase tracking-[.14em] text-ink-muted">{copy.demoCards.keywordLabel}</p>
+      <span className="mt-2 inline-block rounded-lg bg-coral px-3 py-1.5 font-heading text-lg font-bold text-white">{copy.demoCards.keyword}</span>
+      <ul className="mt-5 space-y-2.5">
+        {rows.map((row) => (
+          <li key={row} className="flex items-center justify-between rounded-xl bg-paper px-4 py-3 text-sm text-ink">
+            {row}
+            <span className="relative h-5 w-9 rounded-full bg-moss">
+              <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white" />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 rounded-2xl rounded-bl-md bg-ink p-4 text-sm text-paper">
+        {copy.demo.dmGreeting} <span className="font-semibold text-[#ffb59f]">{copy.demo.dmLink}</span>
+      </div>
+    </div>
+  );
+}
+
+function MetricsVisual({ copy }: { copy: SiteCopy }) {
+  return (
+    <div className="rounded-3xl bg-white p-6 ring-1 ring-line">
+      <p className="font-heading text-lg font-semibold text-ink">{copy.demoCards.sourcesTitle}</p>
+      <ul className="mt-5 space-y-4">
+        {copy.demoCards.sources.map((source) => (
+          <li key={source.label}>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-soft">{source.label}</span>
+              <span className="font-semibold text-ink">{source.value}%</span>
+            </div>
+            <div className="mt-1.5 h-2.5 rounded-full bg-paper-2">
+              <div className="h-2.5 rounded-full bg-coral" style={{ width: `${source.value}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SchedulerVisual({ copy }: { copy: SiteCopy }) {
+  return (
+    <div className="rounded-3xl bg-white p-6 ring-1 ring-line">
+      <div className="grid grid-cols-7 gap-2 text-center">
+        {Array.from({ length: 14 }, (_, i) => (
+          <span
+            key={i}
+            className={`grid aspect-square place-items-center rounded-lg text-xs ${
+              i === 4 ? "bg-coral font-semibold text-white" : i === 9 ? "bg-coral-soft text-coral-dark" : "bg-paper text-ink-soft"
+            }`}
+          >
+            {i + 14}
+          </span>
         ))}
       </div>
-      <div className="p-4">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <p className="text-sm font-medium text-white">
-            {t("Recent replies")}
+      <div className="mt-5 flex items-center gap-3 rounded-2xl bg-paper p-3">
+        <div className="h-12 w-12 shrink-0 rounded-xl bg-[linear-gradient(135deg,#f7a35c,#ee4f2b)]" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-ink">{copy.demoCards.scheduled}</p>
+          <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-moss">
+            <Check className="h-3 w-3" /> {copy.demoCards.autoReply}
           </p>
-          <p className="text-xs text-white/40">{t("Delivery status")}</p>
-        </div>
-        <div className="overflow-hidden rounded-xl border border-white/10">
-          {events.map(([account, campaign, status, color]) => (
-            <div
-              key={account}
-              className="grid grid-cols-[.82fr_1fr_auto] items-center gap-3 border-b border-white/10 px-3.5 py-3 last:border-b-0"
-            >
-              <p className="truncate text-sm font-medium text-white">
-                {account}
-              </p>
-              <p className="truncate text-xs text-white/50">{campaign}</p>
-              <span
-                className={`rounded-full px-2 py-1 text-[10px] font-bold ${color}`}
-              >
-                {status}
-              </span>
-            </div>
-          ))}
         </div>
       </div>
     </div>
   );
 }
 
-export default async function Home({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ lang: string }>;
-  searchParams?: Promise<{ beta?: string }>;
-}) {
+/* ─── Page ─────────────────────────────────────────────────────────────────── */
+
+export default async function Home({ params, searchParams }: Props) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
-  const dict = await getDictionary(locale);
-  const t = landingTranslator(locale);
-  const prefix = `/${locale}`;
-  const betaParams = searchParams ? await searchParams : {};
-  const betaSuccess = betaParams.beta === "success";
-  const betaInvalid = betaParams.beta === "invalid";
+  const copy = getSiteCopy(locale);
+  const signup = `/${locale}/login`;
+  const beta = (searchParams ? await searchParams : {}).beta;
+  const featureVisuals = [ThemesVisual, CampaignVisual, MetricsVisual, SchedulerVisual];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#101112] text-[#f7f5ef] selection:bg-[#ffcf9b] selection:text-[#20160e]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[48rem] bg-[radial-gradient(ellipse_at_20%_0%,rgba(244,112,89,.13),transparent_45%),radial-gradient(ellipse_at_74%_18%,rgba(113,130,255,.14),transparent_38%)]" />
-      <PublicSiteHeader
-        active="home"
-        locale={locale}
-        dict={dict.common}
-        ctaHref="#early-access"
-        ctaLabel={t("Join beta waitlist")}
-      />
-      <section className="relative mx-auto grid w-full max-w-7xl gap-14 px-5 pb-20 pt-16 sm:px-8 lg:grid-cols-[.92fr_1.08fr] lg:items-center lg:px-10 lg:pb-28 lg:pt-24">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#ffcf9b]/25 bg-[#ffcf9b]/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-[#ffe1bf]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ffb46c]" />
-            {dict.landing.badge}
-          </div>
-          <h1 className="mt-7 text-balance text-5xl font-black leading-[.93] tracking-[-.075em] text-[#f7f5ef] sm:text-6xl lg:text-7xl">
-            {dict.landing.heroTitle}
-          </h1>
-          <p className="mt-7 max-w-xl text-lg leading-8 text-white/60 sm:text-xl">
-            {dict.landing.heroDescription}
-          </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#early-access"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ffcf9b] px-6 py-3.5 text-sm font-bold text-[#20160e] transition hover:bg-[#ffe0bd]"
-            >
-              {t("Join beta waitlist")} <ArrowIcon />
-            </a>
-            <a
-              href="#workflow"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 px-6 py-3.5 text-sm font-bold text-white/85 transition hover:border-white/35 hover:bg-white/[.04]"
-            >
-              {dict.common.seeWorkflow}
-            </a>
-          </div>
-          <div className="mt-11 grid grid-cols-3 gap-5 border-t border-white/10 pt-6">
-            {[
-              ["01", t("Comment trigger")],
-              ["02", t("Keywords")],
-              ["03", t("Private reply")],
-            ].map(([number, label]) => (
-              <div key={number}>
-                <p className="text-sm font-bold text-[#ffcf9b]">{number}</p>
-                <p className="mt-1.5 text-xs leading-5 text-white/45">
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <CommentToDmCanvas locale={locale} />
-      </section>
-      <section className="border-y border-white/10 bg-white/[.025]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-7 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
-          <p className="max-w-sm text-sm font-medium leading-6 text-white/55">
-            {dict.landing.audiences.title}
-          </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white/65">
-            {dict.landing.audiences.items
-              .slice(0, 5)
-              .map((audience: string) => (
-                <span key={audience}>{audience}</span>
-              ))}
-          </div>
-        </div>
-      </section>
-      <section
-        id="workflow"
-        className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:px-10 lg:py-32"
-      >
-        <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-[#ffcf9b]">
-            {dict.landing.workflow.eyebrow}
-          </p>
-          <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-            {dict.landing.workflow.title}
-          </h2>
-          <p className="mt-5 text-lg leading-8 text-white/55">
-            {dict.landing.workflow.description}
-          </p>
-        </div>
-        <div className="mt-14 grid overflow-hidden rounded-[1.5rem] border border-white/10 lg:grid-cols-3">
-          {dict.landing.workflow.steps.map(
-            (
-              step: { eyebrow: string; title: string; description: string },
-              index: number,
-            ) => (
-              <article
-                key={step.title}
-                className="relative min-h-[270px] border-b border-white/10 p-7 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0"
-              >
-                <span className="text-xs font-black tracking-[.16em] text-[#ffcf9b]">
-                  0{index + 1}
-                </span>
-                <div className="mt-10 grid h-10 w-10 place-items-center rounded-full border border-white/10 text-[#c4ccff]">
-                  <FlowIcon />
-                </div>
-                <p className="mt-7 text-xs font-bold uppercase tracking-[.16em] text-white/40">
-                  {step.eyebrow}
-                </p>
-                <h3 className="mt-3 text-2xl font-bold tracking-[-.035em] text-white">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-white/50">
-                  {step.description}
-                </p>
-              </article>
-            ),
-          )}
-        </div>
-      </section>
-      <section className="border-y border-white/10 bg-[#161718] py-24 lg:py-32">
-        <div className="mx-auto grid w-full max-w-7xl gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_.85fr] lg:items-center lg:px-10">
-          <OperationsCanvas locale={locale} />
+    <div className={`${siteFontVariables} min-h-screen overflow-x-clip bg-paper font-site text-ink selection:bg-coral selection:text-white`}>
+      <SiteHeader locale={locale} onHome />
+
+      <main>
+        {/* Hero */}
+        <section className="mx-auto grid max-w-6xl items-center gap-16 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1.05fr_.95fr] lg:pt-20">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#c4ccff]">
-              {dict.landing.dashboard.eyebrow}
+            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-soft">
+              <span className="h-1.5 w-1.5 rounded-full bg-coral" />
+              {copy.hero.badge}
             </p>
-            <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-              {dict.landing.dashboard.title}
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-white/55">
-              {dict.landing.dashboard.description}
-            </p>
-            <ul className="mt-8 space-y-3">
-              {dict.landing.platformFeatures
-                .slice(0, 4)
-                .map((feature: string) => (
-                  <li
-                    key={feature}
-                    className="flex items-center gap-3 text-sm text-white/75"
-                  >
-                    <span className="grid h-5 w-5 place-items-center rounded-full bg-[#c4ccff] text-[#303a81]">
-                      <CheckIcon />
-                    </span>
-                    {feature}
-                  </li>
-                ))}
+            <h1 className="mt-7 text-balance font-heading text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl">
+              {copy.hero.titleStart}{" "}
+              <span className="relative whitespace-nowrap text-coral">
+                {copy.hero.titleHighlight}
+                <svg aria-hidden="true" viewBox="0 0 300 18" preserveAspectRatio="none" className="absolute -bottom-2 left-0 h-3 w-full text-coral/35">
+                  <path d="M3 13c60-9 140-12 294-6" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+                </svg>
+              </span>{" "}
+              {copy.hero.titleEnd}
+            </h1>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-ink-soft">{copy.hero.description}</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={signup}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-coral px-7 py-4 text-base font-semibold text-white shadow-[0_14px_30px_-12px_rgba(238,79,43,.7)] transition hover:bg-coral-dark"
+              >
+                {copy.hero.primary} <Arrow />
+              </Link>
+              <a
+                href="#como-funciona"
+                className="inline-flex items-center justify-center rounded-full border border-ink/15 bg-white px-7 py-4 text-base font-semibold text-ink transition hover:border-ink/40"
+              >
+                {copy.hero.secondary}
+              </a>
+            </div>
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-muted">
+              {copy.hero.reassurance.map((item) => (
+                <li key={item} className="inline-flex items-center gap-1.5">
+                  <Check className="h-4 w-4 text-moss" /> {item}
+                </li>
+              ))}
             </ul>
           </div>
-        </div>
-      </section>
-      <section
-        id="use-cases"
-        className="mx-auto w-full max-w-7xl px-5 py-24 sm:px-8 lg:px-10 lg:py-32"
-      >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <HeroVisual copy={copy} />
+        </section>
+
+        {/* Trust strip */}
+        <section className="border-y border-line bg-white">
+          <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-3 px-5 py-6 text-sm font-medium text-ink-soft sm:px-8 lg:grid-cols-4">
+            {copy.trust.map((item) => (
+              <li key={item} className="inline-flex items-center gap-2">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-coral-soft text-coral-dark">
+                  <Check className="h-3 w-3" />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* How it works */}
+        <section id="como-funciona" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24 sm:px-8 lg:py-32">
           <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#ffcf9b]">
-              {dict.landing.useCases.eyebrow}
-            </p>
-            <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-              {dict.landing.useCases.title}
-            </h2>
+            <Eyebrow>{copy.how.eyebrow}</Eyebrow>
+            <SectionTitle>{copy.how.title}</SectionTitle>
           </div>
-          <p className="max-w-xs text-sm leading-6 text-white/45">
-            {t("Social commerce")} · {t("Lead generation")} ·{" "}
-            {t("Creator funnels")}
-          </p>
-        </div>
-        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {dict.landing.useCases.cards.map(
-            (card: { title: string; description: string }, index: number) => (
-              <article
-                key={card.title}
-                className="rounded-2xl border border-white/10 bg-white/[.025] p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[.05]"
-              >
-                <p className="text-xs font-black tracking-[.16em] text-[#ffcf9b]">
-                  0{index + 1}
-                </p>
-                <h3 className="mt-12 text-xl font-bold tracking-[-.03em] text-white">
-                  {card.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-white/50">
-                  {card.description}
-                </p>
+          <ol className="mt-14 grid gap-5 md:grid-cols-3">
+            {copy.how.steps.map((step, i) => (
+              <li key={step.title} className="rounded-3xl bg-white p-7 ring-1 ring-line">
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-ink font-heading text-lg font-bold text-paper">{i + 1}</span>
+                <h3 className="mt-6 font-heading text-2xl font-semibold tracking-tight">{step.title}</h3>
+                <p className="mt-3 leading-7 text-ink-soft">{step.description}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Features */}
+        <section id="recursos" className="scroll-mt-20 border-t border-line bg-paper-2 py-24 lg:py-32">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <div className="max-w-2xl">
+              <Eyebrow>{copy.features.eyebrow}</Eyebrow>
+              <SectionTitle>{copy.features.title}</SectionTitle>
+            </div>
+            <div className="mt-16 space-y-20 lg:space-y-28">
+              {copy.features.items.map((feature, i) => {
+                const Visual = featureVisuals[i];
+                return (
+                  <div key={feature.title} className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+                    <div className={i % 2 === 1 ? "lg:order-2" : ""}>
+                      <p className="text-sm font-semibold text-coral-dark">{feature.eyebrow}</p>
+                      <h3 className="mt-3 text-balance font-heading text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{feature.title}</h3>
+                      <p className="mt-4 text-lg leading-8 text-ink-soft">{feature.description}</p>
+                      <ul className="mt-6 space-y-3">
+                        {feature.bullets.map((bullet) => (
+                          <li key={bullet} className="flex gap-3 text-ink-soft">
+                            <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-paper">
+                              <Check className="h-3 w-3" />
+                            </span>
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className={i % 2 === 1 ? "lg:order-1" : ""}>
+                      <Visual copy={copy} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Use cases */}
+        <section className="mx-auto max-w-6xl px-5 py-24 sm:px-8 lg:py-32">
+          <div className="max-w-2xl">
+            <Eyebrow>{copy.useCases.eyebrow}</Eyebrow>
+            <SectionTitle>{copy.useCases.title}</SectionTitle>
+          </div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {copy.useCases.items.map((item) => (
+              <article key={item.title} className="rounded-3xl border border-line p-6 transition hover:border-ink/30 hover:bg-white">
+                <h3 className="font-heading text-xl font-semibold tracking-tight">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-ink-soft">{item.description}</p>
               </article>
-            ),
-          )}
-        </div>
-      </section>
-      <section
-        id="pricing"
-        className="border-y border-white/10 bg-[#161718] py-24 lg:py-32"
-      >
-        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#ffcf9b]">
-              {dict.landing.pricing.eyebrow}
-            </p>
-            <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-              {dict.landing.pricing.title}
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-white/55">
-              {dict.landing.pricing.description}
-            </p>
+            ))}
           </div>
-          <div className="mt-14 grid gap-4 lg:grid-cols-3">
-            {dict.landing.pricing.tiers.map(
-              (
-                tier: {
-                  name: string;
-                  price: string;
-                  label: string;
-                  description: string;
-                  features: string[];
-                  cta: string;
-                },
-                index: number,
-              ) => {
-                const featured = index === 1;
+        </section>
+
+        {/* Pricing */}
+        <section id="precos" className="scroll-mt-20 bg-ink py-24 text-paper lg:py-32">
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#ffb59f]">{copy.pricing.eyebrow}</p>
+              <SectionTitle className="text-paper">{copy.pricing.title}</SectionTitle>
+              <p className="mt-5 text-lg text-paper/65">{copy.pricing.description}</p>
+            </div>
+            <div className="mt-14 grid gap-5 lg:grid-cols-3">
+              {copy.pricing.tiers.map((tier) => {
+                const featured = Boolean(tier.highlight);
                 return (
                   <article
                     key={tier.name}
-                    className={`relative rounded-2xl border p-7 ${featured ? "border-[#ffcf9b]/60 bg-[#ffcf9b] text-[#20160e] shadow-[0_18px_50px_rgba(255,177,105,.16)]" : "border-white/10 bg-[#101112] text-white"}`}
+                    className={`relative flex flex-col rounded-3xl p-7 ${featured ? "bg-paper text-ink" : "bg-white/[.06] ring-1 ring-white/10"}`}
                   >
-                    {featured && (
-                      <span className="absolute right-5 top-5 rounded-full bg-[#20160e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#ffcf9b]">
-                        {tier.label}
-                      </span>
+                    {tier.highlight && (
+                      <span className="absolute right-6 top-6 rounded-full bg-coral px-3 py-1 text-xs font-semibold text-white">{tier.highlight}</span>
                     )}
-                    <p
-                      className={`text-sm font-bold ${featured ? "text-[#6a3a16]" : "text-white/55"}`}
-                    >
-                      {tier.name}
+                    <p className={`font-heading text-xl font-semibold ${featured ? "" : "text-paper"}`}>{tier.name}</p>
+                    <p className="mt-5 flex items-baseline gap-2">
+                      <span className="font-heading text-5xl font-bold tracking-tight">{tier.price}</span>
+                      <span className={`text-sm ${featured ? "text-ink-muted" : "text-paper/55"}`}>{tier.period}</span>
                     </p>
-                    <div className="mt-6 flex items-end gap-1">
-                      <span className="text-5xl font-black tracking-[-.07em]">
-                        {tier.price}
-                      </span>
-                      <span
-                        className={`mb-1 text-sm ${featured ? "text-[#6a3a16]" : "text-white/45"}`}
-                      >
-                        {t("/mo")}
-                      </span>
-                    </div>
-                    <p
-                      className={`mt-5 min-h-12 text-sm leading-6 ${featured ? "text-[#6a3a16]" : "text-white/55"}`}
-                    >
-                      {tier.description}
-                    </p>
-                    <ul
-                      className={`mt-6 space-y-3 border-t pt-6 text-sm ${featured ? "border-[#20160e]/15 text-[#4d2a12]" : "border-white/10 text-white/70"}`}
-                    >
-                      {tier.features.map((feature: string) => (
+                    <p className={`mt-4 text-sm leading-6 ${featured ? "text-ink-soft" : "text-paper/65"}`}>{tier.description}</p>
+                    <ul className={`mt-6 flex-1 space-y-3 border-t pt-6 text-sm ${featured ? "border-line" : "border-white/10 text-paper/85"}`}>
+                      {tier.features.map((feature) => (
                         <li key={feature} className="flex gap-2.5">
-                          <span
-                            className={
-                              featured ? "text-[#6a3a16]" : "text-[#b9f7df]"
-                            }
-                          >
-                            <CheckIcon />
-                          </span>
+                          <Check className={`mt-0.5 h-4 w-4 shrink-0 ${featured ? "text-coral" : "text-[#ffb59f]"}`} />
                           {feature}
                         </li>
                       ))}
                     </ul>
-                    <a
-                      href="#early-access"
-                      className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition ${featured ? "bg-[#20160e] text-[#fff4e8] hover:bg-[#322116]" : "border border-white/15 text-white hover:border-white/35 hover:bg-white/[.05]"}`}
+                    <Link
+                      href={signup}
+                      className={`mt-8 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold transition ${
+                        featured ? "bg-coral text-white hover:bg-coral-dark" : "bg-paper text-ink hover:bg-white"
+                      }`}
                     >
-                      {tier.cta}
-                      <ArrowIcon />
-                    </a>
+                      {tier.cta} <Arrow />
+                    </Link>
                   </article>
                 );
-              },
-            )}
-          </div>
-        </div>
-      </section>
-      <section
-        id="security"
-        className="mx-auto grid w-full max-w-7xl gap-12 px-5 py-24 sm:px-8 lg:grid-cols-[.82fr_1.18fr] lg:px-10 lg:py-32"
-      >
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-[#c4ccff]">
-            {dict.landing.trust.eyebrow}
-          </p>
-          <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-            {dict.landing.trust.title}
-          </h2>
-          <p className="mt-5 text-lg leading-8 text-white/55">
-            {dict.landing.trust.description}
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {dict.landing.platformFeatures.map((feature: string) => (
-            <div
-              key={feature}
-              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] p-4 text-sm font-medium text-white/75"
-            >
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#c4ccff]/15 text-[#c4ccff]">
-                <CheckIcon />
-              </span>
-              {feature}
+              })}
             </div>
-          ))}
-        </div>
-      </section>
-      <section
-        id="early-access"
-        className="border-y border-white/10 bg-[radial-gradient(ellipse_at_78%_20%,rgba(244,112,89,.22),transparent_45%),radial-gradient(ellipse_at_18%_80%,rgba(113,130,255,.19),transparent_48%),#161718] py-24 lg:py-32"
-      >
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[.88fr_1.12fr] lg:px-10">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#ffcf9b]">
-              {t("Beta access")}
-            </p>
-            <h2 className="mt-4 text-balance text-4xl font-black leading-[.98] tracking-[-.06em] text-white sm:text-5xl">
-              {t("Request early access for agencies and launch teams.")}
-            </h2>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-white/60">
-              {t(
-                "Join the initial cohort for onboarding, feedback, and the founding agency offer.",
+            <p className="mt-8 text-center text-sm text-paper/50">{copy.pricing.note}</p>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="duvidas" className="mx-auto max-w-3xl scroll-mt-20 px-5 py-24 sm:px-8 lg:py-32">
+          <div className="text-center">
+            <Eyebrow>{copy.faq.eyebrow}</Eyebrow>
+            <SectionTitle>{copy.faq.title}</SectionTitle>
+          </div>
+          <div className="mt-12 divide-y divide-line border-y border-line">
+            {copy.faq.items.map((item) => (
+              <details key={item.q} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 font-heading text-lg font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                  {item.q}
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line text-ink-muted transition group-open:rotate-45">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
+                </summary>
+                <p className="mt-3 pr-12 leading-7 text-ink-soft">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* Final CTA + agencies */}
+        <section id="contato" className="scroll-mt-20 px-5 pb-24 sm:px-8">
+          <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1.2fr_.8fr]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-coral p-10 text-white sm:p-14">
+              <div aria-hidden="true" className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10" />
+              <h2 className="relative max-w-lg text-balance font-heading text-4xl font-bold leading-tight tracking-tight sm:text-5xl">{copy.final.title}</h2>
+              <p className="relative mt-5 max-w-md text-lg text-white/85">{copy.final.description}</p>
+              <Link
+                href={signup}
+                className="relative mt-9 inline-flex items-center gap-2 rounded-full bg-ink px-7 py-4 text-base font-semibold text-paper transition hover:bg-black"
+              >
+                {copy.final.cta} <Arrow />
+              </Link>
+            </div>
+            <div className="rounded-[2rem] bg-white p-8 ring-1 ring-line sm:p-10">
+              <h3 className="font-heading text-2xl font-bold tracking-tight">{copy.final.agencyTitle}</h3>
+              <p className="mt-3 text-sm leading-6 text-ink-soft">{copy.final.agencyDescription}</p>
+              {beta === "success" ? (
+                <p className="mt-6 rounded-2xl bg-coral-soft p-4 text-sm font-medium text-coral-dark">{copy.final.success}</p>
+              ) : (
+                <form action={submitWaitlist} className="mt-6 space-y-3">
+                  <input type="hidden" name="locale" value={locale} />
+                  {beta === "invalid" && <p className="text-sm font-medium text-coral-dark">{copy.final.invalid}</p>}
+                  {[
+                    { name: "name", label: copy.final.name, type: "text", required: true, autoComplete: "name" },
+                    { name: "email", label: copy.final.email, type: "email", required: true, autoComplete: "email" },
+                    { name: "company", label: copy.final.company, type: "text", required: false, autoComplete: "organization" },
+                  ].map((field) => (
+                    <label key={field.name} className="block">
+                      <span className="sr-only">{field.label}</span>
+                      <input
+                        name={field.name}
+                        type={field.type}
+                        required={field.required}
+                        autoComplete={field.autoComplete}
+                        placeholder={field.label}
+                        className="w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink outline-none transition placeholder:text-ink-muted focus:border-coral"
+                      />
+                    </label>
+                  ))}
+                  <button type="submit" className="w-full rounded-full bg-ink px-5 py-3.5 text-sm font-semibold text-paper transition hover:bg-coral-dark">
+                    {copy.final.submit}
+                  </button>
+                </form>
               )}
-            </p>
-            <div className="mt-9 border-l border-[#ffcf9b]/60 pl-4 text-sm leading-6 text-white/60">
-              {dict.landing.founding.description}
             </div>
-            {betaSuccess && (
-              <div className="mt-6 rounded-xl border border-[#b9f7df]/30 bg-[#b9f7df]/10 p-4 text-sm text-[#d9ffef]">
-                {t(
-                  "You are on the beta waitlist. We will reach out with the next onboarding step.",
-                )}
-              </div>
-            )}
-            {betaInvalid && (
-              <div className="mt-6 rounded-xl border border-red-300/30 bg-red-400/10 p-4 text-sm text-red-100">
-                {t("Please provide a valid name and work email.")}
-              </div>
-            )}
           </div>
-          <form
-            action={submitWaitlist}
-            className="rounded-[1.5rem] border border-white/15 bg-[#101112]/85 p-5 shadow-2xl sm:p-7"
-          >
-            <input type="hidden" name="locale" value={locale} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-white/70">
-                <span>{t("Name")}</span>
-                <input
-                  name="name"
-                  required
-                  className="w-full rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-3 text-white outline-none transition placeholder:text-white/25 focus:border-[#ffcf9b]/60"
-                  placeholder="Ana Silva"
-                />
-              </label>
-              <label className="space-y-2 text-sm font-medium text-white/70">
-                <span>{t("Work email")}</span>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  className="w-full rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-3 text-white outline-none transition placeholder:text-white/25 focus:border-[#ffcf9b]/60"
-                  placeholder={t("you@agency.com")}
-                />
-              </label>
-            </div>
-            <label className="mt-4 block space-y-2 text-sm font-medium text-white/70">
-              <span>{t("Company")}</span>
-              <input
-                name="company"
-                className="w-full rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-3 text-white outline-none transition placeholder:text-white/25 focus:border-[#ffcf9b]/60"
-                placeholder="Studio North"
-              />
-            </label>
-            <label className="mt-4 block space-y-2 text-sm font-medium text-white/70">
-              <span>{t("What are you trying to launch?")}</span>
-              <textarea
-                name="goal"
-                rows={4}
-                className="w-full resize-none rounded-xl border border-white/10 bg-white/[.04] px-3.5 py-3 text-white outline-none transition placeholder:text-white/25 focus:border-[#ffcf9b]/60"
-                placeholder={t(
-                  "3 client campaigns, lead magnet flow, or weekly launch funnel...",
-                )}
-              />
-            </label>
-            <button
-              type="submit"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#ffcf9b] px-6 py-3.5 text-sm font-bold text-[#20160e] transition hover:bg-[#ffe0bd]"
-            >
-              {t("Join beta waitlist")}
-              <ArrowIcon />
-            </button>
-          </form>
-        </div>
-      </section>
-      <footer className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 py-9 text-sm text-white/45 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
-        <div className="flex items-center gap-3">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#ffcf9b] text-xs font-black text-[#20160e]">
-            MP
-          </span>
-          <span className="font-semibold text-white/80">meuperfil.me</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Link
-            href={`${prefix}/templates`}
-            className="transition hover:text-white"
-          >
-            {dict.common.templates}
-          </Link>
-          <Link
-            href={`${prefix}/privacy`}
-            className="transition hover:text-white"
-          >
-            {dict.common.privacy}
-          </Link>
-          <Link
-            href={`${prefix}/terms`}
-            className="transition hover:text-white"
-          >
-            {dict.common.terms}
-          </Link>
-          <Link
-            href={`${prefix}/data-deletion`}
-            className="transition hover:text-white"
-          >
-            {dict.common.dataDeletion}
-          </Link>
-          <LanguageSwitcher currentLocale={locale} variant="compact" />
-        </div>
-      </footer>
-    </main>
+        </section>
+      </main>
+
+      <SiteFooter locale={locale} onHome />
+    </div>
   );
 }
