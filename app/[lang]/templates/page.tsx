@@ -1,7 +1,9 @@
 import { publicTranslator } from "@/lib/i18n/public";
 import type { Metadata } from "next";
 import Link from "next/link";
-import PublicSiteHeader from "@/components/public-site-header";
+import SiteHeader from "@/components/site/site-header";
+import SiteFooter from "@/components/site/site-footer";
+import { siteFontVariables } from "@/lib/site/fonts";
 import TemplateVisual from "@/components/template-visual";
 import { localizeCampaignTemplate } from "@/lib/i18n/templates";
 import { CAMPAIGN_TEMPLATES } from "@/lib/templates/campaign-templates";
@@ -35,81 +37,44 @@ export default async function TemplatesPage({
   const prefix = `/${locale}`;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <PublicSiteHeader active="templates" locale={locale} />
-
-      <section className="border-b border-white/10 bg-zinc-950/55">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8 lg:py-20">
+    <div className={`${siteFontVariables} min-h-screen overflow-x-clip bg-paper font-site text-ink`}>
+      <SiteHeader locale={locale} />
+      <main>
+        <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-20 pt-14 sm:px-8 lg:grid-cols-[.95fr_1.05fr] lg:items-center lg:pt-20">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-cyan-200">{t("Public template library")}</p>
-            <h1 className="mt-4 text-5xl font-black leading-[1.02] text-white sm:text-6xl">{t("Instagram campaigns you can copy in minutes")}</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">{t("Start with proven comment-to-DM playbooks for lead magnets, product links, events, service menus, and agency client campaigns.")}</p>
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-coral-dark">{t("Public template library")}</p>
+            <h1 className="mt-4 text-balance font-heading text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">{t("Instagram campaigns you can copy in minutes")}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-ink-soft">{t("Start with proven comment-to-DM playbooks for lead magnets, product links, events, service menus, and agency client campaigns.")}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={`${prefix}/login`}
-                className="inline-flex items-center justify-center bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
-              >{t("Start free")}</Link>
-              <a
-                href="#template-grid"
-                className="inline-flex items-center justify-center border border-white/10 bg-white/[0.04] px-6 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
-              >{t("Browse templates")}</a>
+              <Link href={`${prefix}/login`} className="inline-flex items-center justify-center rounded-full bg-coral px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-coral-dark">{t("Start free")}</Link>
+              <a href="#template-grid" className="inline-flex items-center justify-center rounded-full border border-ink/15 bg-white px-7 py-3.5 text-sm font-semibold text-ink transition hover:border-ink/40">{t("Browse templates")}</a>
             </div>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             {templates.slice(0, 2).map((template) => (
               <TemplateVisual key={template.slug} template={template} compact />
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section
-        id="template-grid"
-        className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-6 lg:px-8"
-      >
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {templates.map((template) => (
-            <article
-              key={template.slug}
-              className="flex min-h-full flex-col border border-white/10 bg-white/[0.035] p-5 transition hover:border-white/20 hover:bg-white/[0.055]"
-            >
-              <div className="mb-5">
+        <section id="template-grid" className="scroll-mt-20 border-t border-line bg-paper-2 py-20">
+          <div className="mx-auto grid max-w-6xl gap-5 px-5 sm:px-8 md:grid-cols-2 lg:grid-cols-3">
+            {templates.map((template) => (
+              <article key={template.slug} className="flex flex-col rounded-3xl bg-white p-5 ring-1 ring-line">
                 <TemplateVisual template={template} compact />
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">
-                {template.category}
-              </p>
-              <h2 className="mt-3 text-xl font-black leading-tight text-white">
-                {template.title}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">
-                {template.summary}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {template.keywords.map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="border border-white/10 bg-zinc-950 px-2 py-1 text-xs font-semibold text-zinc-300"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-auto grid gap-2 pt-6">
-                <Link
-                  href={`${prefix}/templates/${template.slug}`}
-                  className="inline-flex w-full items-center justify-center border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
-                >{t("View playbook")}</Link>
-                <Link
-                  href={`${prefix}/login?template=${template.slug}`}
-                  className="inline-flex w-full items-center justify-center bg-cyan-300 px-4 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
-                >{t("Use this template")}</Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[.12em] text-coral-dark">{template.category}</p>
+                <h2 className="mt-2 font-heading text-xl font-semibold leading-tight tracking-tight">{template.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-ink-soft">{template.summary}</p>
+                <div className="mt-auto grid gap-2 pt-6">
+                  <Link href={`${prefix}/login?template=${template.slug}`} className="inline-flex items-center justify-center rounded-full bg-ink px-4 py-3 text-sm font-semibold text-paper transition hover:bg-coral-dark">{t("Use this template")}</Link>
+                  <Link href={`${prefix}/templates/${template.slug}`} className="inline-flex items-center justify-center rounded-full border border-line px-4 py-3 text-sm font-semibold text-ink transition hover:border-ink/40">{t("View playbook")}</Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
+      <SiteFooter locale={locale} />
+    </div>
   );
 }

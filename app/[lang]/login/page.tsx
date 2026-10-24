@@ -2,14 +2,18 @@ import { redirect } from "next/navigation";
 import { publicTranslator } from "@/lib/i18n/public";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
+import Link from "next/link";
 import LanguageSwitcher from "@/components/language-switcher";
+import { Logo } from "@/components/site/logo";
+import { siteFontVariables } from "@/lib/site/fonts";
+import { LEGAL_CONTACT_EMAIL } from "@/lib/legal/content";
 import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   const t = publicTranslator(lang);
   return {
-  title: "Login - MeuPerfil",
+  title: t("Sign in or create your account") + " — MeuPerfil",
   description: t("Sign in to manage Instagram comment-to-DM campaigns."),
 };
 }
@@ -53,67 +57,74 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center gradient-mesh overflow-hidden px-6">
-      <div className="absolute top-6 right-6 z-20">
-        <LanguageSwitcher currentLocale={locale} />
-      </div>
+    <div className={`${siteFontVariables} flex min-h-screen flex-col bg-paper font-site text-ink`}>
+      <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
+        <Link href={`/${locale}`} aria-label="meuperfil.me">
+          <Logo />
+        </Link>
+        <LanguageSwitcher currentLocale={locale} tone="light" />
+      </header>
 
-      <div className="relative z-10 w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 mb-5">
-            <span className="text-xl font-black text-cyan-100">MP</span>
+      <main className="flex flex-1 items-center justify-center px-5 py-12">
+        <div className="w-full max-w-md">
+          <div className="rounded-[2rem] bg-white p-8 ring-1 ring-line shadow-[0_30px_60px_-40px_rgba(22,18,15,.45)] sm:p-10">
+            {checkEmail ? (
+              <div className="text-center">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-coral-soft text-coral-dark">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                  </svg>
+                </div>
+                <h1 className="mt-6 font-heading text-3xl font-bold tracking-tight">{t("Check your email")}</h1>
+                <p className="mt-3 leading-7 text-ink-soft">{t("We sent you a secure sign-in link. Open it on this device to continue.")}</p>
+                <Link href={`/${locale}/login`} className="mt-6 inline-block text-sm font-semibold text-coral-dark hover:underline">
+                  {t("Use another email")}
+                </Link>
+              </div>
+            ) : (
+              <>
+                <h1 className="font-heading text-3xl font-bold tracking-tight">{t("Sign in or create your account")}</h1>
+                <p className="mt-3 leading-7 text-ink-soft">
+                  {selectedTemplate
+                    ? t("Sign in or create your account to use the {template} template.", { template: selectedTemplate.title })
+                    : t("Enter your email and we send you an access link. If you are new, your account is created right away, free.")}
+                </p>
+                {selectedTemplate && (
+                  <div className="mt-5 rounded-2xl bg-coral-soft p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[.12em] text-coral-dark">{t("Template selected")}</p>
+                    <p className="mt-1 font-semibold">{selectedTemplate.title}</p>
+                  </div>
+                )}
+                <form action={sendMagicLink} className="mt-7 space-y-4">
+                  <label htmlFor="email" className="block text-sm font-semibold">{t("Your email")}</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder={t("you@email.com")}
+                    className="w-full rounded-xl border border-line bg-paper px-4 py-3.5 text-ink outline-none transition placeholder:text-ink-muted focus:border-coral"
+                  />
+                  <button type="submit" className="w-full rounded-full bg-coral px-6 py-3.5 font-semibold text-white transition hover:bg-coral-dark">
+                    {t("Continue with email")}
+                  </button>
+                </form>
+                <p className="mt-6 text-center text-xs leading-5 text-ink-muted">
+                  {t("No password needed.")}{" "}
+                  {t("By continuing you agree to the")}{" "}
+                  <Link href={`/${locale}/terms`} className="underline hover:text-ink">{t("Terms of Use")}</Link>{" "}
+                  {t("and the")}{" "}
+                  <Link href={`/${locale}/privacy`} className="underline hover:text-ink">{t("Privacy Policy")}</Link>.
+                </p>
+              </>
+            )}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            MeuPerfil
-          </h1>
-          <p className="text-muted text-sm leading-relaxed mt-2">
-            {selectedTemplate
-              ? t("Sign in or create your account to use the {template} template.", { template: selectedTemplate.title })
-              : t("Sign in or create your account with your email. Then connect your Instagram professional account.")}
+          <p className="mt-6 text-center text-xs text-ink-muted">
+            {t("Need help?")} <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-ink">{LEGAL_CONTACT_EMAIL}</a>
           </p>
         </div>
-
-        <div className="glass-strong rounded-2xl p-8 shadow-2xl shadow-black/40">
-          {selectedTemplate && !checkEmail && (
-            <div className="mb-5 border border-cyan-200/20 bg-cyan-300/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">{t("Template selected")}</p>
-              <p className="mt-2 text-sm font-semibold text-white">
-                {selectedTemplate.title}
-              </p>
-            </div>
-          )}
-
-          {checkEmail ? (
-            <div className="text-center py-4">
-              <h2 className="text-lg font-semibold mb-2">{t("Check your email")}</h2>
-              <p className="text-sm text-muted">{t("We sent you a secure sign-in link. Open it on this device to continue.")}</p>
-            </div>
-          ) : (
-            <form action={sendMagicLink} className="space-y-5">
-              <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-foreground"
-                >{t("Your email")}</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder={t("you@email.com")}
-                  className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
-              >{t("Email me a sign-in link")}</button>
-            </form>
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

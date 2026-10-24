@@ -31,18 +31,9 @@ export default function SiteHeader({ locale, onHome = false }: { locale: Locale;
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher currentLocale={locale} tone="light" />
-          <Link href={`${home}/login`} className="hidden px-2 text-sm font-semibold text-ink-soft transition hover:text-ink sm:block">
-            {copy.nav.signIn}
-          </Link>
           <Link
             href={`${home}/login`}
-            className="hidden rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper transition hover:bg-coral-dark sm:block"
-          >
-            {copy.nav.cta}
-          </Link>
-          <Link
-            href={`${home}/login`}
-            className="whitespace-nowrap rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper transition hover:bg-coral-dark sm:hidden"
+            className="whitespace-nowrap rounded-full bg-ink px-5 py-2 text-sm font-semibold text-paper transition hover:bg-coral-dark"
           >
             {copy.nav.signIn}
           </Link>
