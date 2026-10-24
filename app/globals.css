@@ -21,6 +21,20 @@
   --color-warning: #fbbf24;
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Public site (landing and legal pages): warm paper, ink and coral. */
+  --font-heading: var(--font-display), "Bricolage Grotesque", system-ui, sans-serif;
+  --font-site: var(--font-body), "Inter", system-ui, sans-serif;
+  --color-paper: #fbf8f3;
+  --color-paper-2: #f3ede3;
+  --color-ink: #16120f;
+  --color-ink-soft: #4b433b;
+  --color-ink-muted: #7b7168;
+  --color-line: #e6ded2;
+  --color-coral: #ee4f2b;
+  --color-coral-dark: #c23a1a;
+  --color-coral-soft: #fde4da;
+  --color-moss: #1d5c4c;
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────── */
