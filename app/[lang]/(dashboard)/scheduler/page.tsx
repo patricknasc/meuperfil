@@ -334,7 +334,7 @@ export default function SchedulerPage() {
   const selectedAccount = accounts.find((a) => a.id === formAccountId) || accounts[0];
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 space-y-8">
+    <div className="space-y-6 animate-fade-in">
       {loading && !posts.length && <p role="status">{messages.loading}</p>}
       {loadError && <div role="alert" className="rounded-xl border border-error/30 p-4 text-error">{messages.loadError} <button className="underline" onClick={() => void fetchInitialData()}>{messages.searchButton}</button></div>}
       {!loading && !accounts.length && !loadError && <Link className="block rounded-xl border border-border p-4 text-accent" href={`/${lang}/settings`}>{messages.connectFirst}</Link>}
@@ -349,16 +349,10 @@ export default function SchedulerPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-accent/10 text-accent border border-accent/20">{t("Novo Módulo")}</span>
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">{t("Agendador de Conteúdo")}</h1>
-          </div>
-          <p className="text-muted text-sm mt-1">{t("Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.")}</p>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <p className="max-w-2xl text-sm leading-6 text-muted">{t("Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.")}</p>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* View Toggle */}
           <div className="bg-surface-hover border border-border p-1 rounded-xl flex items-center">
             <button
@@ -396,7 +390,7 @@ export default function SchedulerPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-surface border border-border rounded-2xl p-4 shadow-[0_1px_2px_rgba(22,18,15,.04)] flex items-center justify-between">
           <div>
             <p className="text-muted text-xs font-medium">{t("Agendados")}</p>
@@ -404,7 +398,7 @@ export default function SchedulerPage() {
               {posts.filter((p) => p.status === "SCHEDULED").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+          <div className="hidden sm:flex w-10 h-10 shrink-0 rounded-xl bg-accent/10 border border-accent/20 items-center justify-center text-accent">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
@@ -418,7 +412,7 @@ export default function SchedulerPage() {
               {posts.filter((p) => p.status === "PUBLISHED").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success">
+          <div className="hidden sm:flex w-10 h-10 shrink-0 rounded-xl bg-success/10 border border-success/20 items-center justify-center text-success">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
@@ -432,7 +426,7 @@ export default function SchedulerPage() {
               {posts.filter((p) => p.status === "DRAFT").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-warning/10 border border-warning/30 flex items-center justify-center text-warning">
+          <div className="hidden sm:flex w-10 h-10 shrink-0 rounded-xl bg-warning/10 border border-warning/30 items-center justify-center text-warning">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
@@ -446,7 +440,7 @@ export default function SchedulerPage() {
               {posts.filter((p) => p.autoCampaignEnabled || p.createdAutomationId).length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+          <div className="hidden sm:flex w-10 h-10 shrink-0 rounded-xl bg-accent/10 border border-accent/20 items-center justify-center text-accent">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
             </svg>
@@ -456,7 +450,7 @@ export default function SchedulerPage() {
 
       {/* Main View: Calendar or List */}
       {activeView === "calendar" ? (
-        <div className="bg-surface border border-border rounded-2xl overflow-hidden p-6 space-y-6">
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden p-3 sm:p-6 space-y-4 sm:space-y-6">
           {/* Calendar Header Navigation */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -498,7 +492,7 @@ export default function SchedulerPage() {
           </div>
 
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-muted uppercase tracking-wider">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-xs font-semibold text-muted uppercase sm:tracking-wider">
             <span>{t("Dom")}</span>
             <span>{t("Seg")}</span>
             <span>{t("Ter")}</span>
@@ -509,7 +503,7 @@ export default function SchedulerPage() {
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {calendarDays.map((day, idx) => {
               const isToday =
                 new Date().toDateString() === day.date.toDateString();
@@ -518,7 +512,7 @@ export default function SchedulerPage() {
                 <div
                   key={idx}
                   onClick={() => openCreateModal(day.date)}
-                  className={`min-h-[110px] p-2 rounded-xl border transition group cursor-pointer flex flex-col justify-between ${
+                  className={`min-h-[56px] sm:min-h-[110px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition group cursor-pointer flex flex-col justify-between ${
                     day.isCurrentMonth
                       ? isToday
                         ? "bg-accent/5 border-accent/40 shadow-inner"
@@ -536,11 +530,25 @@ export default function SchedulerPage() {
                     >
                       {day.date.getDate()}
                     </span>
-                    <span className="text-[10px] text-muted group-hover:text-muted opacity-0 group-hover:opacity-100 transition">{t("+ Agendar")}</span>
+                    <span className="text-[10px] text-muted group-hover:text-muted opacity-0 group-hover:opacity-100 transition hidden sm:inline">{t("+ Agendar")}</span>
                   </div>
 
+                  {/* Phones: one dot per post; the cell opens the day. */}
+                  {day.posts.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                      {day.posts.map((post) => (
+                        <span
+                          key={post.id}
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            post.status === "PUBLISHED" ? "bg-success" : post.status === "FAILED" ? "bg-error" : "bg-accent"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Day Posts Badges */}
-                  <div className="space-y-1 mt-1 overflow-y-auto max-h-[80px]">
+                  <div className="hidden sm:block space-y-1 mt-1 overflow-y-auto max-h-[80px]">
                     {day.posts.map((post) => (
                       <div
                         key={post.id}

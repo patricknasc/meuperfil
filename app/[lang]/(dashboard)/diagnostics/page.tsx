@@ -132,16 +132,11 @@ export default function DiagnosticsPage() {
       : Math.round(data.workerHealth.ageMs / 1000);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {t("Workspace Diagnostics")}
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            {t("Health and failures for this workspace.")}
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-6 text-muted">
+          {t("Health and failures for this workspace.")}
+        </p>
         <button
           onClick={() => void refreshDiagnostics()}
           className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:border-border-hover"

@@ -46,6 +46,8 @@ export default function LogsPage() {
   const { lang } = useParams<{ lang: string }>();
   const t = workspaceTranslator(lang);
   const dateLocale = workspaceDateLocale(lang);
+  const formatTime = (value: string) =>
+    new Date(value).toLocaleString(dateLocale, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   const [logs, setLogs] = useState<DmLog[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +138,35 @@ export default function LogsPage() {
 
       {/* Table */}
       <div className="glass rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Phones: one card per log, so status and time stay visible. */}
+        <ul className="divide-y divide-border md:hidden">
+          {loading &&
+            [...Array(5)].map((_, i) => (
+              <li key={i} className="px-4 py-4">
+                <div className="h-4 bg-surface-hover rounded animate-pulse" />
+              </li>
+            ))}
+          {!loading && logs.length === 0 && (
+            <li className="px-4 py-12 text-center text-sm text-muted">{t("No logs found")}</li>
+          )}
+          {!loading &&
+            logs.map((log) => (
+              <li key={log.id} className="space-y-1.5 px-4 py-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate font-medium text-foreground">
+                    @{log.commenterName ?? log.commenterId.slice(0, 8)}
+                  </span>
+                  <StatusBadge locale={lang} status={log.status} />
+                </div>
+                <p className="truncate text-muted">“{log.commentText}”</p>
+                <p className="truncate text-xs text-muted">
+                  {log.automation.name} · @{log.instagramAccount.username} · {formatTime(log.createdAt)}
+                </p>
+              </li>
+            ))}
+        </ul>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left">
@@ -188,12 +218,7 @@ export default function LogsPage() {
                       <StatusBadge locale={lang} status={log.status} />
                     </td>
                     <td className="px-6 py-4 text-muted whitespace-nowrap">
-                      {new Date(log.createdAt).toLocaleString(dateLocale, {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatTime(log.createdAt)}
                     </td>
                   </tr>
                 ))}
@@ -203,7 +228,7 @@ export default function LogsPage() {
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-border">
             <p className="text-xs text-muted">
               {t("Showing")} {(pagination.page - 1) * pagination.limit + 1}–
               {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{" "}

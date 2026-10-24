@@ -145,7 +145,7 @@ export default function CampaignDetailPage() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm text-muted">{t("Campaign overview")}</p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">{campaign.name}</h1>
+          <h2 className="mt-1 text-2xl font-semibold text-foreground">{campaign.name}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-border bg-surface px-2 py-1 text-xs text-muted">

@@ -208,7 +208,7 @@ export default function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
         <div className="glass rounded-2xl p-4">
           <p className="text-xs uppercase tracking-wide text-muted">{t("Active")}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{overviewStats.active}</p>
@@ -240,14 +240,14 @@ export default function CampaignsPage() {
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {[
               { label: t("Strong"), value: portfolioBands.strong, accent: "text-success" },
               { label: t("Growing"), value: portfolioBands.growing, accent: "text-warning" },
               { label: t("Early"), value: portfolioBands.early, accent: "text-muted" },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-[11px] uppercase tracking-wide text-muted">{item.label}</p>
+              <div key={item.label} className="min-w-0 rounded-xl border border-border bg-surface p-3 sm:p-4">
+                <p className="truncate text-[11px] uppercase tracking-wide text-muted">{item.label}</p>
                 <p className={`mt-3 text-2xl font-semibold ${item.accent}`}>{item.value}</p>
               </div>
             ))}

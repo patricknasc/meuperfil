@@ -148,7 +148,7 @@ export default function CampaignEditPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm text-muted">{t("Campaign settings")}</p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
+          <h2 className="mt-1 text-2xl font-semibold text-foreground">{title}</h2>
         </div>
         <button
           type="button"
