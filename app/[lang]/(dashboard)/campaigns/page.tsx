@@ -1,5 +1,7 @@
 "use client";
 
+import { campaignTranslator } from "@/lib/i18n/campaigns";
+
 /**
  * Campaigns List Page
  *
@@ -29,6 +31,8 @@ interface Campaign {
   dmMessage: string;
   isActive: boolean;
   wholeWordMatch: boolean;
+  typoTolerance?: boolean;
+  endsAt?: string | null;
   instagramAccount: {
     username: string;
     instagramId: string;
@@ -60,6 +64,7 @@ export default function CampaignsPage() {
   const segments = pathname.split("/").filter(Boolean);
   const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
   const prefix = `/${currentLocale}`;
+  const t = campaignTranslator(currentLocale);
 
   const [automations, setAutomations] = useState<Campaign[]>([]);
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
@@ -139,7 +144,7 @@ export default function CampaignsPage() {
   }
 
   async function deleteAutomation(id: string) {
-    if (!confirm("Delete this campaign? This cannot be undone.")) return;
+    if (!confirm(t("Delete this campaign? This cannot be undone."))) return;
     try {
       await fetch(`/api/automations?id=${id}`, { method: "DELETE" });
       setAutomations((prev) => prev.filter((a) => a.id !== id));
@@ -184,7 +189,7 @@ export default function CampaignsPage() {
     if (statusFilter === "all") return true;
     if (statusFilter === "active") return auto.isActive;
     if (statusFilter === "paused") return !auto.isActive;
-    return getCampaignInsights(auto).score === "Medium" || getCampaignInsights(auto).score === "Low";
+    return getCampaignInsights(auto, currentLocale).score === "Medium" || getCampaignInsights(auto, currentLocale).score === "Low";
   });
 
   if (loading) {
@@ -201,19 +206,19 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-5">
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Active</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Active")}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{overviewStats.active}</p>
         </div>
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Sent</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Sent")}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{overviewStats.totalSent}</p>
         </div>
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Clicks</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Clicks")}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{overviewStats.totalClicks}</p>
         </div>
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Avg CTR</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Avg CTR")}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{overviewStats.avgCtr}%</p>
         </div>
         <div className="glass rounded-2xl p-4">
@@ -226,16 +231,16 @@ export default function CampaignsPage() {
         <div className="glass rounded-2xl p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted">Executive view</p>
-              <h2 className="mt-1 text-lg font-semibold text-foreground">Portfolio health</h2>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Executive view")}</p>
+              <h2 className="mt-1 text-lg font-semibold text-foreground">{t("Portfolio health")}</h2>
             </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
             {[
-              { label: "Strong", value: portfolioBands.strong, accent: "text-success" },
-              { label: "Growing", value: portfolioBands.growing, accent: "text-warning" },
-              { label: "Early", value: portfolioBands.early, accent: "text-muted" },
+              { label: t("Strong"), value: portfolioBands.strong, accent: "text-success" },
+              { label: t("Growing"), value: portfolioBands.growing, accent: "text-warning" },
+              { label: t("Early"), value: portfolioBands.early, accent: "text-muted" },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border border-border bg-surface p-4">
                 <p className="text-[11px] uppercase tracking-wide text-muted">{item.label}</p>
@@ -250,8 +255,8 @@ export default function CampaignsPage() {
         <div className="glass rounded-2xl p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted">Leaderboard</p>
-              <h2 className="mt-1 text-lg font-semibold text-foreground">Campaign performance</h2>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Leaderboard")}</p>
+              <h2 className="mt-1 text-lg font-semibold text-foreground">{t("Campaign performance")}</h2>
             </div>
           </div>
 
@@ -264,12 +269,12 @@ export default function CampaignsPage() {
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{campaign.name}</p>
-                    <p className="text-xs text-muted">{campaign.isActive ? "Active" : "Paused"}</p>
+                    <p className="text-xs text-muted">{campaign.isActive ? t("Active") : t("Paused")}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted">
-                  <span>{campaign.sent} sent</span>
-                  <span>{campaign.clicks} clicks</span>
+                  <span>{campaign.sent} {t("sent")}</span>
+                  <span>{campaign.clicks} {t("clicks")}</span>
                   <span className="font-medium text-accent">{campaign.ctr}% CTR</span>
                 </div>
               </div>
@@ -281,7 +286,7 @@ export default function CampaignsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm text-muted">
-            {filteredAutomations.length} of {automations.length} campaign{automations.length !== 1 ? "s" : ""}
+            {t(automations.length === 1 ? "{shown} of {total} campaign" : "{shown} of {total} campaigns", { shown: filteredAutomations.length, total: automations.length })}
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -294,10 +299,10 @@ export default function CampaignsPage() {
           )}
           <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-surface p-1">
             {[
-              { key: "all", label: "All" },
-              { key: "active", label: "Active" },
-              { key: "paused", label: "Paused" },
-              { key: "attention", label: "Needs attention" },
+              { key: "all", label: t("All") },
+              { key: "active", label: t("Active") },
+              { key: "paused", label: t("Paused") },
+              { key: "attention", label: t("Needs attention") },
             ].map((filter) => (
               <button
                 key={filter.key}
@@ -320,7 +325,7 @@ export default function CampaignsPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            New Campaign
+            {t("New Campaign")}
           </Link>
         </div>
       </div>
@@ -333,15 +338,15 @@ export default function CampaignsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
+          <h3 className="text-lg font-semibold mb-2">{t("No campaigns yet")}</h3>
           <p className="text-sm text-muted mb-6 max-w-sm mx-auto">
-            Create your first comment-to-DM campaign to turn a post or reel into a measurable conversation flow.
+            {t("Create your first comment-to-DM campaign to turn a post or reel into a measurable conversation flow.")}
           </p>
           <Link
             href={`${prefix}/campaigns/new`}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-sm font-semibold text-white hover:bg-accent-hover transition-colors"
           >
-            Create Campaign
+            {t("Create Campaign")}
           </Link>
         </div>
       )}
@@ -349,9 +354,9 @@ export default function CampaignsPage() {
       {/* Campaign cards */}
       <div className="space-y-4 stagger">
         {filteredAutomations.map((auto) => {
-          const campaignInsight = getCampaignInsights(auto);
+          const campaignInsight = getCampaignInsights(auto, currentLocale);
           const attribution = getCampaignAttributionSummary(auto);
-          const executiveSummary = getCampaignExecutiveSummary(auto);
+          const executiveSummary = getCampaignExecutiveSummary(auto, currentLocale);
 
           return (
           <div key={auto.id} className="glass rounded-2xl p-6 animate-fade-in hover:border-border-hover transition-all">
@@ -362,36 +367,46 @@ export default function CampaignsPage() {
                   <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted">
                     @{auto.instagramAccount.username}
                   </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      auto.isActive
-                        ? "bg-success/10 text-success"
-                        : "bg-zinc-500/10 text-zinc-400"
-                    }`}
-                  >
-                    {auto.isActive ? "Active" : "Paused"}
-                  </span>
+                  {(() => {
+                    const ended = Boolean(auto.endsAt && new Date(auto.endsAt) <= new Date());
+                    return (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          auto.isActive && !ended
+                            ? "bg-success/10 text-success"
+                            : "bg-zinc-500/10 text-zinc-400"
+                        }`}
+                      >
+                        {ended ? t("Ended") : auto.isActive ? t("Active") : t("Paused")}
+                      </span>
+                    );
+                  })()}
                 </div>
+                <p className="mb-2 text-xs text-muted">
+                  {auto.postId === "ALL_POSTS" || auto.postId === "ALL" ? t("All posts and reels") : t("Specific post")}
+                  {auto.endsAt && ` · ${t("Ends on")} ${new Date(auto.endsAt).toLocaleDateString()}`}
+                  {auto.typoTolerance && ` · ${t("Accepts typos")}`}
+                </p>
 
                 {auto.goal && (
                   <p className="mb-3 text-xs font-medium uppercase tracking-wide text-accent">
-                    {auto.goal}
+                    {t(auto.goal)}
                   </p>
                 )}
 
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-border bg-surface px-2 py-1 text-[11px] font-medium text-muted">
-                    {getCampaignOverview(auto).health}
+                    {t(getCampaignOverview(auto).health)}
                   </span>
                   <span className="rounded-full border border-accent/20 bg-accent/5 px-2 py-1 text-[11px] font-medium text-accent">
                     ROI {attribution.efficiencyScore}
                   </span>
                   <span className="rounded-full border border-border bg-surface px-2 py-1 text-[11px] font-medium text-muted">
-                    {attribution.attributionBand}
+                    {t(attribution.attributionBand)}
                   </span>
                   {getCampaignOverview(auto).topKeyword !== "No data" && (
                     <span className="rounded-full border border-accent/20 bg-accent/5 px-2 py-1 text-[11px] font-medium text-accent">
-                      Top keyword: {getCampaignOverview(auto).topKeyword}
+                      {t("Top keyword")}: {getCampaignOverview(auto).topKeyword}
                     </span>
                   )}
                 </div>
@@ -414,7 +429,7 @@ export default function CampaignsPage() {
                 <div className="mt-4 rounded-xl border border-border bg-surface/70 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-                      Recommendation
+                      {t("Recommendation")}
                     </p>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -427,11 +442,11 @@ export default function CampaignsPage() {
                               : "bg-zinc-500/10 text-zinc-400"
                       }`}
                     >
-                      {executiveSummary.priority}
+                      {t(executiveSummary.priority)}
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-foreground">{executiveSummary.recommendation}</p>
-                  <p className="mt-2 text-xs text-muted">Next move: {executiveSummary.nextAction}</p>
+                  <p className="mt-2 text-xs text-muted">{t("Next move")}: {executiveSummary.nextAction}</p>
                   <ul className="mt-3 space-y-2 text-xs text-muted">
                     {campaignInsight.actions.slice(0, 2).map((action) => (
                       <li key={action} className="flex gap-2">
@@ -444,17 +459,17 @@ export default function CampaignsPage() {
 
                 {/* Stats */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-zinc-500">
-                  <span>{auto.analytics.sent} sent</span>
+                  <span>{auto.analytics.sent} {t("sent")}</span>
                   <span>·</span>
-                  <span>{auto.analytics.skipped} skipped</span>
+                  <span>{auto.analytics.skipped} {t("skipped")}</span>
                   <span>·</span>
-                  <span>{auto.analytics.failed} failed</span>
+                  <span>{auto.analytics.failed} {t("failed")}</span>
                   <span>·</span>
-                  <span>{auto.analytics.clicks} clicks</span>
+                  <span>{auto.analytics.clicks} {t("clicks")}</span>
                   <span>·</span>
                   <span>{auto.analytics.ctr}% CTR</span>
                   <span>·</span>
-                  <span>{auto.wholeWordMatch ? "Whole word" : "Partial match"}</span>
+                  <span>{auto.wholeWordMatch ? t("Whole word") : t("Partial match")}</span>
                 </div>
 
                 {auto.trackedLinks[0] && (
@@ -462,7 +477,7 @@ export default function CampaignsPage() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                          Tracked link
+                          {t("Tracked link")}
                         </p>
                         <p className="mt-1 truncate text-xs text-muted">
                           {auto.trackedLinks[0].trackedUrl}
@@ -474,7 +489,7 @@ export default function CampaignsPage() {
                         rel="noreferrer"
                         className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-hover hover:text-foreground"
                       >
-                        Open
+                        {t("Open")}
                       </a>
                     </div>
                   </div>
@@ -485,7 +500,7 @@ export default function CampaignsPage() {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div className="min-w-0">
                         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                          Client report
+                          {t("Client report")}
                         </p>
                         <p className="mt-1 truncate text-xs text-muted">
                           {auto.reportUrl}
@@ -503,7 +518,7 @@ export default function CampaignsPage() {
                               : "border-border text-muted hover:border-border-hover hover:text-foreground"
                           }`}
                         >
-                          {auto.reportShareEnabled ? "Public" : "Disabled"}
+                          {auto.reportShareEnabled ? t("Public") : t("Disabled")}
                         </button>
                         <button
                           type="button"
@@ -512,7 +527,7 @@ export default function CampaignsPage() {
                           }
                           className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-hover hover:text-foreground"
                         >
-                          Copy
+                          {t("Copy")}
                         </button>
                         <a
                           href={auto.reportUrl}
@@ -520,7 +535,7 @@ export default function CampaignsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-hover hover:text-foreground"
                         >
-                          View
+                          {t("View")}
                         </a>
                       </div>
                     </div>
@@ -547,7 +562,7 @@ export default function CampaignsPage() {
                   href={`${prefix}/campaigns/${auto.id}`}
                   className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-hover hover:text-foreground"
                 >
-                  Open
+                  {t("Open")}
                 </Link>
 
                 {/* Toggle */}

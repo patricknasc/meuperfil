@@ -1,3 +1,4 @@
+import { publicTranslator } from "@/lib/i18n/public";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -10,14 +11,19 @@ type InvitePageProps = {
   params: Promise<{ lang: string; token: string }>;
 };
 
-export const metadata: Metadata = {
-  title: "Accept Workspace Invitation - MeuPerfil",
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  const t = publicTranslator(lang);
+  return {
+  title: t("Accept Workspace Invitation - MeuPerfil"),
   robots: { index: false, follow: false },
 };
+}
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { lang, token } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const t = publicTranslator(locale);
   const prefix = `/${locale}`;
 
   const [session, invitation] = await Promise.all([
@@ -43,21 +49,16 @@ export default async function InvitePage({ params }: InvitePageProps) {
           MeuPerfil
         </Link>
         <section className="border border-white/10 bg-white/[0.035] p-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">
-            Workspace invitation
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">{t("Workspace invitation")}</p>
           <h1 className="mt-4 text-3xl font-black leading-tight text-white">
-            Join {invitation.workspace.name}
+            {t("Join {workspace}", { workspace: invitation.workspace.name })}
           </h1>
           <p className="mt-4 text-sm leading-6 text-zinc-400">
-            You were invited as {invitation.role.toLowerCase()} for{" "}
-            {invitation.email}.
+            {t("You were invited as {role} for {email}.", { role: t(invitation.role.toLowerCase()), email: invitation.email })}
           </p>
           <div className="mt-8">
             {expired ? (
-              <p className="text-sm text-error">
-                This invitation has expired. Ask the workspace owner to resend it.
-              </p>
+              <p className="text-sm text-error">{t("This invitation has expired. Ask the workspace owner to resend it.")}</p>
             ) : (
               <InvitationAcceptCard
                 token={token}

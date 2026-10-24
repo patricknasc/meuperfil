@@ -1,3 +1,4 @@
+import { seoTranslator } from "@/lib/i18n/seo";
 import type { SeoPageConfig } from "@/components/seo-page-shell";
 
 const templateLinks = [
@@ -235,3 +236,23 @@ export const commentLinkSeoPage: SeoPageConfig = {
   ],
 };
 
+
+/** Translate copy while keeping route and template identifiers unchanged. */
+export function localizeSeoPage(config: SeoPageConfig, locale: string): SeoPageConfig {
+  const t = seoTranslator(locale);
+  const section = (item: SeoPageConfig["sections"][number]) => ({ title: t(item.title), body: t(item.body) });
+  return {
+    ...config,
+    eyebrow: t(config.eyebrow),
+    title: t(config.title),
+    description: t(config.description),
+    primaryCta: t(config.primaryCta),
+    secondaryCta: config.secondaryCta ? t(config.secondaryCta) : undefined,
+    bullets: config.bullets.map(t),
+    sections: config.sections.map(section),
+    comparisonTitle: t(config.comparisonTitle),
+    comparisons: config.comparisons.map(item => ({ label: t(item.label), meuPerfil: t(item.meuPerfil), other: t(item.other) })),
+    templateLinks: config.templateLinks.map(item => ({ ...item, label: t(item.label) })),
+    faqs: config.faqs.map(section),
+  };
+}

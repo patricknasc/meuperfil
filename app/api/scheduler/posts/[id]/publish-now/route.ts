@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentWorkspaceContext, canManageWorkspace } from "@/lib/workspace-access";
-import { triggerInstantPublish } from "@/lib/scheduler/service";
+import { triggerInstantPublish, SchedulerError } from "@/lib/scheduler/service";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +28,7 @@ export async function POST(
     const res = await triggerInstantPublish(context.workspaceId, id);
     return NextResponse.json(res);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro ao disparar publicação";
+    const message = error instanceof SchedulerError ? error.message : "Erro ao disparar publicação";
     return NextResponse.json({ success: false, error: message }, { status: 400 });
   }
 }

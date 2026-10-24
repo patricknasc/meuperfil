@@ -9,7 +9,7 @@ import { getMetaGraphApiVersion } from "@/lib/env";
 import { MetaApiError, TokenExpiredError, RateLimitError } from "@/lib/meta/client";
 
 function graphBase() {
-  return `https://graph.facebook.com/${getMetaGraphApiVersion()}`;
+  return `https://graph.instagram.com/${getMetaGraphApiVersion()}`;
 }
 
 export type PublisherMediaType = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL" | "STORY";
@@ -21,6 +21,11 @@ export interface PublishMediaOptions {
   coverUrl?: string | null;
   shareToFeed?: boolean;
   locationId?: string | null;
+  existingContainerId?: string | null;
+  onContainerCreated?: (containerId: string) => Promise<void>;
+  onPublishStarted?: () => Promise<void>;
+  onPublished?: (mediaId: string) => Promise<void>;
+  onProgress?: () => Promise<void>;
 }
 
 export interface PublishResult {
@@ -48,8 +53,12 @@ interface MediaPermalinkResponse {
 }
 
 async function fetchGraph<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${graphBase()}${endpoint}`;
-  const response = await fetch(url, options);
+  const url = new URL(`${graphBase()}${endpoint}`);
+  const accessToken = url.searchParams.get("access_token");
+  url.searchParams.delete("access_token");
+  const headers = new Headers(options?.headers);
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(url.toString(), { ...options, headers, signal: AbortSignal.timeout(20_000) });
   const data = await response.json();
 
   if (!response.ok || data.error) {
@@ -117,7 +126,7 @@ export async function createSingleMediaContainer(
       params.set("image_url", options.mediaUrl);
     }
   } else if (options.mediaType === "VIDEO") {
-    params.set("media_type", "VIDEO");
+    params.set("media_type", options.isCarouselItem ? "VIDEO" : "REELS");
     params.set("video_url", options.mediaUrl);
   } else {
     // IMAGE
@@ -165,9 +174,11 @@ export async function waitForContainerReady(
   containerId: string,
   accessToken: string,
   maxAttempts = 15,
-  intervalMs = 3000
+  intervalMs = 3000,
+  onProgress?: () => Promise<void>
 ): Promise<void> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    await onProgress?.();
     const params = new URLSearchParams({
       access_token: accessToken,
       fields: "status_code,status",
@@ -247,11 +258,14 @@ export async function publishToInstagram(
 
   let finalContainerId: string;
 
-  if (options.mediaType === "CAROUSEL" && options.mediaUrls.length > 1) {
+  if (options.existingContainerId) {
+    finalContainerId = options.existingContainerId;
+  } else if (options.mediaType === "CAROUSEL" && options.mediaUrls.length > 1) {
     // 1. Create all child items
     const childIds: string[] = [];
     for (const url of options.mediaUrls) {
       const isVideo = url.match(/\.(mp4|mov|webm)(\?.*)?$/i);
+      await options.onProgress?.();
       const childId = await createSingleMediaContainer(instagramId, accessToken, {
         mediaUrl: url,
         mediaType: isVideo ? "VIDEO" : "IMAGE",
@@ -262,7 +276,7 @@ export async function publishToInstagram(
 
     // 2. Wait for each child to be ready
     for (const childId of childIds) {
-      await waitForContainerReady(childId, accessToken);
+      await waitForContainerReady(childId, accessToken, 15, 3000, options.onProgress);
     }
 
     // 3. Create parent carousel container
@@ -284,11 +298,16 @@ export async function publishToInstagram(
     });
   }
 
+  await options.onContainerCreated?.(finalContainerId);
+
   // 4. Wait for final container to be ready
-  await waitForContainerReady(finalContainerId, accessToken);
+  await waitForContainerReady(finalContainerId, accessToken, 15, 3000, options.onProgress);
 
   // 5. Publish
+  await options.onPublishStarted?.();
   const publishedMediaId = await publishContainer(instagramId, accessToken, finalContainerId);
+
+  await options.onPublished?.(publishedMediaId);
 
   // 6. Fetch permalink
   const details = await getPublishedMediaDetails(publishedMediaId, accessToken);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentWorkspaceId } from "@/lib/auth";
 import { prisma } from "@/lib/db/client";
-import { getEffectivePlan, PLAN_LIMITS } from "@/lib/billing/plans";
+import { createCampaign, CampaignLimitError } from "@/lib/campaigns/service";
 import { calculateCtr, normalizeTopKeywords } from "@/lib/tracking/analytics";
 import { buildTrackedUrl } from "@/lib/tracking/message";
 import { generateTrackedLinkSlug } from "@/lib/tracking/server";
@@ -23,6 +23,8 @@ const createAutomationSchema = z.object({
   trackedDestinationUrl: z.string().url().optional().nullable(),
   isActive: z.boolean().optional().default(true),
   wholeWordMatch: z.boolean().optional().default(true),
+  typoTolerance: z.boolean().optional().default(false),
+  endsAt: z.coerce.date().optional().nullable(),
 });
 
 const updateAutomationSchema = z.object({
@@ -32,6 +34,8 @@ const updateAutomationSchema = z.object({
   dmMessage: z.string().min(1).max(1000).optional(),
   isActive: z.boolean().optional(),
   wholeWordMatch: z.boolean().optional(),
+  typoTolerance: z.boolean().optional(),
+  endsAt: z.coerce.date().optional().nullable(),
   reportShareEnabled: z.boolean().optional(),
 });
 
@@ -157,6 +161,20 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const leadRows = await prisma.leadInteraction.findMany({
+    where: { workspaceId, automationId: { in: automations.map((item) => item.id) } },
+    distinct: ["automationId", "contactId"],
+    select: { automationId: true, contact: { select: { status: true } } },
+  });
+  const leadCounts = new Map<string, { leads: number; convertedLeads: number }>();
+  for (const row of leadRows) {
+    if (!row.automationId) continue;
+    const counts = leadCounts.get(row.automationId) ?? { leads: 0, convertedLeads: 0 };
+    counts.leads++;
+    if (row.contact.status === "CONVERTED") counts.convertedLeads++;
+    leadCounts.set(row.automationId, counts);
+  }
+
   return NextResponse.json({
     success: true,
     data: automationsWithReports.map((automation) => {
@@ -179,6 +197,7 @@ export async function GET(request: NextRequest) {
           : null,
         analytics: {
           ...item,
+          ...(leadCounts.get(automation.id) ?? { leads: 0, convertedLeads: 0 }),
           ctr: calculateCtr(item.clicks, item.sent),
         },
       };
@@ -223,28 +242,9 @@ export async function POST(request: NextRequest) {
       ? parsed.data.instagramAccountId
       : null;
 
-  const [workspace, instagramAccount, automationCount] = await Promise.all([
-    prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { plan: true, subscriptionStatus: true },
-    }),
-    requestedInstagramAccountId
-      ? prisma.instagramAccount.findFirst({
-          where: { id: requestedInstagramAccountId, workspaceId },
-        })
-      : prisma.instagramAccount.findFirst({
-          where: { workspaceId },
-          orderBy: { connectedAt: "desc" },
-        }),
-    prisma.automation.count({ where: { workspaceId } }),
-  ]);
-
-  if (!workspace) {
-    return NextResponse.json(
-      { success: false, error: "Workspace not found" },
-      { status: 404 }
-    );
-  }
+  const instagramAccount = requestedInstagramAccountId
+    ? await prisma.instagramAccount.findFirst({ where: { id: requestedInstagramAccountId, workspaceId }, select: { id: true } })
+    : await prisma.instagramAccount.findFirst({ where: { workspaceId }, orderBy: { connectedAt: "desc" }, select: { id: true } });
 
   if (!instagramAccount) {
     return NextResponse.json(
@@ -253,59 +253,48 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const effectivePlan = getEffectivePlan(
-    workspace.plan,
-    workspace.subscriptionStatus
-  );
-  const limit = PLAN_LIMITS[effectivePlan];
-
-  if (automationCount >= limit.maxAutomations) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: `Plan limit reached. Your ${effectivePlan} plan allows up to ${limit.maxAutomations} campaign(s).`,
-      },
-      { status: 403 }
-    );
-  }
-
   const { trackedDestinationUrl } = parsed.data;
 
-  const automation = await prisma.automation.create({
-    data: {
-      name: parsed.data.name,
-      goal: parsed.data.goal,
-      postId: parsed.data.postId,
-      postUrl: parsed.data.postUrl,
-      keywords: parsed.data.keywords,
-      dmMessage: parsed.data.dmMessage,
-      isActive: parsed.data.isActive,
-      wholeWordMatch: parsed.data.wholeWordMatch,
-      workspaceId,
-      instagramAccountId: instagramAccount.id,
-      reportShareSlug: generateReportShareSlug(),
-      ...(trackedDestinationUrl
-        ? {
-            trackedLinks: {
-              create: {
-                workspaceId,
-                slug: generateTrackedLinkSlug(),
-                label: "Primary campaign link",
-                destinationUrl: trackedDestinationUrl,
+  try {
+    const automation = await createCampaign({
+        name: parsed.data.name,
+        goal: parsed.data.goal,
+        postId: parsed.data.postId,
+        postUrl: parsed.data.postUrl,
+        keywords: parsed.data.keywords,
+        dmMessage: parsed.data.dmMessage,
+        isActive: parsed.data.isActive,
+        wholeWordMatch: parsed.data.wholeWordMatch,
+        typoTolerance: parsed.data.typoTolerance,
+        endsAt: parsed.data.endsAt ?? null,
+        workspaceId,
+        instagramAccountId: instagramAccount.id,
+        reportShareSlug: generateReportShareSlug(),
+        ...(trackedDestinationUrl
+          ? {
+              trackedLinks: {
+                create: {
+                  workspaceId,
+                  slug: generateTrackedLinkSlug(),
+                  label: "Primary campaign link",
+                  destinationUrl: trackedDestinationUrl,
+                },
               },
-            },
-          }
-        : {}),
-    },
-    include: {
-      trackedLinks: true,
-    },
-  });
+            }
+          : {}),
+    });
 
-  return NextResponse.json(
-    { success: true, data: automation },
-    { status: 201 }
-  );
+    return NextResponse.json(
+      { success: true, data: automation },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof CampaignLimitError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 403 });
+    }
+    console.error("Campaign creation failed", error);
+    return NextResponse.json({ success: false, error: "Não foi possível criar a campanha." }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: NextRequest) {

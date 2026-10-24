@@ -1,5 +1,9 @@
 "use client";
+import CampaignTopPosts from "@/components/campaign-top-posts";
 
+import { campaignTranslator } from "@/lib/i18n/campaigns";
+
+import { dashboardMessages } from "@/lib/i18n/dashboard";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -36,6 +40,8 @@ interface CampaignDetail {
     _count: { clicks: number };
   }>;
   analytics: {
+    leads: number;
+    convertedLeads: number;
     sent: number;
     skipped: number;
     failed: number;
@@ -50,6 +56,8 @@ export default function CampaignDetailPage() {
   const segments = pathname.split("/").filter(Boolean);
   const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
   const prefix = `/${currentLocale}`;
+  const t = campaignTranslator(currentLocale);
+  const messages = dashboardMessages(currentLocale);
   const campaignId = segments[segments.length - 1];
 
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
@@ -75,20 +83,14 @@ export default function CampaignDetailPage() {
     };
   }, [campaignId]);
 
-  const overview = useMemo(() => {
-    if (!campaign) return null;
-    return getCampaignOverview(campaign);
-  }, [campaign]);
+  const overview = campaign ? getCampaignOverview(campaign) : null;
 
   const conversionSnapshot = useMemo(() => {
     if (!campaign) return null;
     return getCampaignConversionSnapshot(campaign);
   }, [campaign]);
 
-  const insights = useMemo(() => {
-    if (!campaign) return null;
-    return getCampaignInsights(campaign);
-  }, [campaign]);
+  const insights = campaign ? getCampaignInsights(campaign, currentLocale) : null;
 
   const linkRankings = useMemo(() => {
     if (!campaign) return [];
@@ -105,10 +107,7 @@ export default function CampaignDetailPage() {
     return getCampaignAttributionSummary(campaign);
   }, [campaign]);
 
-  const outcomeSummary = useMemo(() => {
-    if (!campaign) return null;
-    return getCampaignOutcomeSummary(campaign);
-  }, [campaign]);
+  const outcomeSummary = campaign ? getCampaignOutcomeSummary(campaign, currentLocale) : null;
 
   const keywordMomentum = useMemo(() => {
     if (!campaign) return [];
@@ -132,10 +131,10 @@ export default function CampaignDetailPage() {
   if (!campaign) {
     return (
       <div className="glass rounded-2xl p-10 text-center">
-        <h2 className="text-lg font-semibold">Campaign not found</h2>
-        <p className="mt-2 text-sm text-muted">This campaign may have been deleted or is no longer available.</p>
+        <h2 className="text-lg font-semibold">{t("Campaign not found")}</h2>
+        <p className="mt-2 text-sm text-muted">{t("This campaign may have been deleted or is no longer available.")}</p>
         <Link href={`${prefix}/campaigns`} className="mt-6 inline-flex rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white">
-          Back to campaigns
+          {t("Back to campaigns")}
         </Link>
       </div>
     );
@@ -145,7 +144,7 @@ export default function CampaignDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-sm text-muted">Campaign overview</p>
+          <p className="text-sm text-muted">{t("Campaign overview")}</p>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">{campaign.name}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -154,25 +153,29 @@ export default function CampaignDetailPage() {
           </span>
           {overview && (
             <span className="rounded-full border border-accent/20 bg-accent/5 px-2 py-1 text-xs font-medium text-accent">
-              {overview.health}
+              {t(overview.health)}
             </span>
           )}
           <Link href={`${prefix}/campaigns/${campaign.id}/edit`} className="rounded-xl border border-border px-3 py-2 text-sm text-muted hover:text-foreground">
-            Edit
+            {t("Edit")}
           </Link>
           <Link href={`${prefix}/campaigns`} className="rounded-xl border border-border px-3 py-2 text-sm text-muted hover:text-foreground">
-            Back
+            {t("Back")}
           </Link>
         </div>
       </div>
 
+      <div className="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <p>{messages.leads}: <strong>{campaign.analytics.leads ?? 0}</strong> · {messages.CONVERTED}: <strong>{campaign.analytics.convertedLeads ?? 0}</strong></p>
+        <Link className="text-accent hover:underline" href={`${prefix}/leads?campaignId=${campaign.id}`}>{messages.viewLeads}</Link>
+      </div>
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Sent</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Sent")}</p>
           <p className="mt-2 text-2xl font-semibold">{campaign.analytics.sent}</p>
         </div>
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Clicks</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Clicks")}</p>
           <p className="mt-2 text-2xl font-semibold">{campaign.analytics.clicks}</p>
         </div>
         <div className="glass rounded-2xl p-4">
@@ -180,7 +183,7 @@ export default function CampaignDetailPage() {
           <p className="mt-2 text-2xl font-semibold">{campaign.analytics.ctr}%</p>
         </div>
         <div className="glass rounded-2xl p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Keywords</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t("Keywords")}</p>
           <p className="mt-2 text-2xl font-semibold">{campaign.keywords.length}</p>
         </div>
       </div>
@@ -189,25 +192,25 @@ export default function CampaignDetailPage() {
         <div className="glass rounded-2xl p-6 space-y-5">
           {campaign.goal && (
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted">Goal</p>
-              <p className="mt-2 text-base font-medium text-foreground">{campaign.goal}</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Goal")}</p>
+              <p className="mt-2 text-base font-medium text-foreground">{t(campaign.goal)}</p>
             </div>
           )}
 
           {outcomeSummary && (
             <div className="rounded-xl border border-border bg-surface p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted">Expected outcome</p>
+              <p className="text-[11px] uppercase tracking-wide text-muted">{t("Expected outcome")}</p>
               <p className="mt-2 text-sm font-medium text-foreground">{outcomeSummary.primaryOutcome}</p>
               <p className="mt-2 text-xs text-muted">{outcomeSummary.expectedOutcome}</p>
               <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-muted">
-                <span>{outcomeSummary.horizon}</span>
+                <span>{t(outcomeSummary.horizon)}</span>
                 <span>{outcomeSummary.conversionRate}% conversion</span>
               </div>
             </div>
           )}
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">Keywords</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t("Keywords")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {campaign.keywords.map((keyword) => (
                 <span key={keyword} className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-muted">
@@ -218,19 +221,19 @@ export default function CampaignDetailPage() {
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">DM template</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t("DM template")}</p>
             <p className="mt-2 rounded-xl border border-border bg-surface p-3 text-sm text-foreground">“{campaign.dmMessage}”</p>
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">Keyword momentum</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t("Keyword momentum")}</p>
             <div className="mt-3 space-y-3">
               {keywordMomentum.length > 0 ? (
                 keywordMomentum.map((keyword) => (
                   <div key={keyword.keyword}>
                     <div className="mb-1 flex items-center justify-between gap-3 text-xs text-muted">
                       <span className="font-medium text-foreground">{keyword.keyword}</span>
-                      <span>{keyword.count} mentions</span>
+                      <span>{keyword.count} {t("mentions")}</span>
                     </div>
                     <div className="h-2 rounded-full bg-surface">
                       <div
@@ -241,14 +244,14 @@ export default function CampaignDetailPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted">No keyword data yet.</p>
+                <p className="text-sm text-muted">{t("No keyword data yet.")}</p>
               )}
             </div>
           </div>
 
           {campaign.trackedLinks.length > 0 && (
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted">Tracked links</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Tracked links")}</p>
               <div className="mt-3 space-y-3">
                 {campaign.trackedLinks.map((link) => (
                   <div key={link.id} className="rounded-xl border border-border bg-surface p-3">
@@ -258,7 +261,7 @@ export default function CampaignDetailPage() {
                         <p className="mt-1 truncate text-xs text-accent">{link.trackedUrl}</p>
                       </div>
                       <a href={link.trackedUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted">
-                        Open
+                        {t("Open")}
                       </a>
                     </div>
                   </div>
@@ -269,16 +272,18 @@ export default function CampaignDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <CampaignTopPosts campaignId={campaign.id} />
+
           <div className="glass rounded-2xl p-5">
-            <p className="text-xs uppercase tracking-wide text-muted">Performance</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t("Performance")}</p>
             <div className="mt-4 space-y-3 text-sm text-foreground">
-              <div className="flex items-center justify-between"><span>Skipped</span><span>{campaign.analytics.skipped}</span></div>
-              <div className="flex items-center justify-between"><span>Failed</span><span>{campaign.analytics.failed}</span></div>
-              <div className="flex items-center justify-between"><span>Top keyword</span><span>{overview?.topKeyword ?? "No data"}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Skipped")}</span><span>{campaign.analytics.skipped}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Failed")}</span><span>{campaign.analytics.failed}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Top keyword")}</span><span>{t(overview?.topKeyword ?? "No data")}</span></div>
               {conversionSnapshot && (
                 <>
-                  <div className="flex items-center justify-between"><span>Lead rate</span><span>{conversionSnapshot.leadRate}%</span></div>
-                  <div className="flex items-center justify-between"><span>Stage</span><span>{conversionSnapshot.stage}</span></div>
+                  <div className="flex items-center justify-between"><span>{t("Click rate")}</span><span>{conversionSnapshot.clickRate}%</span></div>
+                  <div className="flex items-center justify-between"><span>{t("Stage")}</span><span>{t(conversionSnapshot.stage)}</span></div>
                 </>
               )}
             </div>
@@ -286,11 +291,11 @@ export default function CampaignDetailPage() {
 
           {insights && (
             <div className="glass rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Insights</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Insights")}</p>
               <p className="mt-3 text-sm font-medium text-foreground">{insights.primary}</p>
               <div className="mt-4 rounded-xl border border-border bg-surface p-3">
-                <p className="text-xs uppercase tracking-wide text-muted">Priority</p>
-                <p className="mt-2 text-lg font-semibold text-accent">{insights.score}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t("Priority")}</p>
+                <p className="mt-2 text-lg font-semibold text-accent">{t(insights.score)}</p>
               </div>
               <ul className="mt-4 space-y-2 text-sm text-muted">
                 {insights.actions.map((action) => (
@@ -305,10 +310,10 @@ export default function CampaignDetailPage() {
 
           {offerSummary && offerSummary.primaryOffer && (
             <div className="glass rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Primary offer</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Primary offer")}</p>
               <p className="mt-3 text-sm text-foreground">{offerSummary.primaryOffer}</p>
               <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted">
-                <span>{offerSummary.bestPathClicks} clicks</span>
+                <span>{offerSummary.bestPathClicks} {t("clicks")}</span>
                 <span>{offerSummary.offerShare}% share</span>
               </div>
               {offerSummary.destinationHost && (
@@ -319,11 +324,11 @@ export default function CampaignDetailPage() {
 
           {attributionSummary && (
             <div className="glass rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Attribution</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Attribution")}</p>
               <p className="mt-3 text-2xl font-semibold text-foreground">{attributionSummary.efficiencyScore}</p>
-              <p className="mt-2 text-xs text-muted">ROI proxy score</p>
+              <p className="mt-2 text-xs text-muted">{t("Engagement score")}</p>
               <div className="mt-4 rounded-xl border border-border bg-surface p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted">Band</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted">{t("Band")}</p>
                 <p className="mt-2 text-sm font-medium text-accent">{attributionSummary.attributionBand}</p>
               </div>
             </div>
@@ -331,15 +336,15 @@ export default function CampaignDetailPage() {
 
           {conversionSnapshot?.bestLink && (
             <div className="glass rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Best link</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Best link")}</p>
               <p className="mt-3 text-sm text-foreground">{conversionSnapshot.bestLink.destinationUrl}</p>
-              <p className="mt-2 text-xs text-muted">{conversionSnapshot.bestLink.clicks} clicks</p>
+              <p className="mt-2 text-xs text-muted">{conversionSnapshot.bestLink.clicks} {t("clicks")}</p>
             </div>
           )}
 
           {linkRankings.length > 0 && (
             <div className="glass rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-muted">Top links</p>
+              <p className="text-xs uppercase tracking-wide text-muted">{t("Top links")}</p>
               <div className="mt-4 space-y-3">
                 {linkRankings.map((link, index) => (
                   <div key={link.id} className="rounded-xl border border-border bg-surface p-3">
@@ -348,7 +353,7 @@ export default function CampaignDetailPage() {
                       <span className="text-xs text-accent">{link.share}%</span>
                     </div>
                     <p className="mt-2 text-sm text-foreground truncate">{link.destinationUrl}</p>
-                    <p className="mt-1 text-xs text-muted">{link.clicks} clicks</p>
+                    <p className="mt-1 text-xs text-muted">{link.clicks} {t("clicks")}</p>
                   </div>
                 ))}
               </div>
@@ -356,18 +361,18 @@ export default function CampaignDetailPage() {
           )}
 
           <div className="glass rounded-2xl p-5">
-            <p className="text-xs uppercase tracking-wide text-muted">Settings</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t("Settings")}</p>
             <div className="mt-4 space-y-3 text-sm text-foreground">
-              <div className="flex items-center justify-between"><span>Active</span><span>{campaign.isActive ? "Yes" : "No"}</span></div>
-              <div className="flex items-center justify-between"><span>Whole word</span><span>{campaign.wholeWordMatch ? "Yes" : "No"}</span></div>
-              <div className="flex items-center justify-between"><span>Report public</span><span>{campaign.reportShareEnabled ? "Yes" : "No"}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Active")}</span><span>{campaign.isActive ? t("Yes") : t("No")}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Whole word")}</span><span>{campaign.wholeWordMatch ? t("Yes") : t("No")}</span></div>
+              <div className="flex items-center justify-between"><span>{t("Report public")}</span><span>{campaign.reportShareEnabled ? t("Yes") : t("No")}</span></div>
             </div>
           </div>
 
           {campaign.reportUrl && (
             <div className="glass rounded-2xl p-5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-wide text-muted">Shareable report</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t("Shareable report")}</p>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     campaign.reportShareEnabled
@@ -375,20 +380,20 @@ export default function CampaignDetailPage() {
                       : "bg-zinc-500/10 text-zinc-400"
                   }`}
                 >
-                  {campaign.reportShareEnabled ? "Public" : "Hidden"}
+                  {campaign.reportShareEnabled ? t("Public") : t("Hidden")}
                 </span>
               </div>
               <p className="mt-3 truncate text-sm text-accent">{campaign.reportUrl}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <a href={campaign.reportUrl} target="_blank" rel="noreferrer" className="inline-flex rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white">
-                  Open report
+                  {t("Open report")}
                 </a>
                 <button
                   type="button"
                   onClick={() => void navigator.clipboard?.writeText(campaign.reportUrl ?? "")}
                   className="inline-flex rounded-xl border border-border px-4 py-2 text-sm font-semibold text-muted hover:text-foreground"
                 >
-                  Copy link
+                  {t("Copy link")}
                 </button>
               </div>
             </div>

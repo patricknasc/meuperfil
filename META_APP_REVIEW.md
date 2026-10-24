@@ -7,6 +7,7 @@ MeuPerfil uses the official Instagram API to send private replies to people who 
 - `instagram_business_basic`
 - `instagram_business_manage_comments`
 - `instagram_business_manage_messages`
+- `instagram_business_content_publish`
 
 ## Review Demo Script
 
@@ -25,3 +26,15 @@ MeuPerfil uses the official Instagram API to send private replies to people who 
 - Tokens are encrypted at rest with AES-256-GCM.
 - Customers can disconnect Instagram from Settings.
 - Rate limiting, deduplication, and monthly plan limits prevent spammy behavior.
+
+## Publishing validation
+
+The app uses Instagram Login tokens and the `graph.instagram.com` host. Existing
+accounts must reconnect to grant the new content publishing permission. Confirm
+Advanced Access/App Review for public users before enabling production publishing.
+
+On a Meta test account, verify photo, Reel, carousel and (where supported by the
+account) Story publishing. Then verify that the published post's keyword comment
+creates one private reply and one persisted lead. See `docs/integration-smoke-tests.md`.
+
+Reference: [Meta's Instagram Login collection](https://www.postman.com/meta/instagram/folder/1z5vxzu/instagram-api-with-instagram-login).

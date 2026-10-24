@@ -12,6 +12,8 @@ function persistLocale(locale: Locale) {
 interface LanguageSwitcherProps {
   currentLocale: Locale;
   variant?: "header" | "footer" | "compact";
+  /** Light pages (public site) use ink-on-paper colors. */
+  tone?: "dark" | "light";
 }
 
 const languages: { code: Locale; label: string; name: string; flag: string }[] = [
@@ -23,7 +25,9 @@ const languages: { code: Locale; label: string; name: string; flag: string }[] =
 export default function LanguageSwitcher({
   currentLocale,
   variant = "header",
+  tone = "dark",
 }: LanguageSwitcherProps) {
+  const selectLanguage = currentLocale === "en" ? "Select language" : currentLocale === "es" ? "Seleccionar idioma" : "Selecionar idioma";
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -73,6 +77,7 @@ export default function LanguageSwitcher({
         {languages.map((lang, idx) => (
           <span key={lang.code} className="flex items-center gap-1">
             <button
+              aria-label={`${selectLanguage}: ${lang.name}`}
               onClick={() => handleLanguageChange(lang.code)}
               className={`font-semibold transition ${
                 currentLocale === lang.code
@@ -96,7 +101,12 @@ export default function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+        className={
+          tone === "light"
+            ? "flex items-center gap-2 rounded-full border border-[#e3dbcf] bg-white px-3 py-1.5 text-xs font-semibold text-[#3a332c] transition hover:border-[#cfc4b4]"
+            : "flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-zinc-300 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+        }
+        aria-label={`${selectLanguage}: ${currentLang.name}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -120,21 +130,30 @@ export default function LanguageSwitcher({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-36 origin-top-right rounded-lg border border-white/10 bg-zinc-900/95 p-1 shadow-xl backdrop-blur-md focus:outline-none">
+        <div
+          className={`absolute right-0 z-50 mt-2 w-36 origin-top-right rounded-lg border p-1 shadow-xl backdrop-blur-md focus:outline-none ${
+            tone === "light" ? "border-[#e3dbcf] bg-white" : "border-white/10 bg-zinc-900/95"
+          }`}
+        >
           {languages.map((lang) => (
             <button
               key={lang.code}
+              aria-label={`${selectLanguage}: ${lang.name}`}
               onClick={() => handleLanguageChange(lang.code)}
               className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium transition ${
                 currentLocale === lang.code
-                  ? "bg-cyan-300/10 text-cyan-200"
-                  : "text-zinc-300 hover:bg-white/[0.06] hover:text-white"
+                  ? tone === "light"
+                    ? "bg-[#fbe4dc] text-[#b5361a]"
+                    : "bg-cyan-300/10 text-cyan-200"
+                  : tone === "light"
+                    ? "text-[#3a332c] hover:bg-[#f4eee5]"
+                    : "text-zinc-300 hover:bg-white/[0.06] hover:text-white"
               }`}
             >
               <span>{lang.flag}</span>
               <span className="flex-1">{lang.name}</span>
               {currentLocale === lang.code && (
-                <span className="text-cyan-400">✓</span>
+                <span className={tone === "light" ? "text-[#b5361a]" : "text-cyan-400"}>✓</span>
               )}
             </button>
           ))}

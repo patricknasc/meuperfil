@@ -1,5 +1,6 @@
 "use client";
 
+import { publicTranslator } from "@/lib/i18n/public";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -20,11 +21,13 @@ export default function InvitationAcceptCard({
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
+  const t = publicTranslator(currentLocale);
   const prefix = `/${currentLocale}`;
 
   async function acceptInvite() {
     setBusy(true);
     setMessage(null);
+    try {
     const response = await fetch("/api/workspace/invitations/accept", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,8 +38,9 @@ export default function InvitationAcceptCard({
       window.location.assign(`${prefix}/dashboard`);
       return;
     }
-    setMessage(payload.error ?? "Could not accept invitation");
-    setBusy(false);
+    setMessage(t("Could not accept invitation"));
+    } catch { setMessage(t("Could not accept invitation")); }
+    finally { setBusy(false); }
   }
 
   if (!isSignedIn) {
@@ -45,7 +49,7 @@ export default function InvitationAcceptCard({
         href={`${prefix}/login`}
         className="inline-flex items-center justify-center rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-hover"
       >
-        Sign in to accept
+        {t("Sign in to accept")}
       </Link>
     );
   }
@@ -58,11 +62,11 @@ export default function InvitationAcceptCard({
         disabled={busy}
         className="inline-flex items-center justify-center rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50"
       >
-        {busy ? "Accepting..." : "Accept invitation"}
+        {busy ? t("Accepting...") : t("Accept invitation")}
       </button>
       {message && <p className="text-sm text-error">{message}</p>}
       <p className="text-xs text-muted">
-        Use the magic link account for {invitedEmail}.
+        {t("Use the magic link account for {email}.", { email: invitedEmail })}
       </p>
     </div>
   );

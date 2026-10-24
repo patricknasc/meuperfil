@@ -1,4 +1,6 @@
 import { Worker, type Job } from "bullmq";
+import { captureLeadFromInteraction } from "@/lib/crm";
+import { commentJobId } from "./job-ids";
 import { getDMQueue, getRedisConnection, type ProcessCommentJob } from "./client";
 import { prisma } from "@/lib/db/client";
 import { MetaApiError, sendPrivateReply, sendDirectMessage } from "@/lib/meta/client";
@@ -37,12 +39,9 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
 
   const automations = await prisma.automation.findMany({
     where: {
-      OR: [
-        { postId: mediaId },
-        { postId: "ALL_POSTS" },
-        { postId: "ALL" },
-      ],
+      postId: { in: [mediaId, "ALL_POSTS", "ALL"] },
       isActive: true,
+      OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
       instagramAccount: {
         instagramId: instagramAccountId,
       },
@@ -61,16 +60,32 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
     orderBy: { createdAt: "asc" },
   });
 
-  for (const automation of automations) {
-    const matchResult = matchKeywords(
-      commentText,
-      automation.keywords,
-      automation.wholeWordMatch
-    );
+  // One comment gets one DM: Instagram allows a single private reply per
+  // comment. The most specific campaign wins (this post before "all posts"),
+  // then the oldest one.
+  const isAllPosts = (postId: string) => postId === "ALL_POSTS" || postId === "ALL";
+  const ranked = [...automations].sort(
+    (a, b) => Number(isAllPosts(a.postId)) - Number(isAllPosts(b.postId))
+  );
+  const winner = ranked
+    .map((automation) => ({
+      automation,
+      matchResult: matchKeywords(commentText, automation.keywords, automation.wholeWordMatch, {
+        typoTolerance: automation.typoTolerance,
+      }),
+    }))
+    .find((candidate) => candidate.matchResult.matched);
 
-    if (!matchResult.matched) {
-      continue;
-    }
+  for (const { automation, matchResult } of winner ? [winner] : []) {
+
+    // Persist the identified person and campaign interaction before any DM side effect.
+    // Repeated webhooks reuse the contact and interaction instead of fabricating leads.
+    await captureLeadFromInteraction({
+      workspaceId: automation.workspaceId,
+      source: mediaId === "direct_message" ? "INSTAGRAM_DM" : "CAMPAIGN",
+      sourceId: automation.id, interactionKey: commentId,
+      instagramId: commenterId, instagramUsername: commenterName,
+    });
 
     const existingLog = await prisma.dmLog.findUnique({
       where: {
@@ -105,6 +120,7 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
           commenterName,
           commentText,
           commentId,
+          mediaId,
           matchedKeyword: matchResult.matchedKeyword,
           status: "FAILED",
           errorMessage: "No Instagram access token available",
@@ -136,6 +152,7 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
           commenterName,
           commentText,
           commentId,
+          mediaId,
           matchedKeyword: matchResult.matchedKeyword,
           status: "FAILED",
           errorMessage: "Failed to decrypt Instagram access token",
@@ -163,6 +180,7 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
         commenterName,
         commentText,
         commentId,
+        mediaId,
         matchedKeyword: matchResult.matchedKeyword,
         status: "PENDING",
         attempts: job.attemptsMade + 1,
@@ -264,7 +282,7 @@ async function processComment(job: Job<ProcessCommentJob>): Promise<void> {
           },
           {
             delay: rateLimit.requeueDelayMs,
-            jobId: `comment:${instagramAccountId}:${commentId}:retry:${requeueAttempt + 1}`,
+            jobId: commentJobId(instagramAccountId, commentId, requeueAttempt + 1),
           }
         );
         continue;

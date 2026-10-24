@@ -1,3 +1,5 @@
+import { workspaceTranslator } from "@/lib/i18n/workspace";
+
 /**
  * Status Badge
  *
@@ -16,15 +18,16 @@ const statusConfig: Record<string, { bg: string; text: string; dot: string; labe
 
 interface StatusBadgeProps {
   status: string;
+  locale?: string;
 }
 
-export default function StatusBadge({ status }: StatusBadgeProps) {
+export default function StatusBadge({ status, locale = "pt" }: StatusBadgeProps) {
   const config = statusConfig[status] ?? statusConfig.PENDING;
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-      {config.label}
+      {workspaceTranslator(locale)(config.label)}
     </span>
   );
 }

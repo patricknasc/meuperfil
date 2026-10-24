@@ -93,6 +93,8 @@ model Workspace {
   operationalEvents OperationalEvent[]
   profiles          Profile[]
   scheduledPosts    ScheduledPost[]
+  contacts          Contact[]
+  leadInteractions  LeadInteraction[]
 
   @@index([ownerId])
 }
@@ -167,6 +169,10 @@ model Automation {
   dmMessage      String
   isActive       Boolean @default(true)
   wholeWordMatch Boolean @default(true)
+  /// Accept one wrong letter in keywords of 5+ characters.
+  typoTolerance  Boolean @default(false)
+  /// Optional end of the campaign; null means it never expires.
+  endsAt         DateTime?
   reportShareSlug    String? @unique
   reportShareEnabled Boolean @default(true)
 
@@ -178,6 +184,7 @@ model Automation {
   dmLogs           DmLog[]
   trackedLinks     TrackedLink[]
   linkClicks       LinkClick[]
+  leadInteractions LeadInteraction[]
 
   @@index([workspaceId])
   @@index([instagramAccountId])
@@ -195,6 +202,8 @@ model DmLog {
   commentText   String
   commentId     String
   matchedKeyword String?
+  /// Post or reel the comment was made on (useful for "all posts" campaigns).
+  mediaId        String?
   status        DmStatus @default(PENDING)
   attempts      Int      @default(0)
   dmSentAt      DateTime?
@@ -369,6 +378,7 @@ enum ProfileTheme {
   EMERALD_CLEAN
   MIDNIGHT_VELVET
   OCEAN_GRADIENT
+  CUSTOM
 }
 
 enum ProfileBlockType {
@@ -385,6 +395,7 @@ model Profile {
   bio             String?
   avatarUrl       String?
   theme           ProfileTheme @default(MODERN_DARK)
+  themeSettings   Json?
   isPublished     Boolean      @default(true)
   customDomain    String?      @unique
   seoTitle        String?
@@ -429,6 +440,12 @@ model ProfileVisit {
   ipHash      String?
   userAgent   String?
   referrer    String?
+  country     String?
+  region      String?
+  city        String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
   createdAt   DateTime @default(now())
 
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -448,6 +465,12 @@ model ProfileBlockClick {
   ipHash         String?
   userAgent      String?
   referrer       String?
+  country        String?
+  region         String?
+  city           String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
   createdAt      DateTime @default(now())
 
   profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -500,6 +523,10 @@ model ScheduledPost {
   publishedAt        DateTime?
   status             PostStatus      @default(DRAFT)
   
+  queueVersion       Int             @default(0)
+  publishAttemptedAt DateTime?
+  quotaCountedAt     DateTime?
+
   // Meta container tracking
   metaContainerId    String?
   publishedPostId    String?
@@ -525,3 +552,72 @@ model ScheduledPost {
   @@index([workspaceId, status])
 }
 
+
+model BetaWaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  company   String?
+  goal      String?
+  source    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LeadSource {
+  BIO_LINK
+  INSTAGRAM_DM
+  CAMPAIGN
+  MANUAL
+  IMPORT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+model Contact {
+  id                String     @id @default(cuid())
+  workspaceId       String
+  identityKey       String
+  name              String?
+  email             String?
+  phone             String?
+  instagramUsername String?
+  instagramId       String?
+  source            LeadSource
+  sourceId          String?
+  status            LeadStatus @default(NEW)
+  tags              String[]   @default([])
+  customFields      Json?
+  lastInteractionAt DateTime   @default(now())
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  workspace         Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  interactions      LeadInteraction[]
+
+  @@unique([workspaceId, identityKey])
+  @@index([workspaceId, status])
+  @@index([workspaceId, lastInteractionAt])
+}
+
+model LeadInteraction {
+  id           String     @id @default(cuid())
+  workspaceId  String
+  contactId    String
+  automationId String?
+  eventKey     String     @unique
+  source       LeadSource
+  sourceId     String?
+  createdAt    DateTime   @default(now())
+  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, automationId])
+  @@index([contactId, createdAt])
+}

@@ -18,23 +18,25 @@ export async function POST(request: NextRequest) {
     }
 
     const entry = normalizeBetaWaitlistEntry(parsed.data);
-    await saveBetaWaitlistEntry(entry);
-    await sendBetaWelcomeEmail({
-      name: entry.name,
-      email: entry.email,
-      company: entry.company,
-      goal: entry.goal,
-    });
+    const stored = await saveBetaWaitlistEntry(entry);
+    if (stored.isNew) {
+      try {
+        await sendBetaWelcomeEmail({ name: entry.name, email: entry.email, company: entry.company, goal: entry.goal });
+      } catch (error) {
+        console.error("Waitlist saved but welcome email failed", error);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       message: "You are on the beta waitlist.",
       entry,
     });
-  } catch {
-    return NextResponse.json(
-      { success: false, error: "Invalid request body." },
-      { status: 400 }
-    );
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ success: false, error: "Invalid request body." }, { status: 400 });
+    }
+    console.error("Waitlist persistence failed", error);
+    return NextResponse.json({ success: false, error: "Registration unavailable. Please try again shortly." }, { status: 503 });
   }
 }

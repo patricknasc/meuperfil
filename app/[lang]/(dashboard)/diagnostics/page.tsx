@@ -1,5 +1,8 @@
 "use client";
 
+import { useParams } from "next/navigation";
+import { workspaceTranslator, workspaceDateLocale } from "@/lib/i18n/workspace";
+
 import { useEffect, useState } from "react";
 import StatusBadge from "@/components/status-badge";
 
@@ -11,7 +14,7 @@ interface DiagnosticsData {
     heartbeat: {
       checkedAt: string;
       hostname?: string;
-      pid: number;
+      pid?: number;
       startedAt?: string;
     } | null;
   };
@@ -58,8 +61,8 @@ interface DiagnosticsData {
   }>;
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString();
+function formatDate(value: string, locale: string) {
+  return new Date(value).toLocaleString(locale);
 }
 
 function EmptyState({ label }: { label: string }) {
@@ -82,6 +85,9 @@ function Section({
 }
 
 export default function DiagnosticsPage() {
+  const { lang } = useParams<{ lang: string }>();
+  const t = workspaceTranslator(lang);
+  const dateLocale = workspaceDateLocale(lang);
   const [data, setData] = useState<DiagnosticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -130,42 +136,42 @@ export default function DiagnosticsPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Production Diagnostics
+            {t("Workspace Diagnostics")}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Health, queues, webhook failures, billing events, and worker alerts.
+            {t("Health and failures for this workspace.")}
           </p>
         </div>
         <button
           onClick={() => void refreshDiagnostics()}
           className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:border-border-hover"
         >
-          Refresh
+          {t("Refresh")}
         </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="glass rounded-2xl p-5">
           <p className="text-xs font-semibold uppercase text-muted">
-            Worker health
+            {t("Worker health")}
           </p>
           <p
             className={`mt-3 text-2xl font-bold ${
               data?.workerHealth.healthy ? "text-success" : "text-warning"
             }`}
           >
-            {data?.workerHealth.healthy ? "Healthy" : "Needs attention"}
+            {data?.workerHealth.healthy ? t("Healthy") : t("Needs attention")}
           </p>
           <p className="mt-2 text-xs text-muted">
             {workerAgeSeconds == null
-              ? "No heartbeat found"
-              : `Last heartbeat ${workerAgeSeconds}s ago`}
+              ? t("No heartbeat found")
+              : lang === "en" ? `Last heartbeat ${workerAgeSeconds}s ago` : lang === "es" ? `Última señal hace ${workerAgeSeconds}s` : `Último sinal há ${workerAgeSeconds}s`}
           </p>
         </div>
-        {["waiting", "active", "delayed", "failed"].map((key) => (
+        {["pending", "sent", "failed"].map((key) => (
           <div key={key} className="glass rounded-2xl p-5">
             <p className="text-xs font-semibold uppercase text-muted">
-              Queue {key}
+              {t("Workspace DMs")}: {t(key === "pending" ? "Pending" : key === "sent" ? "Sent" : "Failed")}
             </p>
             <p className="mt-3 text-2xl font-bold text-foreground">
               {data?.queueCounts[key] ?? 0}
@@ -174,7 +180,7 @@ export default function DiagnosticsPage() {
         ))}
       </div>
 
-      <Section title="Recent Worker Alerts">
+      <Section title={t("Recent Worker Alerts")}>
         {data?.workerAlerts.length ? (
           <div className="space-y-3">
             {data.workerAlerts.map((alert) => (
@@ -191,19 +197,19 @@ export default function DiagnosticsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted">
-                  {formatDate(alert.createdAt)}
+                  {formatDate(alert.createdAt, dateLocale)}
                   {alert.commentId ? ` · ${alert.commentId}` : ""}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState label="No worker alerts recorded." />
+          <EmptyState label={t("No worker alerts recorded.")} />
         )}
       </Section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Campaign DM Failures And Skips">
+        <Section title={t("Campaign DM Failures And Skips")}>
           {data?.dmFailures.length ? (
             <div className="space-y-3">
               {data.dmFailures.map((item) => (
@@ -212,7 +218,7 @@ export default function DiagnosticsPage() {
                     <p className="truncate text-sm font-semibold text-foreground">
                       {item.automation.name}
                     </p>
-                    <StatusBadge status={item.status} />
+                    <StatusBadge locale={lang} status={item.status} />
                   </div>
                   <p className="mt-1 truncate text-xs text-muted">
                     {item.commentText}
@@ -224,35 +230,35 @@ export default function DiagnosticsPage() {
               ))}
             </div>
           ) : (
-            <EmptyState label="No DM failures or skips." />
+            <EmptyState label={t("No DM failures or skips.")} />
           )}
         </Section>
 
-        <Section title="Webhook Failures">
+        <Section title={t("Webhook Failures")}>
           {data?.webhookFailures.length ? (
             <div className="space-y-3">
               {data.webhookFailures.map((event) => (
                 <div key={event.id} className="border-b border-border pb-3 last:border-0">
                   <p className="text-sm font-semibold text-foreground">
-                    {event.object ?? "Instagram webhook"}
+                    {event.object ?? t("Instagram webhook")}
                   </p>
                   <p className="mt-1 text-xs text-error">
-                    {event.errorMessage ?? "Unknown error"}
+                    {event.errorMessage ?? t("Unknown error")}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    {formatDate(event.createdAt)}
+                    {formatDate(event.createdAt, dateLocale)}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyState label="No failed webhook events." />
+            <EmptyState label={t("No failed webhook events.")} />
           )}
         </Section>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Token Refresh Failures">
+        <Section title={t("Token Refresh Failures")}>
           {data?.tokenRefreshFailures.length ? (
             <div className="space-y-3">
               {data.tokenRefreshFailures.map((event) => (
@@ -261,17 +267,17 @@ export default function DiagnosticsPage() {
                     {event.message}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    {formatDate(event.createdAt)}
+                    {formatDate(event.createdAt, dateLocale)}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyState label="No token refresh failures." />
+            <EmptyState label={t("No token refresh failures.")} />
           )}
         </Section>
 
-        <Section title="Billing Events">
+        <Section title={t("Billing Events")}>
           {data?.billingEvents.length ? (
             <div className="space-y-3">
               {data.billingEvents.map((event) => (
@@ -280,30 +286,30 @@ export default function DiagnosticsPage() {
                     {event.type}
                   </p>
                   <p className="mt-1 truncate text-xs text-muted">
-                    {event.stripeEventId} · {formatDate(event.processedAt)}
+                    {event.stripeEventId} · {formatDate(event.processedAt, dateLocale)}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyState label="No billing events yet." />
+            <EmptyState label={t("No billing events yet.")} />
           )}
         </Section>
       </div>
 
-      <Section title="Operational Event Timeline">
+      <Section title={t("Operational Event Timeline")}>
         {data?.operationalEvents.length ? (
           <div className="space-y-3">
             {data.operationalEvents.map((event) => (
               <div key={event.id} className="grid gap-2 border-b border-border pb-3 last:border-0 sm:grid-cols-[140px_1fr_auto]">
                 <p className="text-xs font-semibold text-muted">{event.source}</p>
                 <p className="text-sm text-foreground">{event.message}</p>
-                <p className="text-xs text-muted">{formatDate(event.createdAt)}</p>
+                <p className="text-xs text-muted">{formatDate(event.createdAt, dateLocale)}</p>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState label="No operational events recorded." />
+          <EmptyState label={t("No operational events recorded.")} />
         )}
       </Section>
     </div>

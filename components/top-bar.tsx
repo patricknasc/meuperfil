@@ -7,6 +7,7 @@
  */
 
 import { usePathname } from "next/navigation";
+import { workspaceTranslator } from "@/lib/i18n/workspace";
 import LanguageSwitcher from "@/components/language-switcher";
 import type { Locale } from "@/app/[lang]/dictionaries";
 
@@ -19,6 +20,9 @@ const pageTitles: Record<string, string> = {
   "/logs": "DM Logs",
   "/settings": "Settings",
   "/diagnostics": "Diagnostics",
+  "/scheduler": "Scheduler",
+  "/profiles": "Bio link",
+  "/leads": "Leads",
 };
 
 interface TopBarProps {
@@ -34,9 +38,17 @@ export default function TopBar({
   instagramAccountCount,
   locale = "pt",
 }: TopBarProps) {
+  const t = workspaceTranslator(locale);
   const pathname = usePathname();
   const normalizedPath = pathname.replace(/^\/(en|pt|es)/, "") || "/";
-  const title = pageTitles[normalizedPath] ?? "Dashboard";
+  const fallbackTitle = normalizedPath.startsWith("/profiles/")
+    ? "Bio link"
+    : /\/(campaigns|automations)\/[^/]+\/edit$/.test(normalizedPath)
+      ? "Edit Campaign"
+      : /\/(campaigns|automations)\/[^/]+$/.test(normalizedPath)
+        ? "Campaign"
+        : "Dashboard";
+  const title = t(pageTitles[normalizedPath] ?? fallbackTitle);
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 lg:px-8 border-b border-border glass">
@@ -45,7 +57,7 @@ export default function TopBar({
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
-          aria-label="Toggle sidebar"
+          aria-label={t("Toggle sidebar")}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -63,12 +75,12 @@ export default function TopBar({
             }`}
           />
           {instagramAccountCount > 1
-            ? `${instagramAccountCount} accounts`
+            ? `${instagramAccountCount} ${t("accounts")}`
             : instagramUsername
               ? `@${instagramUsername}`
-              : "Connect Instagram"}
+              : t("Connect Instagram")}
         </div>
-        <LanguageSwitcher currentLocale={locale} variant="compact" />
+        <LanguageSwitcher currentLocale={locale} />
       </div>
     </header>
   );

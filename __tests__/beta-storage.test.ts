@@ -1,46 +1,19 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-
-import {
-  saveBetaWaitlistEntry,
-  readBetaWaitlistEntries,
-  resolveBetaWaitlistFilePath,
-} from "../lib/beta/storage";
-
-describe("beta storage", () => {
-  const originalCwd = process.cwd();
-
-  afterEach(async () => {
-    process.chdir(originalCwd);
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const { db } = vi.hoisted(() => ({ db: { upsert: vi.fn(), findMany: vi.fn() } }));
+vi.mock("@/lib/db/client", () => ({ prisma: { betaWaitlistEntry: db } }));
+import { saveBetaWaitlistEntry, readBetaWaitlistEntries } from "@/lib/beta/storage";
+describe("persistent beta storage", () => {
+  beforeEach(() => { vi.resetAllMocks(); db.upsert.mockResolvedValue({ id: "existing" }); });
+  it("normalizes email and deduplicates at the database boundary", async () => {
+    await saveBetaWaitlistEntry({ name: "Ana", email: " ANA@EXAMPLE.COM ", source: "landing-page" });
+    expect(db.upsert).toHaveBeenCalledWith({ where: { email: "ana@example.com" }, create: { id: expect.any(String), name: "Ana", email: "ana@example.com", source: "landing-page" }, update: { email: "ana@example.com" } });
   });
-
-  it("persists entries to the project data folder and reads them back", async () => {
-    const tempDir = await mkdtemp(join(tmpdir(), "meuperfil-beta-"));
-    process.chdir(tempDir);
-
-    const entry = {
-      name: "Ana Silva",
-      email: "ana@studio.com",
-      company: "Studio North",
-      goal: "Launch waitlist",
-      source: "landing-page",
-    } as const;
-
-    const filePath = await saveBetaWaitlistEntry(entry);
-    const stored = await readBetaWaitlistEntries();
-
-    expect(filePath).toBe(resolveBetaWaitlistFilePath());
-    expect(stored).toHaveLength(1);
-    expect(stored[0].email).toBe("ana@studio.com");
-    expect(stored[0]).toMatchObject({
-      name: "Ana Silva",
-      company: "Studio North",
-      goal: "Launch waitlist",
-      source: "landing-page",
-    });
-
-    await rm(tempDir, { recursive: true, force: true });
+  it("propagates storage errors instead of reporting a successful registration", async () => {
+    db.upsert.mockRejectedValue(new Error("db unavailable"));
+    await expect(saveBetaWaitlistEntry({ name: "Ana", email: "ana@example.com", source: "landing-page" })).rejects.toThrow("db unavailable");
+  });
+  it("reads durable records", async () => {
+    db.findMany.mockResolvedValue([{ email: "ana@example.com" }]);
+    expect(await readBetaWaitlistEntries()).toEqual([{ email: "ana@example.com" }]);
   });
 });

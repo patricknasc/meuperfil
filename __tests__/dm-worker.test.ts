@@ -35,6 +35,8 @@ const {
   mockReleaseWorkspaceDMReservation: vi.fn(),
 }));
 
+vi.mock("@/lib/crm", () => ({ captureLeadFromInteraction: vi.fn().mockResolvedValue({ success: true, contactId: "contact_1" }) }));
+
 vi.mock("@/lib/db/client", () => ({
   prisma: mockPrisma,
 }));
@@ -195,12 +197,9 @@ describe("DM Worker — Full Pipeline", () => {
 
     expect(mockPrisma.automation.findMany).toHaveBeenCalledWith({
       where: {
-        OR: [
-          { postId: "media_101" },
-          { postId: "ALL_POSTS" },
-          { postId: "ALL" },
-        ],
+        postId: { in: ["media_101", "ALL_POSTS", "ALL"] },
         isActive: true,
+        OR: [{ endsAt: null }, { endsAt: { gt: expect.any(Date) } }],
         instagramAccount: { instagramId: "ig_456" },
       },
       include: {
@@ -219,7 +218,8 @@ describe("DM Worker — Full Pipeline", () => {
     expect(mockMatchKeywords).toHaveBeenCalledWith(
       "I want the LINK!",
       ["LINK", "PRICE"],
-      true
+      true,
+      { typoTolerance: undefined }
     );
     expect(mockReserveWorkspaceDMSend).toHaveBeenCalledWith("workspace_123");
     expect(mockReserveDMSlot).toHaveBeenCalledWith("ig_456", 0);
@@ -323,7 +323,7 @@ describe("DM Worker — Full Pipeline", () => {
       }),
       expect.objectContaining({
         delay: 1800000,
-        jobId: "comment:ig_456:comment_555:retry:1",
+        jobId: expect.stringMatching(/^comment-[a-f0-9]{64}$/),
       })
     );
   });
@@ -448,5 +448,29 @@ describe("DM Worker — Full Pipeline", () => {
       "comment_555",
       "Hey commenter_user! Here is the offer: http://localhost:3000/r/abc123"
     );
+  });
+
+  it("sends only one DM when several campaigns match, preferring the specific post", async () => {
+    const allPosts = { ...mockAutomation, id: "auto_all", postId: "ALL_POSTS" };
+    const specific = { ...mockAutomation, id: "auto_specific" };
+    mockPrisma.automation.findMany.mockResolvedValue([allPosts, specific]);
+    const processor = getProcessor();
+
+    await processor(createMockJob());
+
+    expect(mockSendPrivateReply).toHaveBeenCalledTimes(1);
+    const sentUpdate = mockPrisma.dmLog.update.mock.calls.find((call) => call[0].data.status === "SENT");
+    expect(sentUpdate?.[0].where.automationId_commentId.automationId).toBe("auto_specific");
+  });
+
+  it("passes typo tolerance to the matcher and records the commented post", async () => {
+    mockPrisma.automation.findMany.mockResolvedValue([{ ...mockAutomation, typoTolerance: true }]);
+    const processor = getProcessor();
+
+    await processor(createMockJob());
+
+    expect(mockMatchKeywords).toHaveBeenCalledWith(expect.any(String), ["LINK", "PRICE"], true, { typoTolerance: true });
+    const created = mockPrisma.dmLog.upsert.mock.calls[0][0].create;
+    expect(created.mediaId).toBe("media_101");
   });
 });

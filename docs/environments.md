@@ -84,6 +84,44 @@ Depois de mudar um valor, rode o script de novo e faça Redeploy. Equivalente na
 
 O cron da Vercel (`vercel.json`) só roda em Production. As funções ficam em `gru1` (São Paulo), junto do Supabase `sa-east-1`.
 
+## Acesso ao HM: duas portas
+
+O HM é protegido pela Vercel (Deployment Protection). Todo acesso passa por duas verificações, nesta ordem:
+
+```
+Pessoa digita hm.meuperfil.me
+        │
+        ▼
+ PORTA 1 — Vercel (antes do nosso app)
+   Tem o cookie de acesso da Vercel para este domínio?
+   ├─ não → redireciona para o login da Vercel
+   │         → logou e é dono/membro do time? → recebe o cookie e volta
+   │         → não é do time? → acesso negado (o app nunca é acionado)
+   └─ sim → deixa passar
+        │
+        ▼
+ PORTA 2 — MeuPerfil (nosso app)
+   Tem sessão do MeuPerfil (login por link mágico)?
+   ├─ não → páginas públicas abrem; o dashboard redireciona para /pt/login
+   └─ sim → mostra o workspace da pessoa
+```
+
+**O endereço é público, o conteúdo não.** Qualquer pessoa pode digitar `hm.meuperfil.me` e o DNS responde, mas quem não passa pela porta 1 só vê a tela de login da Vercel. Nenhuma página, dado ou código do HM é entregue. O que fica visível é apenas o nome do domínio.
+
+**Quem tem acesso** é decidido na porta 1: só membros do time `meuperfil1` na Vercel. No plano Hobby o time tem um único membro (o dono) e não é possível adicionar outros. Para liberar testadores ou sócios é preciso o plano Pro, com gestão em *Team Settings → Members*. A configuração da proteção fica em *Project → Settings → Deployment Protection → Vercel Authentication* (hoje *Standard Protection*: protege tudo, exceto o domínio de produção).
+
+**Quando cada porta reconhece a pessoa:**
+
+1. Vercel: no login da Vercel, que grava um cookie para `hm.meuperfil.me`. A cada requisição a Vercel confere esse cookie antes de chamar o app.
+2. MeuPerfil: ao clicar no link mágico do e-mail, o app cria a sessão (outro cookie). A cada página do dashboard o app confere a sessão e o workspace a que a pessoa pertence.
+
+A porta 1 existe só no HM. Em PD (`meuperfil.me`) o site é público e só existe a porta 2.
+
+**Consequências práticas:**
+
+- Abra o link mágico de login do HM em um navegador já logado na Vercel. Em janela anônima, o desvio pelo login da Vercel faz o link chegar ao app sem o `token`, e o login falha com `error=Configuration`.
+- Webhooks externos (Meta, Stripe) não passam pela porta 1. No HM eles precisam do *Protection Bypass for Automation* da Vercel.
+
 ## Worker
 
 A Vercel não roda processos contínuos. O worker (`npm run worker`) precisa de um host próprio por ambiente (Railway, Render ou Fly.io), com as mesmas variáveis do app daquele ambiente.

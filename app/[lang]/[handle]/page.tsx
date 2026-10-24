@@ -1,22 +1,30 @@
+import Image from "next/image";
+import { profileTranslator } from "@/lib/i18n/profiles";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { getPublicProfileByHandle, recordProfileVisit } from "@/lib/profiles/service";
-import { getThemeConfig } from "@/lib/profiles/themes";
+import { getThemeConfig, themeIconStyle, themeStyle } from "@/lib/profiles/themes";
+import { geoFromHeaders, utmFromParams } from "@/lib/tracking/visitor";
+import { profileFontVariables } from "@/lib/profiles/fonts";
+import { getSocialPlatform } from "@/lib/profiles/social-platforms";
+import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
 import { ProfileBlockType } from "@/app/generated/prisma/client";
 import { hashClickIp } from "@/lib/tracking/server";
 
 interface PageProps {
   params: Promise<{ lang: string; handle: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { handle } = await params;
+  const { lang, handle } = await params;
+  const t = profileTranslator(lang);
   const profile = await getPublicProfileByHandle(handle);
 
   if (!profile || !profile.isPublished) {
     return {
-      title: "Perfil não encontrado | meuperfil.me",
+      title: `${t("Perfil não encontrado")} | meuperfil.me`,
       robots: { index: false, follow: false },
     };
   }
@@ -25,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description =
     profile.seoDescription ||
     profile.bio ||
-    `Acesse todos os links, produtos e redes sociais de ${profile.displayName} no meuperfil.me.`;
+    `${profile.displayName} — ${lang === "en" ? "Links, products and social networks" : lang === "es" ? "Enlaces, productos y redes sociales" : "Links, produtos e redes sociais"} | meuperfil.me`;
 
   return {
     title,
@@ -46,8 +54,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function PublicProfilePage({ params }: PageProps) {
-  const { handle } = await params;
+export default async function PublicProfilePage({ params, searchParams }: PageProps) {
+  const { lang, handle } = await params;
+  const t = profileTranslator(lang);
   const profile = await getPublicProfileByHandle(handle);
 
   if (!profile || !profile.isPublished) {
@@ -68,19 +77,23 @@ export default async function PublicProfilePage({ params }: PageProps) {
     ipHash,
     userAgent,
     referrer,
+    ...geoFromHeaders(headerList),
+    ...utmFromParams(await searchParams),
   });
 
   const themeConfig = getThemeConfig(profile.theme);
+  const iconStyle = themeIconStyle(profile.theme, profile.themeSettings);
 
   return (
     <main
-      className={`min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 ${themeConfig.classes.background} ${themeConfig.classes.container} selection:bg-indigo-500 selection:text-white transition-colors duration-300`}
+      className={`min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 ${themeConfig.classes.background} ${themeConfig.classes.container} selection:bg-indigo-500 selection:text-white transition-colors duration-300 ${profileFontVariables}`}
+      style={themeStyle(profile.theme, profile.themeSettings)}
     >
-      <div className="w-full max-w-md mx-auto flex flex-col items-center pt-8 sm:pt-14 pb-12">
+      <div className="w-full max-w-md mx-auto flex flex-col items-center pt-8 sm:pt-14 pb-12 [zoom:var(--mp-zoom,1)]">
         {/* Profile Avatar & Header */}
         <div className="flex flex-col items-center text-center space-y-3 mb-8">
           {profile.avatarUrl ? (
-            <img
+            <Image unoptimized width={96} height={96}
               src={profile.avatarUrl}
               alt={profile.displayName}
               className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 ${themeConfig.classes.avatarBorder} transition-all duration-300`}
@@ -134,18 +147,24 @@ export default async function PublicProfilePage({ params }: PageProps) {
 
               return (
                 <div key={block.id} className="flex items-center justify-center gap-3 py-2 flex-wrap">
-                  {links.map((s, idx) => (
-                    <a
-                      key={idx}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold ${themeConfig.classes.socialIconBg} ${themeConfig.classes.socialIconText} shadow-md transition-all hover:scale-110 active:scale-95`}
-                      title={s.platform}
-                    >
-                      {s.platform.slice(0, 2).toUpperCase()}
-                    </a>
-                  ))}
+                  {links.map((s, idx) => {
+                    const button = socialButtonProps(s.platform, iconStyle, themeConfig);
+                    const label = getSocialPlatform(s.platform).label;
+                    return (
+                      <a
+                        key={idx}
+                        href={`/p/c/${block.id}?i=${idx}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={button.className}
+                        style={button.style}
+                        title={label}
+                        aria-label={label}
+                      >
+                        <SocialGlyph platform={s.platform} />
+                      </a>
+                    );
+                  })}
                 </div>
               );
             }
@@ -157,10 +176,10 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 href={`/p/c/${block.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`w-full p-4 rounded-2xl flex items-center gap-3.5 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} group`}
+                className={`w-full p-4 ${themeConfig.classes.linkRadius ?? "rounded-2xl"} flex items-center gap-3.5 ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} group`}
               >
                 {block.imageUrl && (
-                  <img
+                  <Image unoptimized width={40} height={40}
                     src={block.imageUrl}
                     alt=""
                     className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
@@ -185,12 +204,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
       {/* Powered by meuperfil.me Footer Badge */}
       <footer className="pt-8 pb-4 text-center">
         <a
-          href="/"
+          href={`/${lang}`}
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase opacity-75 hover:opacity-100 transition-opacity ${themeConfig.classes.footerText}`}
         >
-          <span>Criado com</span>
+          <span>{t("Criado com")}</span>
           <strong className="font-bold text-white">meuperfil.me</strong>
         </a>
       </footer>

@@ -1,14 +1,19 @@
+import { publicTranslator } from "@/lib/i18n/public";
 import type { Metadata } from "next";
 import Link from "next/link";
 import PublicSiteHeader from "@/components/public-site-header";
 import TemplateVisual from "@/components/template-visual";
+import { localizeCampaignTemplate } from "@/lib/i18n/templates";
 import { CAMPAIGN_TEMPLATES } from "@/lib/templates/campaign-templates";
 import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
 
-export const metadata: Metadata = {
-  title: "Instagram Comment to DM Templates - MeuPerfil",
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  const t = publicTranslator(lang);
+  return {
+  title: t("Instagram Comment to DM Templates - MeuPerfil"),
   description:
-    "Copy ready-to-launch Instagram comment-to-DM campaign templates for product links, lead magnets, real estate, fitness, restaurants, events, and creators.",
+    t("Copy ready-to-launch Instagram comment-to-DM campaign templates for product links, lead magnets, real estate, fitness, restaurants, events, and creators."),
   keywords: [
     "Instagram comment to DM templates",
     "comment to DM campaigns",
@@ -16,6 +21,7 @@ export const metadata: Metadata = {
     "Manychat alternative templates",
   ],
 };
+}
 
 export default async function TemplatesPage({
   params,
@@ -24,6 +30,8 @@ export default async function TemplatesPage({
 }) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
+  const t = publicTranslator(locale);
+  const templates = CAMPAIGN_TEMPLATES.map((template) => localizeCampaignTemplate(template, locale));
   const prefix = `/${locale}`;
 
   return (
@@ -33,34 +41,23 @@ export default async function TemplatesPage({
       <section className="border-b border-white/10 bg-zinc-950/55">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:px-8 lg:py-20">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-cyan-200">
-              Public template library
-            </p>
-            <h1 className="mt-4 text-5xl font-black leading-[1.02] text-white sm:text-6xl">
-              Instagram campaigns you can copy in minutes
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">
-              Start with proven comment-to-DM playbooks for lead magnets,
-              product links, events, service menus, and agency client campaigns.
-            </p>
+            <p className="text-sm font-bold uppercase tracking-wide text-cyan-200">{t("Public template library")}</p>
+            <h1 className="mt-4 text-5xl font-black leading-[1.02] text-white sm:text-6xl">{t("Instagram campaigns you can copy in minutes")}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">{t("Start with proven comment-to-DM playbooks for lead magnets, product links, events, service menus, and agency client campaigns.")}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={`${prefix}/login`}
                 className="inline-flex items-center justify-center bg-cyan-300 px-6 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
-              >
-                Start free
-              </Link>
+              >{t("Start free")}</Link>
               <a
                 href="#template-grid"
                 className="inline-flex items-center justify-center border border-white/10 bg-white/[0.04] px-6 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
-              >
-                Browse templates
-              </a>
+              >{t("Browse templates")}</a>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {CAMPAIGN_TEMPLATES.slice(0, 2).map((template) => (
+            {templates.slice(0, 2).map((template) => (
               <TemplateVisual key={template.slug} template={template} compact />
             ))}
           </div>
@@ -72,7 +69,7 @@ export default async function TemplatesPage({
         className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-6 lg:px-8"
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {CAMPAIGN_TEMPLATES.map((template) => (
+          {templates.map((template) => (
             <article
               key={template.slug}
               className="flex min-h-full flex-col border border-white/10 bg-white/[0.035] p-5 transition hover:border-white/20 hover:bg-white/[0.055]"
@@ -103,15 +100,11 @@ export default async function TemplatesPage({
                 <Link
                   href={`${prefix}/templates/${template.slug}`}
                   className="inline-flex w-full items-center justify-center border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white transition hover:border-white/20 hover:bg-white/[0.08]"
-                >
-                  View playbook
-                </Link>
+                >{t("View playbook")}</Link>
                 <Link
                   href={`${prefix}/login?template=${template.slug}`}
                   className="inline-flex w-full items-center justify-center bg-cyan-300 px-4 py-3 text-sm font-bold text-zinc-950 transition hover:bg-cyan-200"
-                >
-                  Use this template
-                </Link>
+                >{t("Use this template")}</Link>
               </div>
             </article>
           ))}

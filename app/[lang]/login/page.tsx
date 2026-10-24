@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
+import { publicTranslator } from "@/lib/i18n/public";
 import { signIn } from "@/lib/auth";
 import { getCampaignTemplate } from "@/lib/templates/campaign-templates";
 import LanguageSwitcher from "@/components/language-switcher";
-import { hasLocale, defaultLocale, getDictionary, type Locale } from "../dictionaries";
+import { hasLocale, defaultLocale, type Locale } from "../dictionaries";
 
-export const metadata = {
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  const t = publicTranslator(lang);
+  return {
   title: "Login - MeuPerfil",
-  description: "Sign in to manage Instagram comment-to-DM campaigns.",
+  description: t("Sign in to manage Instagram comment-to-DM campaigns."),
 };
+}
 
 export default async function LoginPage({
   params,
@@ -22,7 +27,7 @@ export default async function LoginPage({
 }) {
   const { lang } = await params;
   const locale: Locale = hasLocale(lang) ? lang : defaultLocale;
-  const t = (await getDictionary(locale)).login;
+  const t = publicTranslator(locale);
   const sParams = await searchParams;
   const checkEmail = sParams.checkEmail === "1";
   const selectedTemplate = getCampaignTemplate(sParams.template);
@@ -63,17 +68,15 @@ export default async function LoginPage({
           </h1>
           <p className="text-muted text-sm leading-relaxed mt-2">
             {selectedTemplate
-              ? t.templateSubtitle.replace("{template}", selectedTemplate.title)
-              : t.subtitle}
+              ? t("Sign in or create your account to use the {template} template.", { template: selectedTemplate.title })
+              : t("Sign in or create your account with your email. Then connect your Instagram professional account.")}
           </p>
         </div>
 
         <div className="glass-strong rounded-2xl p-8 shadow-2xl shadow-black/40">
           {selectedTemplate && !checkEmail && (
             <div className="mb-5 border border-cyan-200/20 bg-cyan-300/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">
-                {t.templateSelected}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">{t("Template selected")}</p>
               <p className="mt-2 text-sm font-semibold text-white">
                 {selectedTemplate.title}
               </p>
@@ -82,8 +85,8 @@ export default async function LoginPage({
 
           {checkEmail ? (
             <div className="text-center py-4">
-              <h2 className="text-lg font-semibold mb-2">{t.checkEmailTitle}</h2>
-              <p className="text-sm text-muted">{t.checkEmailBody}</p>
+              <h2 className="text-lg font-semibold mb-2">{t("Check your email")}</h2>
+              <p className="text-sm text-muted">{t("We sent you a secure sign-in link. Open it on this device to continue.")}</p>
             </div>
           ) : (
             <form action={sendMagicLink} className="space-y-5">
@@ -91,16 +94,14 @@ export default async function LoginPage({
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-foreground"
-                >
-                  {t.emailLabel}
-                </label>
+                >{t("Your email")}</label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   required
                   autoComplete="email"
-                  placeholder={t.emailPlaceholder}
+                  placeholder={t("you@email.com")}
                   className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
                 />
               </div>
@@ -108,9 +109,7 @@ export default async function LoginPage({
               <button
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
-              >
-                {t.submit}
-              </button>
+              >{t("Email me a sign-in link")}</button>
             </form>
           )}
         </div>

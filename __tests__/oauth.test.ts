@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
+  getAuthorizationUrl,
   createOAuthState,
   decryptToken,
   encryptToken,
@@ -15,6 +16,11 @@ beforeEach(() => {
 });
 
 describe("OAuth state and token encryption", () => {
+  it("requests publishing permission through Instagram Login", () => {
+    vi.stubEnv("INSTAGRAM_APP_ID", "test-app");
+    const url = new URL(getAuthorizationUrl("https://example.com/api/instagram/callback", "state"));
+    expect(url.searchParams.get("scope")?.split(",")).toContain("instagram_business_content_publish");
+  });
   it("round-trips encrypted tokens", () => {
     const encrypted = encryptToken("long-lived-token");
     expect(encrypted).not.toBe("long-lived-token");

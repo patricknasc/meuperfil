@@ -6,7 +6,8 @@ export type ProfileTheme =
   | "SUNSET_ORANGE"
   | "EMERALD_CLEAN"
   | "MIDNIGHT_VELVET"
-  | "OCEAN_GRADIENT";
+  | "OCEAN_GRADIENT"
+  | "CUSTOM";
 
 export interface ThemeConfig {
   id: ProfileTheme;
@@ -30,10 +31,16 @@ export interface ThemeConfig {
     socialIconBg: string;
     socialIconText: string;
     footerText: string;
+    /** Corner style for link cards; defaults to rounded-2xl. */
+    linkRadius?: string;
   };
+  /** How social icons are drawn; defaults to "theme". */
+  iconStyle?: IconStyle;
 }
 
-export const THEMES: Record<ProfileTheme, ThemeConfig> = {
+export type IconStyle = "theme" | "brand" | "outline" | "plain";
+
+export const THEMES: Record<Exclude<ProfileTheme, "CUSTOM">, ThemeConfig> = {
   MODERN_DARK: {
     id: "MODERN_DARK",
     name: "Modern Dark",
@@ -60,6 +67,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
   },
   NEON_CYAN: {
     id: "NEON_CYAN",
+    iconStyle: "outline",
     name: "Neon Cyan",
     description: "Cyberpunk moderno com bordas ciano brilhantes e alto contraste",
     previewBg: "bg-black",
@@ -108,6 +116,7 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
   },
   MINIMAL_LIGHT: {
     id: "MINIMAL_LIGHT",
+    iconStyle: "brand",
     name: "Minimal Light",
     description: "Estilo nórdico editorial limpo, claro e sofisticado",
     previewBg: "bg-zinc-100",
@@ -228,9 +237,132 @@ export const THEMES: Record<ProfileTheme, ThemeConfig> = {
   },
 };
 
+/**
+ * The CUSTOM theme reads its colors from CSS variables set by
+ * customThemeStyle(), so the same classes work on the public page and in the
+ * editor preview.
+ */
+const CUSTOM_THEME: ThemeConfig = {
+  id: "CUSTOM",
+  name: "Personalizado",
+  description: "Escolha suas próprias cores e formato dos botões",
+  previewBg: "bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]",
+  previewCard: "bg-[var(--mp-btn)]",
+  previewAccent: "bg-[var(--mp-btn)]",
+  classes: {
+    container: "text-[var(--mp-text)]",
+    background: "bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]",
+    avatarBorder: "border-[var(--mp-btn)]",
+    displayName: "font-bold tracking-tight text-[var(--mp-text)]",
+    bio: "text-[var(--mp-text)] opacity-80",
+    handleBadge: "bg-[var(--mp-btn)] text-[var(--mp-btn-text)]",
+    linkCard: "bg-[var(--mp-btn)] text-[var(--mp-btn-text)] shadow-lg shadow-black/10 transition-all duration-200 hover:brightness-110",
+    linkCardHover: "hover:scale-[1.015] active:scale-[0.99]",
+    linkTitle: "font-semibold text-[var(--mp-btn-text)]",
+    linkDescription: "text-xs text-[var(--mp-btn-text)] opacity-75",
+    divider: "text-[var(--mp-text)] opacity-70",
+    socialIconBg: "bg-[var(--mp-btn)] hover:brightness-110",
+    socialIconText: "text-[var(--mp-btn-text)]",
+    footerText: "text-[var(--mp-text)] opacity-60",
+    linkRadius: "rounded-[var(--mp-radius)]",
+  },
+};
+
+export type ButtonShape = "rounded" | "pill" | "square";
+export type TextSize = "sm" | "md" | "lg";
+
+export const PROFILE_FONTS = {
+  inter: { label: "Inter", family: "var(--mp-font-inter), system-ui, sans-serif" },
+  poppins: { label: "Poppins", family: "var(--mp-font-poppins), system-ui, sans-serif" },
+  montserrat: { label: "Montserrat", family: "var(--mp-font-montserrat), system-ui, sans-serif" },
+  space: { label: "Space Grotesk", family: "var(--mp-font-space), system-ui, sans-serif" },
+  playfair: { label: "Playfair Display", family: "var(--mp-font-playfair), Georgia, serif" },
+  lora: { label: "Lora", family: "var(--mp-font-lora), Georgia, serif" },
+  system: { label: "Sistema", family: "system-ui, -apple-system, 'Segoe UI', sans-serif" },
+} as const;
+export type ProfileFont = keyof typeof PROFILE_FONTS;
+
+const TEXT_ZOOM: Record<TextSize, string> = { sm: "0.92", md: "1", lg: "1.12" };
+
+export interface CustomThemeSettings {
+  background: string;
+  /** Second gradient color; null for a solid background. */
+  backgroundTo: string | null;
+  text: string;
+  button: string;
+  buttonText: string;
+  buttonShape: ButtonShape;
+  font: ProfileFont;
+  textSize: TextSize;
+  iconStyle: IconStyle;
+}
+
+export const DEFAULT_CUSTOM_THEME: CustomThemeSettings = {
+  background: "#0f172a",
+  backgroundTo: "#4c1d95",
+  text: "#f8fafc",
+  button: "#ffffff",
+  buttonText: "#0f172a",
+  buttonShape: "rounded",
+  font: "inter",
+  textSize: "md",
+  iconStyle: "brand",
+};
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const RADIUS: Record<ButtonShape, string> = { rounded: "1rem", pill: "9999px", square: "0.25rem" };
+
+/** Reads stored settings, falling back to defaults for anything invalid. */
+export function parseCustomTheme(value: unknown): CustomThemeSettings {
+  const v = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const color = (key: keyof CustomThemeSettings) =>
+    typeof v[key] === "string" && HEX.test(v[key] as string) ? (v[key] as string) : (DEFAULT_CUSTOM_THEME[key] as string);
+  return {
+    background: color("background"),
+    backgroundTo:
+      v.backgroundTo === null ? null : typeof v.backgroundTo === "string" && HEX.test(v.backgroundTo) ? v.backgroundTo : DEFAULT_CUSTOM_THEME.backgroundTo,
+    text: color("text"),
+    button: color("button"),
+    buttonText: color("buttonText"),
+    buttonShape: v.buttonShape === "pill" || v.buttonShape === "square" ? v.buttonShape : "rounded",
+    font: typeof v.font === "string" && v.font in PROFILE_FONTS ? (v.font as ProfileFont) : DEFAULT_CUSTOM_THEME.font,
+    textSize: v.textSize === "sm" || v.textSize === "lg" ? v.textSize : "md",
+    iconStyle:
+      v.iconStyle === "theme" || v.iconStyle === "outline" || v.iconStyle === "plain" || v.iconStyle === "brand"
+        ? v.iconStyle
+        : DEFAULT_CUSTOM_THEME.iconStyle,
+  };
+}
+
+/** CSS variables consumed by the CUSTOM theme classes. */
+export function customThemeStyle(settings: CustomThemeSettings): Record<string, string> {
+  return {
+    "--mp-bg": settings.background,
+    "--mp-bg-image": settings.backgroundTo
+      ? `linear-gradient(160deg, ${settings.background}, ${settings.backgroundTo})`
+      : "none",
+    "--mp-text": settings.text,
+    "--mp-btn": settings.button,
+    "--mp-btn-text": settings.buttonText,
+    "--mp-radius": RADIUS[settings.buttonShape],
+    "--mp-zoom": TEXT_ZOOM[settings.textSize],
+    fontFamily: PROFILE_FONTS[settings.font].family,
+  };
+}
+
+export function themeStyle(themeName: string | null | undefined, settings: unknown): Record<string, string> | undefined {
+  return themeName === "CUSTOM" ? customThemeStyle(parseCustomTheme(settings)) : undefined;
+}
+
+export function themeIconStyle(themeName: string | null | undefined, settings: unknown): IconStyle {
+  if (themeName === "CUSTOM") return parseCustomTheme(settings).iconStyle;
+  return getThemeConfig(themeName).iconStyle ?? "theme";
+}
+
 export function getThemeConfig(themeName: ProfileTheme | string | null | undefined): ThemeConfig {
+  if (themeName === "CUSTOM") return CUSTOM_THEME;
   if (themeName && themeName in THEMES) {
-    return THEMES[themeName as ProfileTheme];
+    return THEMES[themeName as keyof typeof THEMES];
   }
   return THEMES.MODERN_DARK;
 }
