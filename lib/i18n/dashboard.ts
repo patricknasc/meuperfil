@@ -1,6 +1,7 @@
 export type DashboardLocale = "pt" | "en" | "es";
 const dictionaries = {
   pt: {
+    plans: { FREE: "Plano Grátis", PRO: "Plano Pro", AGENCY: "Plano Agência" },
     dashboard: "Visão geral", profiles: "Link na bio", scheduler: "Agendador", campaigns: "Campanhas", leads: "Leads", logs: "Logs de DMs", settings: "Configurações", diagnostics: "Diagnósticos", signOut: "Sair",
     leadDescription: "Pessoas identificadas pelas interações com suas campanhas. Cliques anônimos não são contabilizados como leads.",
     search: "Buscar por nome, email ou Instagram", searchButton: "Buscar", all: "Todos", empty: "Nenhum lead encontrado. As interações com palavras-chave das campanhas aparecerão aqui.",
@@ -9,6 +10,7 @@ const dictionaries = {
     loading: "Carregando…", loadError: "Não foi possível carregar os dados. Tente novamente.", connectFirst: "Conecte uma conta do Instagram nas configurações para publicar.",
   },
   en: {
+    plans: { FREE: "Free plan", PRO: "Pro plan", AGENCY: "Agency plan" },
     dashboard: "Overview", profiles: "Bio link", scheduler: "Scheduler", campaigns: "Campaigns", leads: "Leads", logs: "DM logs", settings: "Settings", diagnostics: "Diagnostics", signOut: "Sign out",
     leadDescription: "People identified through campaign interactions. Anonymous clicks are not counted as leads.",
     search: "Search by name, email or Instagram", searchButton: "Search", all: "All", empty: "No leads found. Campaign keyword interactions will appear here.",
@@ -17,6 +19,7 @@ const dictionaries = {
     loading: "Loading…", loadError: "Could not load data. Please try again.", connectFirst: "Connect an Instagram account in settings to publish.",
   },
   es: {
+    plans: { FREE: "Plan Gratis", PRO: "Plan Pro", AGENCY: "Plan Agencia" },
     dashboard: "Resumen", profiles: "Enlace en bio", scheduler: "Programador", campaigns: "Campañas", leads: "Leads", logs: "Registros de DM", settings: "Configuración", diagnostics: "Diagnósticos", signOut: "Cerrar sesión",
     leadDescription: "Personas identificadas mediante interacciones con las campañas. Los clics anónimos no se cuentan como leads.",
     search: "Buscar por nombre, email o Instagram", searchButton: "Buscar", all: "Todos", empty: "No se encontraron leads. Las interacciones con palabras clave de las campañas aparecerán aquí.",

@@ -79,7 +79,7 @@ export default function PostPicker({
             setPosts(data.data);
             setNextCursor(data.nextCursor ?? null);
           } else {
-            setError(data.error ?? t("Failed to load posts"));
+            setError(t("Failed to load posts"));
           }
         })
         .catch(() => {
@@ -100,7 +100,7 @@ export default function PostPicker({
     return (
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="aspect-square rounded-xl bg-zinc-800 animate-pulse" />
+          <div key={i} className="aspect-square rounded-xl bg-surface-hover animate-pulse" />
         ))}
       </div>
     );
@@ -110,7 +110,7 @@ export default function PostPicker({
     return (
       <div className="text-center py-8">
         <p className="text-sm text-muted">{error}</p>
-        <p className="text-xs text-zinc-500 mt-1">{t("Connect your Instagram account first")}</p>
+        <p className="text-xs text-muted mt-1">{t("Connect your Instagram account first")}</p>
       </div>
     );
   }
@@ -156,20 +156,20 @@ export default function PostPicker({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                <svg className="w-6 h-6 text-zinc-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <div className="w-full h-full bg-surface-hover flex items-center justify-center">
+                <svg className="w-6 h-6 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M2.25 18V6a2.25 2.25 0 0 1 2.25-2.25h15A2.25 2.25 0 0 1 21.75 6v12A2.25 2.25 0 0 1 19.5 20.25H4.5A2.25 2.25 0 0 1 2.25 18Z" />
                 </svg>
               </div>
             )}
             {typeLabel[post.media_type] && (
-              <span className="absolute top-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="absolute top-1.5 left-1.5 rounded-md bg-ink/40 px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                 {typeLabel[post.media_type]}
               </span>
             )}
             {isSelected && (
               <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <svg className="w-6 h-6 text-foreground" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                 </svg>
               </div>

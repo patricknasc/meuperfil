@@ -1,5 +1,9 @@
 "use client";
 
+import { dashboardMessages } from "@/lib/i18n/dashboard";
+import { useDialogs } from "@/components/app-dialogs";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
+
 import { useParams } from "next/navigation";
 import { workspaceTranslator, workspaceDateLocale } from "@/lib/i18n/workspace";
 
@@ -59,6 +63,8 @@ interface WorkspaceMembersData {
 export default function SettingsPage() {
   const { lang } = useParams<{ lang: string }>();
   const t = workspaceTranslator(lang);
+  const dialogs = useDialogs();
+  const ft = useFlowTranslation();
   const dateLocale = workspaceDateLocale(lang);
   const [data, setData] = useState<SettingsData | null>(null);
   const [membersData, setMembersData] = useState<WorkspaceMembersData | null>(
@@ -89,7 +95,14 @@ export default function SettingsPage() {
   }
 
   async function disconnectInstagram(instagramAccountId: string) {
-    if (!confirm(t("Disconnect Instagram? Campaigns for this account will stop sending DMs."))) {
+    if (
+      !(await dialogs.confirm({
+        title: ft("Disconnect Instagram?"),
+        message: ft("Campaigns for this account will stop sending DMs."),
+        confirmLabel: ft("Disconnect"),
+        tone: "danger",
+      }))
+    ) {
       return;
     }
 
@@ -202,9 +215,6 @@ export default function SettingsPage() {
                 {accounts.length} / {accountLimit} {t("connected Instagram profiles")}
               </p>
             </div>
-            <span className="text-sm text-muted">
-              {accounts.length > 0 ? `${accounts.length} ${t("connected")}` : t("None")}
-            </span>
           </div>
 
           <div className="space-y-3 py-3">
@@ -223,10 +233,9 @@ export default function SettingsPage() {
                     @{account.username}
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    {t("Token expires")}{" "}
                     {account.tokenExpiresAt
-                      ? new Date(account.tokenExpiresAt).toLocaleDateString(dateLocale)
-                      : t("not available")}{" "}
+                      ? `${t("Token expires")} ${new Date(account.tokenExpiresAt).toLocaleDateString(dateLocale)}`
+                      : t("Token expiry unavailable")}{" "}
                     · {account.webhookSubscribed ? t("Webhook ready") : t("Webhook pending")}
                   </p>
                 </div>
@@ -284,7 +293,7 @@ export default function SettingsPage() {
 
         {membersData?.invitations.length ? (
           <div className="mt-6 border-t border-border pt-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
               {t("Pending invites")}
             </p>
             <div className="space-y-3">
@@ -328,7 +337,7 @@ export default function SettingsPage() {
 
         {canManageMembers && memberLimitReached && (
           <p className="mt-6 border-t border-border pt-4 text-sm text-muted">
-            {lang === "en" ? `This plan allows ${memberLimit} workspace members. Upgrade to Agency to invite a team.` : lang === "es" ? `Este plan permite ${memberLimit} miembros. Cambia a Agency para invitar a un equipo.` : `Este plano permite ${memberLimit} membros. Mude para Agency para convidar uma equipe.`}
+            {lang === "en" ? (memberLimit === 1 ? "This plan includes only you. Upgrade to Agency to invite a team." : `This plan allows ${memberLimit} workspace members. Upgrade to Agency to invite a team.`) : lang === "es" ? (memberLimit === 1 ? "Este plan incluye solo a ti. Cambia a Agency para invitar a un equipo." : `Este plan permite ${memberLimit} miembros. Cambia a Agency para invitar a un equipo.`) : (memberLimit === 1 ? "Este plano inclui só você. Mude para Agency para convidar uma equipe." : `Este plano permite ${memberLimit} membros. Mude para Agency para convidar uma equipe.`)}
           </p>
         )}
 
@@ -372,11 +381,11 @@ export default function SettingsPage() {
       <section className="glass rounded-2xl p-6">
         <h2 className="text-base font-semibold mb-6">{t("Billing")}</h2>
 
-        <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-accent/15">
+        <div className="p-4 rounded-xl bg-gradient-to-r from-coral-soft to-coral-soft border border-accent/15">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {data?.plan ?? "FREE"} {t("Plan")}
+                {dashboardMessages(lang).plans[(data?.plan ?? "FREE") as keyof ReturnType<typeof dashboardMessages>["plans"]] ?? data?.plan}
               </p>
               <p className="text-xs text-muted mt-0.5">
                 {usage} {t("DMs used this month")}
@@ -402,7 +411,7 @@ export default function SettingsPage() {
               className="flex items-center justify-between py-3 border-b border-border last:border-0"
             >
               <div>
-                <p className="text-sm font-medium text-foreground">{tier.plan}</p>
+                <p className="text-sm font-medium text-foreground">{dashboardMessages(lang).plans[tier.plan]}</p>
                 <p className="text-xs text-muted">{tier.features}</p>
               </div>
               <button

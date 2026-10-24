@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import TopBar from "@/components/top-bar";
+import { siteFontVariables } from "@/lib/site/fonts";
+import { DialogsProvider } from "@/components/app-dialogs";
 import type { Locale } from "@/app/[lang]/dictionaries";
 
 interface DashboardShellProps {
@@ -25,7 +27,8 @@ export default function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <DialogsProvider>
+    <div className={`${siteFontVariables} flex h-screen overflow-hidden bg-background font-site text-foreground`}>
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -42,9 +45,10 @@ export default function DashboardShell({
         />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="px-4 lg:px-8 py-6 max-w-7xl mx-auto">{children}</div>
+          <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">{children}</div>
         </main>
       </div>
     </div>
+    </DialogsProvider>
   );
 }

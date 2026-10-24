@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     prisma.contact.findMany({ where: leadFilter, orderBy: { lastInteractionAt: "desc" }, take: 5, select: { id: true, name: true, instagramUsername: true, status: true, lastInteractionAt: true } }),
   ]);
 
-  const dailyDMs: { date: string; count: number }[] = [];
+  const dailyDMs: { date: string; weekday: number; count: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const dayStart = new Date(todayStart);
     dayStart.setDate(dayStart.getDate() - i);
@@ -160,7 +160,9 @@ export async function GET(request: NextRequest) {
     });
 
     dailyDMs.push({
-      date: dayStart.toLocaleDateString("en-US", { weekday: "short" }),
+      date: dayStart.toISOString(),
+      // Day of week (0 = Sunday) so the page can label it in the viewer's language.
+      weekday: dayStart.getDay(),
       count,
     });
   }

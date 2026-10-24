@@ -1,4 +1,6 @@
 "use client";
+import { useDialogs } from "@/components/app-dialogs";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
 import { campaignTranslator } from "@/lib/i18n/campaigns";
 
@@ -65,6 +67,8 @@ export default function CampaignsPage() {
   const currentLocale = ["pt", "en", "es"].includes(segments[0]) ? segments[0] : "pt";
   const prefix = `/${currentLocale}`;
   const t = campaignTranslator(currentLocale);
+  const dialogs = useDialogs();
+  const ft = useFlowTranslation();
 
   const [automations, setAutomations] = useState<Campaign[]>([]);
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
@@ -144,7 +148,7 @@ export default function CampaignsPage() {
   }
 
   async function deleteAutomation(id: string) {
-    if (!confirm(t("Delete this campaign? This cannot be undone."))) return;
+    if (!(await dialogs.confirm({ title: ft("Delete campaign?"), message: ft("This cannot be undone."), confirmLabel: ft("Delete"), tone: "danger" }))) return;
     try {
       await fetch(`/api/automations?id=${id}`, { method: "DELETE" });
       setAutomations((prev) => prev.filter((a) => a.id !== id));
@@ -320,7 +324,7 @@ export default function CampaignsPage() {
           </div>
           <Link
             href={`${prefix}/campaigns/new`}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-coral to-coral-dark text-sm font-semibold text-white shadow-lg shadow-coral/20 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -374,7 +378,7 @@ export default function CampaignsPage() {
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                           auto.isActive && !ended
                             ? "bg-success/10 text-success"
-                            : "bg-zinc-500/10 text-zinc-400"
+                            : "bg-surface-hover text-muted"
                         }`}
                       >
                         {ended ? t("Ended") : auto.isActive ? t("Active") : t("Paused")}
@@ -428,7 +432,7 @@ export default function CampaignsPage() {
 
                 <div className="mt-4 rounded-xl border border-border bg-surface/70 p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
                       {t("Recommendation")}
                     </p>
                     <span
@@ -439,7 +443,7 @@ export default function CampaignsPage() {
                             ? "bg-warning/10 text-warning"
                             : executiveSummary.priority === "Fix"
                               ? "bg-error/10 text-error"
-                              : "bg-zinc-500/10 text-zinc-400"
+                              : "bg-surface-hover text-muted"
                       }`}
                     >
                       {t(executiveSummary.priority)}
@@ -458,7 +462,7 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-zinc-500">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-muted">
                   <span>{auto.analytics.sent} {t("sent")}</span>
                   <span>·</span>
                   <span>{auto.analytics.skipped} {t("skipped")}</span>
@@ -476,7 +480,7 @@ export default function CampaignsPage() {
                   <div className="mt-4 rounded-xl border border-border bg-surface/70 p-3">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted">
                           {t("Tracked link")}
                         </p>
                         <p className="mt-1 truncate text-xs text-muted">
@@ -499,7 +503,7 @@ export default function CampaignsPage() {
                   <div className="mt-4 rounded-xl border border-border bg-surface/70 p-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div className="min-w-0">
-                        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted">
                           {t("Client report")}
                         </p>
                         <p className="mt-1 truncate text-xs text-muted">
@@ -570,7 +574,7 @@ export default function CampaignsPage() {
                   onClick={() => toggleActive(auto.id, auto.isActive)}
                   className={`
                     relative w-11 h-6 rounded-full transition-colors
-                    ${auto.isActive ? "bg-accent" : "bg-zinc-700"}
+                    ${auto.isActive ? "bg-accent" : "bg-border"}
                   `}
                 >
                   <span
@@ -584,7 +588,7 @@ export default function CampaignsPage() {
                 {/* Delete */}
                 <button
                   onClick={() => deleteAutomation(auto.id)}
-                  className="p-2 rounded-lg text-zinc-500 hover:text-error hover:bg-error/10 transition-colors"
+                  className="p-2 rounded-lg text-muted hover:text-error hover:bg-error/10 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />

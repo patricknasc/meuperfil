@@ -237,7 +237,7 @@ export default function CampaignDetailPage() {
                     </div>
                     <div className="h-2 rounded-full bg-surface">
                       <div
-                        className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-coral to-coral-dark"
                         style={{ width: `${keyword.share}%` }}
                       />
                     </div>
@@ -377,7 +377,7 @@ export default function CampaignDetailPage() {
                   className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     campaign.reportShareEnabled
                       ? "bg-success/10 text-success"
-                      : "bg-zinc-500/10 text-zinc-400"
+                      : "bg-surface-hover text-muted"
                   }`}
                 >
                   {campaign.reportShareEnabled ? t("Public") : t("Hidden")}
