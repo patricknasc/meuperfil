@@ -1,4 +1,6 @@
 "use client";
+import { useDialogs } from "@/components/app-dialogs";
+import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
@@ -66,6 +68,8 @@ export default function ProfileStudioPage() {
   const params = useParams();
   const lang = (params?.lang as string) || "pt";
   const t = profileTranslator(lang);
+  const dialogs = useDialogs();
+  const ft = useFlowTranslation();
   const profileId = params?.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -287,11 +291,11 @@ export default function ProfileStudioPage() {
       if (result.url === raw.trim()) return null;
       return (
         <>
-          <p className="mt-1.5 text-[11px] text-emerald-400 break-all">
+          <p className="mt-1.5 text-[11px] text-success break-all">
             {t("Será salvo como:")} <span className="font-mono">{result.url}</span>
           </p>
           {result.assumedBrazil && (
-            <p className="mt-1 text-[11px] text-amber-400">
+            <p className="mt-1 text-[11px] text-warning">
               {t("Sem o + consideramos um número do Brasil (+55). Se for de outro país, comece com + e o código do país, ex.: +66 93 417 8294.")}
             </p>
           )}
@@ -299,7 +303,7 @@ export default function ProfileStudioPage() {
       );
     }
     if (result.error === "empty") return null;
-    return <p className="mt-1.5 text-[11px] text-amber-400">{linkErrorText(result, "")
+    return <p className="mt-1.5 text-[11px] text-warning">{linkErrorText(result, "")
       .replace(/^:\s*/, "")}</p>;
   }
 
@@ -445,7 +449,7 @@ export default function ProfileStudioPage() {
   }
 
   async function handleDeleteBlock(blockId: string) {
-    if (!confirm(t("Tem certeza que deseja excluir este bloco?"))) return;
+    if (!(await dialogs.confirm({ title: ft("Delete block?"), message: ft("The block is removed from your public page."), confirmLabel: ft("Delete"), tone: "danger" }))) return;
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
 
     try {
@@ -493,7 +497,7 @@ export default function ProfileStudioPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          <p className="text-sm text-zinc-400">{t("Carregando Studio...")}</p>
+          <p className="text-sm text-muted">{t("Carregando Studio...")}</p>
         </div>
       </div>
     );
@@ -502,7 +506,7 @@ export default function ProfileStudioPage() {
   if (!profile) {
     return (
       <div className="glass rounded-2xl p-8 text-center max-w-md mx-auto space-y-4">
-        <p className="text-red-400 font-medium">{t("Perfil não encontrado")}</p>
+        <p className="text-error font-medium">{t("Perfil não encontrado")}</p>
         <Link href={`/${lang}/profiles`} className="text-sm text-accent hover:underline">
           {t("Voltar para lista de perfis")}
         </Link>
@@ -526,7 +530,7 @@ export default function ProfileStudioPage() {
     <div className="space-y-6">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 px-4 py-3 rounded-xl bg-emerald-500 text-zinc-950 font-bold text-sm shadow-xl animate-fade-in flex items-center gap-2">
+        <div className="fixed top-5 right-5 z-50 px-4 py-3 rounded-xl bg-ink text-white font-bold text-sm shadow-xl animate-fade-in flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
@@ -536,9 +540,9 @@ export default function ProfileStudioPage() {
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-error/10 border border-error/20 text-error text-sm flex items-center justify-between">
           <span>{errorMessage}</span>
-          <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-white">
+          <button onClick={() => setErrorMessage(null)} className="text-error hover:text-foreground">
             ✕
           </button>
         </div>
@@ -549,7 +553,7 @@ export default function ProfileStudioPage() {
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/${lang}/profiles`}
-            className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+            className="p-2 rounded-xl bg-surface-hover hover:bg-border text-ink-soft transition"
             title={t("Voltar aos perfis")}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -558,13 +562,13 @@ export default function ProfileStudioPage() {
           </Link>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-white truncate">{displayName}</h1>
-              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400">
+              <h1 className="text-lg font-bold text-foreground truncate">{displayName}</h1>
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-surface-hover text-muted">
                 @{handle}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
-              <span className={`w-2 h-2 rounded-full ${isPublished ? "bg-emerald-400" : "bg-amber-400"}`} />
+            <p className="text-xs text-muted flex items-center gap-1.5 mt-0.5">
+              <span className={`w-2 h-2 rounded-full ${isPublished ? "bg-success" : "bg-warning"}`} />
               {isPublished ? t("Página Publicada e Ativa") : t("Modo Rascunho")}
             </p>
           </div>
@@ -573,11 +577,11 @@ export default function ProfileStudioPage() {
         {/* Action Controls */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Mobile view switch */}
-          <div className="flex lg:hidden bg-zinc-900 rounded-xl p-1 border border-white/10 text-xs font-semibold">
+          <div className="flex lg:hidden bg-surface-hover rounded-xl p-1 border border-border text-xs font-semibold">
             <button
               onClick={() => setMobileView("editor")}
               className={`px-3 py-1.5 rounded-lg transition ${
-                mobileView === "editor" ? "bg-accent text-white" : "text-zinc-400"
+                mobileView === "editor" ? "bg-accent text-white" : "text-muted"
               }`}
             >
               {t("Editor")}
@@ -585,7 +589,7 @@ export default function ProfileStudioPage() {
             <button
               onClick={() => setMobileView("preview")}
               className={`px-3 py-1.5 rounded-lg transition ${
-                mobileView === "preview" ? "bg-accent text-white" : "text-zinc-400"
+                mobileView === "preview" ? "bg-accent text-white" : "text-muted"
               }`}
             >
               {t("Preview")}
@@ -594,10 +598,10 @@ export default function ProfileStudioPage() {
 
           <button
             onClick={handleCopyPublicUrl}
-            className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 transition border border-white/10 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-surface-hover hover:bg-border text-xs font-semibold text-foreground transition border border-border flex items-center gap-1.5"
           >
             {copiedLink ? (
-              <span className="text-emerald-400">{t("Link Copiado!")}</span>
+              <span className="text-success">{t("Link Copiado!")}</span>
             ) : (
               <>
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -612,7 +616,7 @@ export default function ProfileStudioPage() {
             href={`/${handle}`}
             target="_blank"
             rel="noreferrer"
-            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-200 transition border border-white/10 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-surface-hover hover:bg-surface-hover text-xs font-semibold text-foreground transition border border-border flex items-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -623,7 +627,7 @@ export default function ProfileStudioPage() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="px-5 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-xs transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-5 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-xs transition shadow-lg shadow-coral/20 disabled:opacity-50 flex items-center gap-1.5"
           >
             {saving ? t("Salvando...") : t("Salvar Alterações")}
           </button>
@@ -635,11 +639,11 @@ export default function ProfileStudioPage() {
         {/* LEFT COLUMN: STUDIO EDITOR */}
         <div className={`lg:col-span-7 space-y-6 ${mobileView === "preview" ? "hidden lg:block" : "block"}`}>
           {/* Navigation Tabs */}
-          <div className="flex border-b border-white/10 gap-6">
+          <div className="flex border-b border-border gap-6">
             <button
               onClick={() => setActiveTab("blocks")}
               className={`pb-3 text-sm font-semibold transition relative ${
-                activeTab === "blocks" ? "text-white" : "text-zinc-400 hover:text-zinc-200"
+                activeTab === "blocks" ? "text-foreground" : "text-muted hover:text-foreground"
               }`}
             >
               {t("Blocos & Links")} ({blocks.length})
@@ -650,7 +654,7 @@ export default function ProfileStudioPage() {
             <button
               onClick={() => setActiveTab("appearance")}
               className={`pb-3 text-sm font-semibold transition relative ${
-                activeTab === "appearance" ? "text-white" : "text-zinc-400 hover:text-zinc-200"
+                activeTab === "appearance" ? "text-foreground" : "text-muted hover:text-foreground"
               }`}
             >
               Aparência & Identidade
@@ -661,7 +665,7 @@ export default function ProfileStudioPage() {
             <button
               onClick={() => setActiveTab("analytics")}
               className={`pb-3 text-sm font-semibold transition relative ${
-                activeTab === "analytics" ? "text-white" : "text-zinc-400 hover:text-zinc-200"
+                activeTab === "analytics" ? "text-foreground" : "text-muted hover:text-foreground"
               }`}
             >
               {t("Métricas & CTR")}
@@ -676,8 +680,8 @@ export default function ProfileStudioPage() {
             <div className="space-y-6 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{t("Conteúdo do Perfil")}</h3>
-                  <p className="text-xs text-zinc-400">
+                  <h3 className="text-sm font-semibold text-foreground">{t("Conteúdo do Perfil")}</h3>
+                  <p className="text-xs text-muted">
                     {t("Adicione links de conversão, redes sociais ou divisores de seção.")}
                   </p>
                 </div>
@@ -694,8 +698,8 @@ export default function ProfileStudioPage() {
 
               {blocks.length === 0 ? (
                 <div className="glass rounded-2xl p-8 text-center space-y-3">
-                  <p className="text-sm text-zinc-300 font-medium">{t("Nenhum bloco cadastrado")}</p>
-                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                  <p className="text-sm text-ink-soft font-medium">{t("Nenhum bloco cadastrado")}</p>
+                  <p className="text-xs text-muted max-w-sm mx-auto">
                     {t("Clique em &quot;Adicionar Bloco&quot; acima para incluir seu primeiro link com destino rastreado.")}
                   </p>
                   <button
@@ -711,16 +715,16 @@ export default function ProfileStudioPage() {
                     <div
                       key={block.id}
                       className={`glass rounded-2xl p-4 flex items-center justify-between gap-3 border transition-all ${
-                        block.isActive ? "border-white/10" : "border-white/5 opacity-60"
+                        block.isActive ? "border-border" : "border-border opacity-60"
                       }`}
                     >
                       {/* Left: Reorder controls + Info */}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex flex-col gap-0.5 text-zinc-500">
+                        <div className="flex flex-col gap-0.5 text-muted">
                           <button
                             disabled={index === 0}
                             onClick={() => handleMoveBlock(index, "up")}
-                            className="p-1 hover:text-white disabled:opacity-20 transition"
+                            className="p-1 hover:text-foreground disabled:opacity-20 transition"
                             title={t("Mover para cima")}
                           >
                             ▲
@@ -728,7 +732,7 @@ export default function ProfileStudioPage() {
                           <button
                             disabled={index === blocks.length - 1}
                             onClick={() => handleMoveBlock(index, "down")}
-                            className="p-1 hover:text-white disabled:opacity-20 transition"
+                            className="p-1 hover:text-foreground disabled:opacity-20 transition"
                             title={t("Mover para baixo")}
                           >
                             ▼
@@ -740,30 +744,30 @@ export default function ProfileStudioPage() {
                           <Image unoptimized width={40} height={40}
                             src={block.imageUrl}
                             alt=""
-                            className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                            className="w-10 h-10 rounded-xl object-cover border border-border flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-white/5 flex items-center justify-center text-zinc-400 flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-muted flex-shrink-0">
                             {block.type === ProfileBlockType.LINK && (
                               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                               </svg>
                             )}
                             {block.type === ProfileBlockType.TEXT_DIVIDER && (
-                              <span className="text-xs font-bold font-mono">DIV</span>
+                              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"><path d="M4 7h16M4 12h10M4 17h7" /></svg>
                             )}
                             {block.type === ProfileBlockType.SOCIAL_LINKS && (
-                              <span className="text-xs font-bold font-mono">SOC</span>
+                              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" /></svg>
                             )}
                           </div>
                         )}
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-white truncate">
+                            <h4 className="text-sm font-semibold text-foreground truncate">
                               {block.title || t("Sem título")}
                             </h4>
-                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-surface-hover text-muted">
                               {block.type === ProfileBlockType.LINK
                                 ? t("Link")
                                 : block.type === ProfileBlockType.TEXT_DIVIDER
@@ -772,12 +776,12 @@ export default function ProfileStudioPage() {
                             </span>
                           </div>
                           {block.url && (
-                            <p className="text-xs text-zinc-400 font-mono truncate mt-0.5">
+                            <p className="text-xs text-muted font-mono truncate mt-0.5">
                               {block.url}
                             </p>
                           )}
                           {block.description && (
-                            <p className="text-xs text-zinc-500 truncate mt-0.5">
+                            <p className="text-xs text-muted truncate mt-0.5">
                               {block.description}
                             </p>
                           )}
@@ -788,7 +792,7 @@ export default function ProfileStudioPage() {
                       <div className="flex items-center gap-3 flex-shrink-0">
                         {block._count?.clicks !== undefined && (
                           <div className="hidden sm:block text-right">
-                            <p className="text-xs font-bold text-emerald-400">
+                            <p className="text-xs font-bold text-success">
                               {block._count.clicks} {t("cliques")}
                             </p>
                           </div>
@@ -798,7 +802,7 @@ export default function ProfileStudioPage() {
                         <button
                           onClick={() => handleToggleBlockActive(block)}
                           className={`w-9 h-5 rounded-full p-0.5 transition-colors ${
-                            block.isActive ? "bg-accent" : "bg-zinc-700"
+                            block.isActive ? "bg-accent" : "bg-border"
                           }`}
                           title={block.isActive ? t("Desativar bloco") : t("Ativar bloco")}
                         >
@@ -817,7 +821,7 @@ export default function ProfileStudioPage() {
                               setSocialLinks(block.config.links as Array<{ platform: string; url: string }>);
                             }
                           }}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                          className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition"
                           title={t("Editar")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -828,7 +832,7 @@ export default function ProfileStudioPage() {
                         {/* Delete Button */}
                         <button
                           onClick={() => handleDeleteBlock(block.id)}
-                          className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                          className="p-1.5 rounded-lg text-muted hover:text-error hover:bg-red-500/10 transition"
                           title={t("Excluir")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -848,7 +852,7 @@ export default function ProfileStudioPage() {
             <div className="space-y-6 animate-fade-in">
               {/* Profile Card Settings */}
               <div className="glass rounded-2xl p-6 space-y-4">
-                <h3 className="text-sm font-semibold text-white">{t("Identidade do Perfil")}</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("Identidade do Perfil")}</h3>
 
                 {/* Avatar Section */}
                 <div className="flex items-center gap-4 pt-2">
@@ -859,7 +863,7 @@ export default function ProfileStudioPage() {
                       className="w-16 h-16 rounded-full object-cover border-2 border-accent"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-coral to-coral-dark flex items-center justify-center text-white font-bold text-xl">
                       {displayName.slice(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -874,7 +878,7 @@ export default function ProfileStudioPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white transition border border-white/10"
+                      className="px-3.5 py-2 rounded-xl bg-surface-hover hover:bg-border text-xs font-semibold text-foreground transition border border-border"
                     >
                       {t("Alterar Foto / Avatar")}
                     </button>
@@ -882,47 +886,47 @@ export default function ProfileStudioPage() {
                       <button
                         type="button"
                         onClick={() => setAvatarUrl(null)}
-                        className="ml-2 text-xs text-zinc-500 hover:text-red-400 transition"
+                        className="ml-2 text-xs text-muted hover:text-error transition"
                       >
                         {t("Remover")}
                       </button>
                     )}
-                    <p className="text-[11px] text-zinc-500 mt-1">{t("PNG, JPG ou WebP (Máx. 2MB)")}</p>
+                    <p className="text-[11px] text-muted mt-1">{t("PNG, JPG ou WebP (Máx. 2MB)")}</p>
                   </div>
                 </div>
 
                 {/* Display Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                     {t("Nome de Exibição")}
                   </label>
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                    className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                   />
                 </div>
 
                 {/* Handle */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                     {t("Handle (Link público)")}
                   </label>
-                  <div className="flex items-center rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 focus-within:border-accent transition">
-                    <span className="text-sm text-zinc-500 font-mono select-none">meuperfil.me/</span>
+                  <div className="flex items-center rounded-xl bg-background border border-border px-3.5 py-2.5 focus-within:border-accent transition">
+                    <span className="text-sm text-muted font-mono select-none">meuperfil.me/</span>
                     <input
                       type="text"
                       value={handle}
                       onChange={(e) => setHandle(e.target.value.toLowerCase().trim())}
-                      className="flex-1 bg-transparent text-sm text-white font-mono focus:outline-none ml-1"
+                      className="flex-1 bg-transparent text-sm text-foreground font-mono focus:outline-none ml-1"
                     />
                   </div>
                 </div>
 
                 {/* Bio */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                     {t("Bio / Descrição")}
                   </label>
                   <textarea
@@ -930,22 +934,22 @@ export default function ProfileStudioPage() {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder={t("Conte sobre seu trabalho, produtos ou canal...")}
-                    className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                    className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                   />
                 </div>
 
                 {/* Publish status toggle */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div>
-                    <p className="text-sm font-semibold text-white">{t("Status de Publicação")}</p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-sm font-semibold text-foreground">{t("Status de Publicação")}</p>
+                    <p className="text-xs text-muted">
                       {t("Quando ativado, sua página fica acessível publicamente em")} meuperfil.me/{handle}
                     </p>
                   </div>
                   <button
                     onClick={() => setIsPublished(!isPublished)}
                     className={`w-11 h-6 rounded-full p-1 transition-colors ${
-                      isPublished ? "bg-emerald-500" : "bg-zinc-700"
+                      isPublished ? "bg-success" : "bg-border"
                     }`}
                   >
                     <div
@@ -959,8 +963,8 @@ export default function ProfileStudioPage() {
 
               {/* Theme Selector */}
               <div className="glass rounded-2xl p-6 space-y-4">
-                <h3 className="text-sm font-semibold text-white">{t("Seletor de Temas")}</h3>
-                <p className="text-xs text-zinc-400">
+                <h3 className="text-sm font-semibold text-foreground">{t("Seletor de Temas")}</h3>
+                <p className="text-xs text-muted">
                   {t("Escolha uma identidade visual para encantar seus seguidores no primeiro segundo.")}
                 </p>
 
@@ -972,11 +976,11 @@ export default function ProfileStudioPage() {
                       onClick={() => setTheme(th.id)}
                       className={`p-3 rounded-2xl border text-left transition flex flex-col gap-2 relative ${
                         theme === th.id
-                          ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-white"
-                          : "border-white/10 bg-zinc-950/70 text-zinc-400 hover:border-white/20"
+                          ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-foreground"
+                          : "border-border bg-background text-muted hover:border-border-hover"
                       }`}
                     >
-                      <div className={`w-full h-14 rounded-xl ${th.previewBg} border border-white/10 p-2 flex flex-col justify-between shadow-inner`}>
+                      <div className={`w-full h-14 rounded-xl ${th.previewBg} border border-border p-2 flex flex-col justify-between shadow-inner`}>
                         <div className="flex items-center gap-1">
                           <div className={`w-2 h-2 rounded-full ${th.previewAccent}`} />
                           <div className="w-8 h-1.5 rounded bg-white/20" />
@@ -984,8 +988,8 @@ export default function ProfileStudioPage() {
                         <div className={`w-full h-3 rounded ${th.previewCard}`} />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">{th.name}</p>
-                        <p className="text-[10px] text-zinc-500 line-clamp-1">{t(th.description)}</p>
+                        <p className="text-xs font-bold text-foreground">{th.name}</p>
+                        <p className="text-[10px] text-muted line-clamp-1">{t(th.description)}</p>
                       </div>
                     </button>
                   ))}
@@ -994,12 +998,12 @@ export default function ProfileStudioPage() {
                     onClick={() => setTheme("CUSTOM")}
                     className={`p-3 rounded-2xl border text-left transition flex flex-col gap-2 relative ${
                       theme === "CUSTOM"
-                        ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-white"
-                        : "border-white/10 bg-zinc-950/70 text-zinc-400 hover:border-white/20"
+                        ? "border-accent bg-accent/15 ring-2 ring-accent/30 text-foreground"
+                        : "border-border bg-background text-muted hover:border-border-hover"
                     }`}
                   >
                     <div
-                      className="w-full h-14 rounded-xl border border-white/10 p-2 flex flex-col justify-between shadow-inner bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]"
+                      className="w-full h-14 rounded-xl border border-border p-2 flex flex-col justify-between shadow-inner bg-[var(--mp-bg)] bg-[image:var(--mp-bg-image)]"
                       style={customThemeStyle(customTheme)}
                     >
                       <div className="flex items-center gap-1">
@@ -1009,14 +1013,14 @@ export default function ProfileStudioPage() {
                       <div className="w-full h-3 rounded bg-[var(--mp-btn)]" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white">{t("Personalizar")}</p>
-                      <p className="text-[10px] text-zinc-500 line-clamp-1">{t("Suas cores e formato dos botões")}</p>
+                      <p className="text-xs font-bold text-foreground">{t("Personalizar")}</p>
+                      <p className="text-[10px] text-muted line-clamp-1">{t("Suas cores e formato dos botões")}</p>
                     </div>
                   </button>
                 </div>
 
                 {theme === "CUSTOM" && (
-                  <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-4 space-y-4">
+                  <div className="rounded-2xl border border-border bg-background p-4 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(
                         [
@@ -1026,23 +1030,23 @@ export default function ProfileStudioPage() {
                           ["buttonText", t("Texto dos botões")],
                         ] as Array<[keyof CustomThemeSettings, string]>
                       ).map(([key, label]) => (
-                        <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
-                          <span className="text-xs text-zinc-300">{label}</span>
+                        <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
+                          <span className="text-xs text-ink-soft">{label}</span>
                           <span className="flex items-center gap-2">
-                            <span className="text-[11px] font-mono text-zinc-500">{customTheme[key] as string}</span>
+                            <span className="text-[11px] font-mono text-muted">{customTheme[key] as string}</span>
                             <input
                               type="color"
                               value={customTheme[key] as string}
                               onChange={(e) => setCustomTheme({ ...customTheme, [key]: e.target.value })}
-                              className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                              className="h-7 w-9 cursor-pointer rounded border border-border bg-transparent"
                             />
                           </span>
                         </label>
                       ))}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 px-3 py-2">
-                      <label className="flex items-center gap-2 text-xs text-zinc-300">
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
+                      <label className="flex items-center gap-2 text-xs text-ink-soft">
                         <input
                           type="checkbox"
                           checked={customTheme.backgroundTo !== null}
@@ -1057,19 +1061,19 @@ export default function ProfileStudioPage() {
                       </label>
                       {customTheme.backgroundTo !== null && (
                         <span className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-zinc-500">{customTheme.backgroundTo}</span>
+                          <span className="text-[11px] font-mono text-muted">{customTheme.backgroundTo}</span>
                           <input
                             type="color"
                             value={customTheme.backgroundTo}
                             onChange={(e) => setCustomTheme({ ...customTheme, backgroundTo: e.target.value })}
-                            className="h-7 w-9 cursor-pointer rounded border border-white/10 bg-transparent"
+                            className="h-7 w-9 cursor-pointer rounded border border-border bg-transparent"
                           />
                         </span>
                       )}
                     </div>
 
                     <div>
-                      <p className="text-xs text-zinc-300 mb-2">{t("Formato dos botões")}</p>
+                      <p className="text-xs text-ink-soft mb-2">{t("Formato dos botões")}</p>
                       <div className="grid grid-cols-3 gap-2">
                         {(
                           [
@@ -1084,8 +1088,8 @@ export default function ProfileStudioPage() {
                             onClick={() => setCustomTheme({ ...customTheme, buttonShape: shape })}
                             className={`py-2 text-xs font-semibold border transition ${radius} ${
                               customTheme.buttonShape === shape
-                                ? "border-accent bg-accent/20 text-white"
-                                : "border-white/10 text-zinc-400 hover:border-white/20"
+                                ? "border-accent bg-accent/20 text-foreground"
+                                : "border-border text-muted hover:border-border-hover"
                             }`}
                           >
                             {label}
@@ -1096,11 +1100,11 @@ export default function ProfileStudioPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <label className="block">
-                        <span className="block text-xs text-zinc-300 mb-2">{t("Fonte")}</span>
+                        <span className="block text-xs text-ink-soft mb-2">{t("Fonte")}</span>
                         <select
                           value={customTheme.font}
                           onChange={(e) => setCustomTheme({ ...customTheme, font: e.target.value as ProfileFont })}
-                          className={`w-full rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none ${profileFontVariables}`}
+                          className={`w-full rounded-xl bg-background border border-border px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none ${profileFontVariables}`}
                           style={{ fontFamily: PROFILE_FONTS[customTheme.font].family }}
                         >
                           {(Object.keys(PROFILE_FONTS) as ProfileFont[]).map((key) => (
@@ -1109,7 +1113,7 @@ export default function ProfileStudioPage() {
                         </select>
                       </label>
                       <div>
-                        <p className="text-xs text-zinc-300 mb-2">{t("Tamanho do texto")}</p>
+                        <p className="text-xs text-ink-soft mb-2">{t("Tamanho do texto")}</p>
                         <div className="grid grid-cols-3 gap-2">
                           {(
                             [
@@ -1124,8 +1128,8 @@ export default function ProfileStudioPage() {
                               onClick={() => setCustomTheme({ ...customTheme, textSize: size })}
                               className={`py-2 rounded-xl font-semibold border transition ${cls} ${
                                 customTheme.textSize === size
-                                  ? "border-accent bg-accent/20 text-white"
-                                  : "border-white/10 text-zinc-400 hover:border-white/20"
+                                  ? "border-accent bg-accent/20 text-foreground"
+                                  : "border-border text-muted hover:border-border-hover"
                               }`}
                             >
                               {label}
@@ -1136,7 +1140,7 @@ export default function ProfileStudioPage() {
                     </div>
 
                     <div>
-                      <p className="text-xs text-zinc-300 mb-2">{t("Ícones das redes")}</p>
+                      <p className="text-xs text-ink-soft mb-2">{t("Ícones das redes")}</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {(
                           [
@@ -1154,8 +1158,8 @@ export default function ProfileStudioPage() {
                               onClick={() => setCustomTheme({ ...customTheme, iconStyle: style })}
                               className={`flex flex-col items-center gap-1.5 py-2 rounded-xl border transition ${
                                 customTheme.iconStyle === style
-                                  ? "border-accent bg-accent/20 text-white"
-                                  : "border-white/10 text-zinc-400 hover:border-white/20"
+                                  ? "border-accent bg-accent/20 text-foreground"
+                                  : "border-border text-muted hover:border-border-hover"
                               }`}
                             >
                               <span
@@ -1174,7 +1178,7 @@ export default function ProfileStudioPage() {
                     <button
                       type="button"
                       onClick={() => setCustomTheme(DEFAULT_CUSTOM_THEME)}
-                      className="text-[11px] text-zinc-500 hover:text-zinc-300"
+                      className="text-[11px] text-muted hover:text-foreground"
                     >
                       {t("Restaurar cores padrão")}
                     </button>
@@ -1190,36 +1194,36 @@ export default function ProfileStudioPage() {
               {/* Stat Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="glass rounded-2xl p-4">
-                  <p className="text-xs text-zinc-400 font-medium">{t("Visitas Totais")}</p>
-                  <p className="text-xl font-bold text-white mt-1">
+                  <p className="text-xs text-muted font-medium">{t("Visitas Totais")}</p>
+                  <p className="text-xl font-bold text-foreground mt-1">
                     {analytics?.totalVisits ?? 0}
                   </p>
-                  <p className="text-[11px] text-zinc-500 mt-1">
+                  <p className="text-[11px] text-muted mt-1">
                     {analytics?.visitsWeek ?? 0} {t("nos últimos 7 dias")}
                   </p>
                 </div>
                 <div className="glass rounded-2xl p-4">
-                  <p className="text-xs text-zinc-400 font-medium">{t("Cliques nos Links")}</p>
-                  <p className="text-xl font-bold text-white mt-1">
+                  <p className="text-xs text-muted font-medium">{t("Cliques nos Links")}</p>
+                  <p className="text-xl font-bold text-foreground mt-1">
                     {analytics?.totalClicks ?? 0}
                   </p>
-                  <p className="text-[11px] text-zinc-500 mt-1">
+                  <p className="text-[11px] text-muted mt-1">
                     {analytics?.clicksWeek ?? 0} {t("nos últimos 7 dias")}
                   </p>
                 </div>
                 <div className="glass rounded-2xl p-4">
-                  <p className="text-xs text-zinc-400 font-medium">{t("Taxa de Conversão (CTR)")}</p>
-                  <p className="text-xl font-bold text-emerald-400 mt-1">
+                  <p className="text-xs text-muted font-medium">{t("Taxa de Conversão (CTR)")}</p>
+                  <p className="text-xl font-bold text-success mt-1">
                     {analytics?.ctr ?? 0}%
                   </p>
-                  <p className="text-[11px] text-zinc-500 mt-1">{t("Cliques / Visitas")}</p>
+                  <p className="text-[11px] text-muted mt-1">{t("Cliques / Visitas")}</p>
                 </div>
                 <div className="glass rounded-2xl p-4">
-                  <p className="text-xs text-zinc-400 font-medium">{t("Visitas Hoje")}</p>
-                  <p className="text-xl font-bold text-cyan-400 mt-1">
+                  <p className="text-xs text-muted font-medium">{t("Visitas Hoje")}</p>
+                  <p className="text-xl font-bold text-accent mt-1">
                     {analytics?.visitsToday ?? 0}
                   </p>
-                  <p className="text-[11px] text-zinc-500 mt-1">
+                  <p className="text-[11px] text-muted mt-1">
                     {analytics?.clicksToday ?? 0} {t("cliques hoje")}
                   </p>
                 </div>
@@ -1227,10 +1231,10 @@ export default function ProfileStudioPage() {
 
               {/* 7-Day Chart */}
               <div className="glass rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-4">
+                <h3 className="text-sm font-semibold text-foreground mb-4">
                   {t("Desempenho dos Últimos 7 Dias")}
                 </h3>
-                <div className="flex items-end gap-3 h-44 pt-6 border-b border-white/10 pb-2">
+                <div className="flex items-end gap-3 h-44 pt-6 border-b border-border pb-2">
                   {analytics?.dailyVisits.map((day, idx) => {
                     const maxV = Math.max(
                       ...(analytics?.dailyVisits.map((d) => d.count) || [1]),
@@ -1239,26 +1243,26 @@ export default function ProfileStudioPage() {
                     const clicksDay = analytics?.dailyClicks[idx]?.count ?? 0;
                     return (
                       <div key={day.date} className="flex-1 flex flex-col items-center gap-2">
-                        <div className="flex items-center gap-1 text-[10px] text-zinc-400 font-mono">
-                          <span className="text-indigo-400">{day.count}v</span>
+                        <div className="flex items-center gap-1 text-[10px] text-muted font-mono">
+                          <span className="text-accent">{day.count}v</span>
                           <span>·</span>
-                          <span className="text-emerald-400">{clicksDay}c</span>
+                          <span className="text-success">{clicksDay}c</span>
                         </div>
                         <div className="w-full flex items-end justify-center gap-1 h-28">
                           {/* Visit Bar */}
                           <div
-                            className="w-1/2 rounded-t bg-gradient-to-t from-indigo-600 to-indigo-400 transition-all min-h-[4px]"
+                            className="w-1/2 rounded-t bg-gradient-to-t from-coral-dark to-coral transition-all min-h-[4px]"
                             style={{ height: `${Math.max((day.count / maxV) * 100, 4)}%` }}
                             title={`${day.count} ${t("visitas")}`}
                           />
                           {/* Click Bar */}
                           <div
-                            className="w-1/2 rounded-t bg-gradient-to-t from-emerald-600 to-emerald-400 transition-all min-h-[4px]"
+                            className="w-1/2 rounded-t bg-gradient-to-t from-moss to-success transition-all min-h-[4px]"
                             style={{ height: `${Math.max((clicksDay / maxV) * 100, 4)}%` }}
                             title={`${clicksDay} ${t("cliques")}`}
                           />
                         </div>
-                        <span className="text-[10px] text-zinc-500">{day.date}</span>
+                        <span className="text-[10px] text-muted">{day.date}</span>
                       </div>
                     );
                   })}
@@ -1269,8 +1273,8 @@ export default function ProfileStudioPage() {
               {analytics?.breakdowns && (
                 <div className="glass rounded-2xl p-6 space-y-5">
                   <div>
-                    <h3 className="text-sm font-semibold text-white">{t("Quem visitou")}</h3>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <h3 className="text-sm font-semibold text-foreground">{t("Quem visitou")}</h3>
+                    <p className="text-xs text-muted mt-1">
                       {t("Últimos {days} dias. Dados anônimos: não identificam a pessoa.").replace("{days}", String(analytics.breakdowns.days))}
                     </p>
                   </div>
@@ -1288,18 +1292,18 @@ export default function ProfileStudioPage() {
                       const max = Math.max(1, ...items.map((i) => i.count));
                       return (
                         <div key={title}>
-                          <p className="text-xs font-semibold text-zinc-300 mb-2">{title}</p>
+                          <p className="text-xs font-semibold text-ink-soft mb-2">{title}</p>
                           {items.length === 0 ? (
-                            <p className="text-[11px] text-zinc-600">{t("Sem dados ainda")}</p>
+                            <p className="text-[11px] text-muted">{t("Sem dados ainda")}</p>
                           ) : (
                             <ul className="space-y-1.5">
                               {items.map((item) => (
                                 <li key={item.label} className="text-xs">
-                                  <div className="flex justify-between gap-2 text-zinc-300">
+                                  <div className="flex justify-between gap-2 text-ink-soft">
                                     <span className="truncate">{t(item.label)}</span>
-                                    <span className="font-mono text-zinc-400">{item.count}</span>
+                                    <span className="font-mono text-muted">{item.count}</span>
                                   </div>
-                                  <div className="mt-0.5 h-1.5 rounded-full bg-white/5">
+                                  <div className="mt-0.5 h-1.5 rounded-full bg-surface-hover">
                                     <div className="h-1.5 rounded-full bg-accent" style={{ width: `${(item.count / max) * 100}%` }} />
                                   </div>
                                 </li>
@@ -1315,8 +1319,8 @@ export default function ProfileStudioPage() {
 
               {/* UTM link builder */}
               <div className="glass rounded-2xl p-6 space-y-3">
-                <h3 className="text-sm font-semibold text-white">{t("Link com rastreamento de campanha")}</h3>
-                <p className="text-xs text-zinc-500">
+                <h3 className="text-sm font-semibold text-foreground">{t("Link com rastreamento de campanha")}</h3>
+                <p className="text-xs text-muted">
                   {t("Use um link diferente em cada lugar (bio do Instagram, post, anúncio) para saber de onde vieram as visitas.")}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1324,17 +1328,17 @@ export default function ProfileStudioPage() {
                     value={utmSource}
                     onChange={(e) => setUtmSource(e.target.value)}
                     placeholder={t("Origem, ex.: instagram")}
-                    className="rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                    className="rounded-xl bg-background border border-border px-3 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                   />
                   <input
                     value={utmCampaign}
                     onChange={(e) => setUtmCampaign(e.target.value)}
                     placeholder={t("Campanha, ex.: black-friday")}
-                    className="rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                    className="rounded-xl bg-background border border-border px-3 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 min-w-0 truncate rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-[11px] text-zinc-300">
+                  <code className="flex-1 min-w-0 truncate rounded-xl bg-background border border-border px-3 py-2 text-[11px] text-ink-soft">
                     {utmLink}
                   </code>
                   <button
@@ -1352,32 +1356,32 @@ export default function ProfileStudioPage() {
 
               {/* Clicks by Block Table */}
               <div className="glass rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-4">{t("Cliques por Bloco")}</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-4">{t("Cliques por Bloco")}</h3>
                 {analytics?.clicksByBlock.length === 0 ? (
-                  <p className="text-xs text-zinc-500 py-4 text-center">{t("Nenhum clique registrado ainda")}</p>
+                  <p className="text-xs text-muted py-4 text-center">{t("Nenhum clique registrado ainda")}</p>
                 ) : (
                   <div className="space-y-2">
                     {analytics?.clicksByBlock.map((b) => (
                       <div
                         key={b.blockId}
-                        className="flex items-center justify-between p-3 rounded-xl bg-zinc-950/40 border border-white/5"
+                        className="flex items-center justify-between p-3 rounded-xl bg-background border border-border"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-white truncate">{b.title}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{b.title}</p>
                           {b.url && (
-                            <p className="text-xs text-zinc-500 font-mono truncate">{b.url}</p>
+                            <p className="text-xs text-muted font-mono truncate">{b.url}</p>
                           )}
                           {b.channels && b.channels.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {b.channels.map((c) => (
-                                <span key={c.label} className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-zinc-300">
-                                  {t(c.label)}: <b className="text-emerald-400">{c.count}</b>
+                                <span key={c.label} className="text-[11px] px-2 py-0.5 rounded-md bg-surface-hover text-ink-soft">
+                                  {t(c.label)}: <b className="text-success">{c.count}</b>
                                 </span>
                               ))}
                             </div>
                           )}
                         </div>
-                        <span className="text-sm font-bold text-emerald-400 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <span className="text-sm font-bold text-success px-3 py-1 rounded-lg bg-success/10 border border-success/20">
                           {b.count} {t("cliques")}
                         </span>
                       </div>
@@ -1397,16 +1401,16 @@ export default function ProfileStudioPage() {
         >
           <div className="flex flex-col items-center">
             <div className="text-center mb-3">
-              <span className="text-xs font-bold tracking-wider text-zinc-400 uppercase">
+              <span className="text-xs font-bold tracking-wider text-muted uppercase">
                 {t("Preview em Tempo Real")}
               </span>
             </div>
 
             {/* Smartphone Outer Chassis */}
-            <div className="w-[320px] sm:w-[350px] h-[680px] rounded-[48px] bg-[#1a1a1f] p-3 border-4 border-zinc-700/80 shadow-[0_0_60px_rgba(0,0,0,0.8)] relative flex flex-col">
+            <div className="w-[320px] sm:w-[350px] h-[680px] rounded-[48px] bg-[#1a1a1f] p-3 border-4 border-ink/80 shadow-[0_0_60px_rgba(0,0,0,0.8)] relative flex flex-col">
               {/* Dynamic Island / Speaker Notch */}
               <div className="absolute top-6 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-30 flex items-center justify-end px-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800" />
+                <div className="w-2.5 h-2.5 rounded-full bg-surface-hover border border-border" />
               </div>
 
               {/* Smartphone Screen Viewport */}
@@ -1428,7 +1432,7 @@ export default function ProfileStudioPage() {
                       />
                     ) : (
                       <div
-                        className={`w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-2xl border-2 ${themeConfig.classes.avatarBorder}`}
+                        className={`w-20 h-20 rounded-full bg-gradient-to-br from-coral to-coral-dark flex items-center justify-center text-white font-bold text-2xl border-2 ${themeConfig.classes.avatarBorder}`}
                       >
                         {displayName.slice(0, 2).toUpperCase()}
                       </div>
@@ -1495,7 +1499,7 @@ export default function ProfileStudioPage() {
                               <Image unoptimized width={32} height={32}
                                 src={block.imageUrl}
                                 alt=""
-                                className="w-8 h-8 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                                className="w-8 h-8 rounded-xl object-cover border border-border flex-shrink-0"
                               />
                             )}
                             <div className="min-w-0 flex-1 text-center">
@@ -1528,15 +1532,15 @@ export default function ProfileStudioPage() {
 
       {/* MODAL: ADD BLOCK */}
       {showAddBlockModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-ink/40 backdrop-blur-sm animate-fade-in">
           <ModalScrollLock />
           <div className="flex min-h-full items-center justify-center p-4">
-          <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
+          <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-border shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">{t("Adicionar Novo Bloco")}</h3>
+              <h3 className="text-lg font-bold text-foreground">{t("Adicionar Novo Bloco")}</h3>
               <button
                 onClick={() => { setShowAddBlockModal(false); setModalError(null); }}
-                className="text-zinc-400 hover:text-white p-1"
+                className="text-muted hover:text-foreground p-1"
               >
                 ✕
               </button>
@@ -1549,8 +1553,8 @@ export default function ProfileStudioPage() {
                 onClick={() => setNewBlockType(ProfileBlockType.LINK)}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-semibold transition ${
                   newBlockType === ProfileBlockType.LINK
-                    ? "border-accent bg-accent/20 text-white"
-                    : "border-white/10 bg-zinc-950 text-zinc-400"
+                    ? "border-accent bg-accent/20 text-foreground"
+                    : "border-border bg-background text-muted"
                 }`}
               >
                 {t("Link / Botão")}
@@ -1560,8 +1564,8 @@ export default function ProfileStudioPage() {
                 onClick={() => setNewBlockType(ProfileBlockType.TEXT_DIVIDER)}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-semibold transition ${
                   newBlockType === ProfileBlockType.TEXT_DIVIDER
-                    ? "border-accent bg-accent/20 text-white"
-                    : "border-white/10 bg-zinc-950 text-zinc-400"
+                    ? "border-accent bg-accent/20 text-foreground"
+                    : "border-border bg-background text-muted"
                 }`}
               >
                 {t("Texto / Divisor")}
@@ -1571,8 +1575,8 @@ export default function ProfileStudioPage() {
                 onClick={() => setNewBlockType(ProfileBlockType.SOCIAL_LINKS)}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-semibold transition ${
                   newBlockType === ProfileBlockType.SOCIAL_LINKS
-                    ? "border-accent bg-accent/20 text-white"
-                    : "border-white/10 bg-zinc-950 text-zinc-400"
+                    ? "border-accent bg-accent/20 text-foreground"
+                    : "border-border bg-background text-muted"
                 }`}
               >
                 {t("Redes Sociais")}
@@ -1581,7 +1585,7 @@ export default function ProfileStudioPage() {
 
             <form onSubmit={handleAddBlock} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                   {newBlockType === ProfileBlockType.TEXT_DIVIDER ? t("Texto do Divisor") : t("Título")}
                 </label>
                 <input
@@ -1595,15 +1599,15 @@ export default function ProfileStudioPage() {
                       ? t("Ex: Meus Cursos & Produtos")
                       : t("Ex: Baixar E-book Grátis ou Agendar Reunião")
                   }
-                  className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                 />
-                <p className="mt-1 text-right text-[11px] text-zinc-500">{newBlockTitle.length}/100</p>
+                <p className="mt-1 text-right text-[11px] text-muted">{newBlockTitle.length}/100</p>
               </div>
 
               {newBlockType === ProfileBlockType.LINK && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("URL de Destino")}
                     </label>
                     <input
@@ -1615,12 +1619,12 @@ export default function ProfileStudioPage() {
                       value={newBlockUrl}
                       onChange={(e) => setNewBlockUrl(e.target.value)}
                       placeholder={t("seusite.com.br/oferta")}
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white font-mono focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground font-mono focus:border-accent focus:outline-none transition"
                     />
                     {linkPreview(normalizeWebUrl(newBlockUrl), newBlockUrl)}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("Subtítulo / Descrição (Opcional)")}
                     </label>
                     <input
@@ -1629,11 +1633,11 @@ export default function ProfileStudioPage() {
                       value={newBlockDescription}
                       onChange={(e) => setNewBlockDescription(e.target.value)}
                       placeholder={t("Ex: Acesso instantâneo e 100% gratuito")}
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("URL do Ícone ou Imagem (Opcional)")}
                     </label>
                     <input
@@ -1644,7 +1648,7 @@ export default function ProfileStudioPage() {
                       value={newBlockImageUrl}
                       onChange={(e) => setNewBlockImageUrl(e.target.value)}
                       placeholder="seusite.com/imagem.png"
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                     />
                     {linkPreview(normalizeWebUrl(newBlockImageUrl), newBlockImageUrl)}
                   </div>
@@ -1653,11 +1657,11 @@ export default function ProfileStudioPage() {
 
               {newBlockType === ProfileBlockType.SOCIAL_LINKS && (
                 <div className="space-y-3">
-                  <p className="text-xs text-zinc-400">{t("Preencha os links das suas redes sociais:")}</p>
+                  <p className="text-xs text-muted">{t("Preencha os links das suas redes sociais:")}</p>
                   {socialLinks.map((s, idx) => (
                     <div key={idx}>
                       <div className="flex items-center gap-2">
-                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
+                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-foreground" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
                           <SocialGlyph platform={s.platform} className="w-4 h-4" />
                         </span>
                         <select
@@ -1668,7 +1672,7 @@ export default function ProfileStudioPage() {
                             setSocialLinks(updated);
                           }}
                           aria-label={t("Rede")}
-                          className="w-32 shrink-0 rounded-xl bg-zinc-950 border border-white/10 px-2 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="w-32 shrink-0 rounded-xl bg-background border border-border px-2 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                         >
                           {SOCIAL_PLATFORMS.map((p) => (
                             <option key={p.id} value={p.id}>{t(p.label)}</option>
@@ -1686,13 +1690,13 @@ export default function ProfileStudioPage() {
                             updated[idx] = { ...updated[idx], url: e.target.value };
                             setSocialLinks(updated);
                           }}
-                          className="min-w-0 flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-background border border-border px-3 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setSocialLinks(socialLinks.filter((_, i) => i !== idx))}
                           aria-label={t("Remover")}
-                          className="p-1.5 text-zinc-500 hover:text-red-400"
+                          className="p-1.5 text-muted hover:text-error"
                         >
                           ✕
                         </button>
@@ -1707,7 +1711,7 @@ export default function ProfileStudioPage() {
                       const next = SOCIAL_PLATFORMS.find((p) => !used.has(p.id))?.id ?? "website";
                       setSocialLinks([...socialLinks, { platform: next, url: "" }]);
                     }}
-                    className="w-full rounded-xl border border-dashed border-white/15 py-2 text-xs font-semibold text-zinc-400 hover:border-accent hover:text-white transition"
+                    className="w-full rounded-xl border border-dashed border-border py-2 text-xs font-semibold text-muted hover:border-accent hover:text-foreground transition"
                   >
                     + {t("Adicionar rede ou canal")}
                   </button>
@@ -1715,16 +1719,16 @@ export default function ProfileStudioPage() {
               )}
 
               {modalError && (
-                <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                <div role="alert" className="rounded-xl border border-error/30 bg-error/10 px-3.5 py-2.5 text-xs text-error">
                   {modalError}
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => { setShowAddBlockModal(false); setModalError(null); }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-muted hover:text-foreground"
                 >
                   {t("Cancelar")}
                 </button>
@@ -1744,20 +1748,20 @@ export default function ProfileStudioPage() {
 
       {/* MODAL: EDIT BLOCK */}
       {editingBlock && (
-        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-ink/40 backdrop-blur-sm animate-fade-in">
           <ModalScrollLock />
           <div className="flex min-h-full items-center justify-center p-4">
-          <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-white/10 shadow-2xl">
+          <div className="glass-strong rounded-2xl w-full max-w-lg p-6 space-y-5 border border-border shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">{t("Editar Bloco")}</h3>
-              <button onClick={() => { setEditingBlock(null); setModalError(null); }} className="text-zinc-400 hover:text-white p-1">
+              <h3 className="text-lg font-bold text-foreground">{t("Editar Bloco")}</h3>
+              <button onClick={() => { setEditingBlock(null); setModalError(null); }} className="text-muted hover:text-foreground p-1">
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleUpdateBlock} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                   {t("Título")}
                 </label>
                 <input
@@ -1766,15 +1770,15 @@ export default function ProfileStudioPage() {
                   maxLength={100}
                   value={editingBlock.title || ""}
                   onChange={(e) => setEditingBlock({ ...editingBlock, title: e.target.value })}
-                  className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                  className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                 />
-                <p className="mt-1 text-right text-[11px] text-zinc-500">{(editingBlock.title || "").length}/100</p>
+                <p className="mt-1 text-right text-[11px] text-muted">{(editingBlock.title || "").length}/100</p>
               </div>
 
               {editingBlock.type === ProfileBlockType.LINK && (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("URL de Destino")}
                     </label>
                     <input
@@ -1785,12 +1789,12 @@ export default function ProfileStudioPage() {
                       required
                       value={editingBlock.url || ""}
                       onChange={(e) => setEditingBlock({ ...editingBlock, url: e.target.value })}
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white font-mono focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground font-mono focus:border-accent focus:outline-none transition"
                     />
                     {linkPreview(normalizeWebUrl(editingBlock.url || ""), editingBlock.url || "")}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("Subtítulo / Descrição")}
                     </label>
                     <input
@@ -1800,11 +1804,11 @@ export default function ProfileStudioPage() {
                       onChange={(e) =>
                         setEditingBlock({ ...editingBlock, description: e.target.value })
                       }
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-1.5">
                       {t("URL do Ícone / Thumbnail")}
                     </label>
                     <input
@@ -1816,7 +1820,7 @@ export default function ProfileStudioPage() {
                       onChange={(e) =>
                         setEditingBlock({ ...editingBlock, imageUrl: e.target.value })
                       }
-                      className="w-full rounded-xl bg-zinc-950 border border-white/10 px-3.5 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition"
+                      className="w-full rounded-xl bg-background border border-border px-3.5 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none transition"
                     />
                     {linkPreview(normalizeWebUrl(editingBlock.imageUrl || ""), editingBlock.imageUrl || "")}
                   </div>
@@ -1825,11 +1829,11 @@ export default function ProfileStudioPage() {
 
               {editingBlock.type === ProfileBlockType.SOCIAL_LINKS && (
                 <div className="space-y-3">
-                  <p className="text-xs text-zinc-400">{t("Links das suas redes sociais:")}</p>
+                  <p className="text-xs text-muted">{t("Links das suas redes sociais:")}</p>
                   {socialLinks.map((s, idx) => (
                     <div key={idx}>
                       <div className="flex items-center gap-2">
-                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
+                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-foreground" style={{ backgroundColor: getSocialPlatform(s.platform).hex }}>
                           <SocialGlyph platform={s.platform} className="w-4 h-4" />
                         </span>
                         <select
@@ -1840,7 +1844,7 @@ export default function ProfileStudioPage() {
                             setSocialLinks(updated);
                           }}
                           aria-label={t("Rede")}
-                          className="w-32 shrink-0 rounded-xl bg-zinc-950 border border-white/10 px-2 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="w-32 shrink-0 rounded-xl bg-background border border-border px-2 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                         >
                           {SOCIAL_PLATFORMS.map((p) => (
                             <option key={p.id} value={p.id}>{t(p.label)}</option>
@@ -1858,13 +1862,13 @@ export default function ProfileStudioPage() {
                             updated[idx] = { ...updated[idx], url: e.target.value };
                             setSocialLinks(updated);
                           }}
-                          className="min-w-0 flex-1 rounded-xl bg-zinc-950 border border-white/10 px-3 py-2 text-xs text-white focus:border-accent focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-background border border-border px-3 py-2 text-xs text-foreground focus:border-accent focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setSocialLinks(socialLinks.filter((_, i) => i !== idx))}
                           aria-label={t("Remover")}
-                          className="p-1.5 text-zinc-500 hover:text-red-400"
+                          className="p-1.5 text-muted hover:text-error"
                         >
                           ✕
                         </button>
@@ -1879,7 +1883,7 @@ export default function ProfileStudioPage() {
                       const next = SOCIAL_PLATFORMS.find((p) => !used.has(p.id))?.id ?? "website";
                       setSocialLinks([...socialLinks, { platform: next, url: "" }]);
                     }}
-                    className="w-full rounded-xl border border-dashed border-white/15 py-2 text-xs font-semibold text-zinc-400 hover:border-accent hover:text-white transition"
+                    className="w-full rounded-xl border border-dashed border-border py-2 text-xs font-semibold text-muted hover:border-accent hover:text-foreground transition"
                   >
                     + {t("Adicionar rede ou canal")}
                   </button>
@@ -1887,16 +1891,16 @@ export default function ProfileStudioPage() {
               )}
 
               {modalError && (
-                <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                <div role="alert" className="rounded-xl border border-error/30 bg-error/10 px-3.5 py-2.5 text-xs text-error">
                   {modalError}
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => { setEditingBlock(null); setModalError(null); }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-muted hover:text-foreground"
                 >
                   {t("Cancelar")}
                 </button>

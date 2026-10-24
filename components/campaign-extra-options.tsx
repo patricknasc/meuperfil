@@ -32,7 +32,7 @@ export default function CampaignExtraOptions({ typoTolerance, onTypoToleranceCha
         <button
           type="button"
           onClick={() => onTypoToleranceChange(!typoTolerance)}
-          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${typoTolerance ? "bg-accent" : "bg-zinc-700"}`}
+          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${typoTolerance ? "bg-accent" : "bg-border"}`}
           aria-pressed={typoTolerance}
         >
           <span

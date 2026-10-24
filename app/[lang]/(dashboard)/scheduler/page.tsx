@@ -1,4 +1,5 @@
 "use client";
+import { useDialogs } from "@/components/app-dialogs";
 import { useFlowTranslation } from "@/lib/i18n/use-flow-translation";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -40,6 +41,7 @@ interface ScheduledPostItem {
 
 export default function SchedulerPage() {
   const t = useFlowTranslation();
+  const dialogs = useDialogs();
   const params = useParams();
 
   const lang = (params?.lang as string) || "pt";
@@ -298,7 +300,7 @@ export default function SchedulerPage() {
   }
 
   async function handleDelete(postId: string) {
-    if (!confirm(t("Deseja realmente cancelar e excluir este post agendado?"))) return;
+    if (!(await dialogs.confirm({ title: t("Delete scheduled post?"), message: t("The post will be cancelled and removed."), confirmLabel: t("Delete"), tone: "danger" }))) return;
     try {
       const res = await fetch(`/api/scheduler/posts/${postId}`, { method: "DELETE" });
       const data = await res.json();
@@ -306,7 +308,7 @@ export default function SchedulerPage() {
         showToast(t("Post cancelado com sucesso."));
         fetchInitialData();
       } else {
-        alert(data.error);
+        await dialogs.alert({ title: t("Something went wrong"), message: data.error });
       }
     } catch (err) {
       console.error(err);
@@ -314,7 +316,7 @@ export default function SchedulerPage() {
   }
 
   async function handlePublishNow(postId: string) {
-    if (!confirm(t("Deseja forçar a publicação imediata no Instagram agora?"))) return;
+    if (!(await dialogs.confirm({ title: t("Publish on Instagram now?"), message: t("The post goes live immediately instead of at the scheduled time."), confirmLabel: t("Publish now") }))) return;
     try {
       const res = await fetch(`/api/scheduler/posts/${postId}/publish-now`, { method: "POST" });
       const data = await res.json();
@@ -322,7 +324,7 @@ export default function SchedulerPage() {
         showToast(t("Publicação imediata enfileirada no worker!"));
         fetchInitialData();
       } else {
-        alert(data.error);
+        await dialogs.alert({ title: t("Something went wrong"), message: data.error });
       }
     } catch (err) {
       console.error(err);
@@ -332,14 +334,14 @@ export default function SchedulerPage() {
   const selectedAccount = accounts.find((a) => a.id === formAccountId) || accounts[0];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-10 space-y-8">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 space-y-8">
       {loading && !posts.length && <p role="status">{messages.loading}</p>}
       {loadError && <div role="alert" className="rounded-xl border border-error/30 p-4 text-error">{messages.loadError} <button className="underline" onClick={() => void fetchInitialData()}>{messages.searchButton}</button></div>}
       {!loading && !accounts.length && !loadError && <Link className="block rounded-xl border border-border p-4 text-accent" href={`/${lang}/settings`}>{messages.connectFirst}</Link>}
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-5 py-3 rounded-xl shadow-2xl shadow-indigo-500/20 border border-indigo-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5">
-          <svg className="w-5 h-5 text-emerald-300" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <div className="fixed bottom-6 right-6 z-50 bg-ink text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5">
+          <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
           <span className="text-sm font-medium">{toastMessage}</span>
@@ -347,24 +349,24 @@ export default function SchedulerPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-800/80 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{t("Novo Módulo")}</span>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">{t("Agendador de Conteúdo")}</h1>
+            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-accent/10 text-accent border border-accent/20">{t("Novo Módulo")}</span>
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">{t("Agendador de Conteúdo")}</h1>
           </div>
-          <p className="text-zinc-400 text-sm mt-1">{t("Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.")}</p>
+          <p className="text-muted text-sm mt-1">{t("Planeje Reels, Carrosséis e Stories com disparo automático de DMs na publicação.")}</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="bg-zinc-900 border border-zinc-800 p-1 rounded-xl flex items-center">
+          <div className="bg-surface-hover border border-border p-1 rounded-xl flex items-center">
             <button
               onClick={() => setActiveView("calendar")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 activeView === "calendar"
-                  ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-surface text-foreground shadow-sm ring-1 ring-border"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -374,8 +376,8 @@ export default function SchedulerPage() {
               onClick={() => setActiveView("list")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                 activeView === "list"
-                  ? "bg-zinc-800 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-surface text-foreground shadow-sm ring-1 ring-border"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -385,7 +387,7 @@ export default function SchedulerPage() {
 
           <button
             onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/20 transition active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl shadow-sm transition active:scale-95"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -395,56 +397,56 @@ export default function SchedulerPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-surface border border-border rounded-2xl p-4 shadow-[0_1px_2px_rgba(22,18,15,.04)] flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">{t("Agendados")}</p>
-            <p className="text-2xl font-bold text-white mt-1">
+            <p className="text-muted text-xs font-medium">{t("Agendados")}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
               {posts.filter((p) => p.status === "SCHEDULED").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
         </div>
 
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-surface border border-border rounded-2xl p-4 shadow-[0_1px_2px_rgba(22,18,15,.04)] flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">{t("Publicados")}</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
+            <p className="text-muted text-xs font-medium">{t("Publicados")}</p>
+            <p className="text-2xl font-bold text-success mt-1">
               {posts.filter((p) => p.status === "PUBLISHED").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-success">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
         </div>
 
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-surface border border-border rounded-2xl p-4 shadow-[0_1px_2px_rgba(22,18,15,.04)] flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">{t("Rascunhos")}</p>
-            <p className="text-2xl font-bold text-amber-400 mt-1">
+            <p className="text-muted text-xs font-medium">{t("Rascunhos")}</p>
+            <p className="text-2xl font-bold text-warning mt-1">
               {posts.filter((p) => p.status === "DRAFT").length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <div className="w-10 h-10 rounded-xl bg-warning/10 border border-warning/30 flex items-center justify-center text-warning">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
             </svg>
           </div>
         </div>
 
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between">
+        <div className="bg-surface border border-border rounded-2xl p-4 shadow-[0_1px_2px_rgba(22,18,15,.04)] flex items-center justify-between">
           <div>
-            <p className="text-zinc-400 text-xs font-medium">{t("Automações Ligadas")}</p>
-            <p className="text-2xl font-bold text-violet-400 mt-1">
+            <p className="text-muted text-xs font-medium">{t("Automações Ligadas")}</p>
+            <p className="text-2xl font-bold text-accent mt-1">
               {posts.filter((p) => p.autoCampaignEnabled || p.createdAutomationId).length}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
             </svg>
@@ -454,16 +456,16 @@ export default function SchedulerPage() {
 
       {/* Main View: Calendar or List */}
       {activeView === "calendar" ? (
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden p-6 space-y-6">
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden p-6 space-y-6">
           {/* Calendar Header Navigation */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white capitalize">
+              <h2 className="font-heading text-xl font-semibold text-foreground first-letter:uppercase">
                 {currentMonth.toLocaleDateString(locale, { month: "long", year: "numeric" })}
               </h2>
               <button
                 onClick={() => setCurrentMonth(new Date())}
-                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition"
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-surface-hover text-ink-soft hover:bg-border transition"
               >{t("Hoje")}</button>
             </div>
 
@@ -474,7 +476,7 @@ export default function SchedulerPage() {
                   prev.setMonth(prev.getMonth() - 1);
                   setCurrentMonth(prev);
                 }}
-                className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition"
+                className="p-2 rounded-xl bg-surface-hover hover:bg-border text-ink-soft transition"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -486,7 +488,7 @@ export default function SchedulerPage() {
                   next.setMonth(next.getMonth() + 1);
                   setCurrentMonth(next);
                 }}
-                className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition"
+                className="p-2 rounded-xl bg-surface-hover hover:bg-border text-ink-soft transition"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -496,7 +498,7 @@ export default function SchedulerPage() {
           </div>
 
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-muted uppercase tracking-wider">
             <span>{t("Dom")}</span>
             <span>{t("Seg")}</span>
             <span>{t("Ter")}</span>
@@ -519,22 +521,22 @@ export default function SchedulerPage() {
                   className={`min-h-[110px] p-2 rounded-xl border transition group cursor-pointer flex flex-col justify-between ${
                     day.isCurrentMonth
                       ? isToday
-                        ? "bg-indigo-950/20 border-indigo-500/50 shadow-inner"
-                        : "bg-zinc-900/40 border-zinc-800/60 hover:border-zinc-700"
-                      : "bg-zinc-950/40 border-zinc-900/40 opacity-40 hover:opacity-70"
+                        ? "bg-accent/5 border-accent/40 shadow-inner"
+                        : "bg-background/60 border-border hover:border-accent/40 hover:bg-accent/5"
+                      : "bg-background border-border opacity-40 hover:opacity-70"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
                         isToday
-                          ? "bg-indigo-600 text-white"
-                          : "text-zinc-400 group-hover:text-white"
+                          ? "bg-accent text-white"
+                          : "text-muted group-hover:text-foreground"
                       }`}
                     >
                       {day.date.getDate()}
                     </span>
-                    <span className="text-[10px] text-zinc-600 group-hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition">{t("+ Agendar")}</span>
+                    <span className="text-[10px] text-muted group-hover:text-muted opacity-0 group-hover:opacity-100 transition">{t("+ Agendar")}</span>
                   </div>
 
                   {/* Day Posts Badges */}
@@ -548,10 +550,10 @@ export default function SchedulerPage() {
                         }}
                         className={`p-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between gap-1 border transition hover:scale-[1.02] ${
                           post.status === "PUBLISHED"
-                            ? "bg-emerald-950/40 border-emerald-800/60 text-emerald-300"
+                            ? "bg-success/10 border-success/30 text-success"
                             : post.status === "FAILED"
-                            ? "bg-rose-950/40 border-rose-800/60 text-rose-300"
-                            : "bg-indigo-950/50 border-indigo-800/60 text-indigo-200"
+                            ? "bg-error/10 border-error/30 text-error"
+                            : "bg-accent/10 border-accent/30 text-accent"
                         }`}
                       >
                         <div className="flex items-center gap-1 truncate">
@@ -586,9 +588,9 @@ export default function SchedulerPage() {
         </div>
       ) : (
         /* List View */
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden">
+        <div className="bg-surface-hover border border-border rounded-2xl overflow-hidden">
           {/* List Filters */}
-          <div className="p-4 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 border-b border-border flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               {["ALL", "SCHEDULED", "PUBLISHED", "DRAFT", "FAILED"].map((st) => (
                 <button
@@ -596,8 +598,8 @@ export default function SchedulerPage() {
                   onClick={() => setStatusFilter(st)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                     statusFilter === st
-                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
-                      : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
+                      ? "bg-accent text-white shadow-sm shadow-coral/20"
+                      : "bg-surface-hover text-muted hover:text-foreground"
                   }`}
                 >
                   {st === "ALL"
@@ -617,7 +619,7 @@ export default function SchedulerPage() {
               <select
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
-                className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-xl px-3 py-2 outline-none"
+                className="bg-surface-hover border border-border text-foreground text-xs rounded-xl px-3 py-2 outline-none"
               >
                 <option value="ALL">{t("Todas as Contas")}</option>
                 {accounts.map((acc) => (
@@ -631,24 +633,24 @@ export default function SchedulerPage() {
 
           {filteredPosts.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-zinc-800/60 flex items-center justify-center mx-auto text-zinc-500">
+              <div className="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center mx-auto text-muted">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
                 </svg>
               </div>
-              <p className="text-zinc-300 font-medium">{t("Nenhum post agendado nesta visão.")}</p>
+              <p className="text-ink-soft font-medium">{t("Nenhum post agendado nesta visão.")}</p>
               <button
                 onClick={() => openCreateModal()}
-                className="text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold"
+                className="text-xs text-accent hover:text-accent-hover underline font-semibold"
               >{t("Criar primeiro agendamento")}</button>
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800/60">
+            <div className="divide-y divide-border">
               {filteredPosts.map((post) => (
-                <div key={post.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-800/30 transition">
+                <div key={post.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surface-hover transition">
                   <div className="flex items-start gap-4">
                     {/* Media Thumbnail */}
-                    <div className="w-16 h-20 rounded-xl bg-zinc-800 overflow-hidden shrink-0 border border-zinc-700 relative">
+                    <div className="w-16 h-20 rounded-xl bg-surface-hover overflow-hidden shrink-0 border border-border relative">
                       {post.mediaUrls[0] ? (
                         <Image unoptimized fill sizes="(max-width: 768px) 100vw, 320px"
                           src={post.mediaUrls[0]}
@@ -656,9 +658,9 @@ export default function SchedulerPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">{t("Sem foto")}</div>
+                        <div className="w-full h-full flex items-center justify-center text-muted text-xs">{t("Sem foto")}</div>
                       )}
-                      <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/70 text-white backdrop-blur">
+                      <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-ink/40 text-foreground backdrop-blur">
                         {post.mediaType === "REEL"
                           ? "Reel"
                           : post.mediaType === "CAROUSEL"
@@ -675,41 +677,41 @@ export default function SchedulerPage() {
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             post.status === "PUBLISHED"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              ? "bg-success/10 text-success border border-success/20"
                               : post.status === "FAILED"
-                              ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              ? "bg-error/10 text-error border border-error/20"
                               : post.status === "PUBLISHING"
-                              ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 animate-pulse"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              ? "bg-accent/10 text-accent border border-accent/20 animate-pulse"
+                              : "bg-warning/10 text-warning border border-warning/30"
                           }`}
                         >
                           {t({ DRAFT: "Draft", SCHEDULED: "Scheduled", PUBLISHING: "Publishing", PUBLISHED: "Published", FAILED: "Failed" }[post.status])}
                         </span>
 
                         {post.instagramAccount && (
-                          <span className="text-xs text-zinc-400 font-medium">
+                          <span className="text-xs text-muted font-medium">
                             @{post.instagramAccount.username}
                           </span>
                         )}
 
                         {post.autoCampaignEnabled && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/10 text-violet-300 border border-violet-500/20 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-accent/10 text-accent border border-accent/20 flex items-center gap-1">
                             <span>💬</span>{t("DM Ativa")}</span>
                         )}
                         {post.createdAutomationId && (
                           <Link
                             href={`/${lang}/campaigns/${post.createdAutomationId}`}
-                            className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1 transition hover:bg-emerald-500/20"
+                            className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/10 text-success border border-success/20 flex items-center gap-1 transition hover:bg-emerald-500/20"
                           >
                             <span>↗</span>{t("Campanha criada")}</Link>
                         )}
                       </div>
 
-                      <p className="text-sm text-zinc-200 line-clamp-2 max-w-xl">
-                        {post.caption || <span className="italic text-zinc-500">{t("Sem legenda")}</span>}
+                      <p className="text-sm text-foreground line-clamp-2 max-w-xl">
+                        {post.caption || <span className="italic text-muted">{t("Sem legenda")}</span>}
                       </p>
 
-                      <div className="text-xs text-zinc-400 flex items-center gap-3">
+                      <div className="text-xs text-muted flex items-center gap-3">
                         <span>
                           📅{" "}
                           {post.scheduledFor
@@ -721,7 +723,7 @@ export default function SchedulerPage() {
                             href={post.publishedPostUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-indigo-400 hover:underline flex items-center gap-1"
+                            className="text-accent hover:underline flex items-center gap-1"
                           >{t("Ver no Instagram")}<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                             </svg>
@@ -730,7 +732,7 @@ export default function SchedulerPage() {
                       </div>
 
                       {post.errorMessage && (
-                        <p className="text-xs text-rose-400 bg-rose-950/30 p-1.5 rounded-lg border border-rose-800/30">{t("Erro:")}{post.errorMessage}
+                        <p className="text-xs text-error bg-error/10 p-1.5 rounded-lg border border-error/20">{t("Erro:")}{post.errorMessage}
                         </p>
                       )}
                     </div>
@@ -742,11 +744,11 @@ export default function SchedulerPage() {
                       <>
                         <button
                           onClick={() => handlePublishNow(post.id)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-hover hover:bg-border text-foreground transition"
                         >{t("Publicar Agora")}</button>
                         <button
                           onClick={() => openEditModal(post)}
-                          className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+                          className="p-2 rounded-xl bg-surface-hover hover:bg-border text-ink-soft transition"
                           title={t("Editar")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -755,7 +757,7 @@ export default function SchedulerPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(post.id)}
-                          className="p-2 rounded-xl bg-zinc-800 hover:bg-rose-950/60 hover:text-rose-400 text-zinc-400 transition"
+                          className="p-2 rounded-xl bg-surface-hover hover:bg-error/10 hover:text-error text-muted transition"
                           title={t("Excluir")}
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -774,27 +776,27 @@ export default function SchedulerPage() {
 
       {/* Creation / Edit Drawer Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-surface border border-border rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95">
             {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40">
+            <div className="p-6 border-b border-border flex items-center justify-between bg-background">
               <div className="flex items-center gap-3">
-                <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <span className="p-2 rounded-xl bg-accent/10 text-accent border border-accent/20">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                   </svg>
                 </span>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-foreground">
                     {editingPostId ? t("Editar Publicação Agendada") : t("Novo Agendamento no Instagram")}
                   </h3>
-                  <p className="text-xs text-zinc-400">{t("Configure mídia, legenda, horário e gatilho de Comentário → Direct.")}</p>
+                  <p className="text-xs text-muted">{t("Configure mídia, legenda, horário e gatilho de Comentário → Direct.")}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+                className="p-2 rounded-xl text-muted hover:text-foreground hover:bg-surface-hover transition"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -807,7 +809,7 @@ export default function SchedulerPage() {
               {/* Left Column: Form Controls (7 cols) */}
               <div className="lg:col-span-7 space-y-6">
                 {formError && (
-                  <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center gap-2">
+                  <div className="p-3.5 rounded-xl bg-error/10 border border-error/30 text-error text-xs font-medium flex items-center gap-2">
                     <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                     </svg>
@@ -817,15 +819,15 @@ export default function SchedulerPage() {
 
                 {/* Account Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">{t("Conta do Instagram")}</label>
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">{t("Conta do Instagram")}</label>
                   {accounts.length === 0 ? (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">{t("Nenhuma conta do Instagram conectada neste workspace. Vá em")}{" "}
+                    <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs">{t("Nenhuma conta do Instagram conectada neste workspace. Vá em")}{" "}
                       <Link href={`/${lang}/settings`} className="underline font-bold">{t("Ajustes > Conectar Instagram")}</Link>{" "}{t("para vincular.")}</div>
                   ) : (
                     <select
                       value={formAccountId}
                       onChange={(e) => setFormAccountId(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 outline-none focus:border-indigo-500 transition"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-accent transition"
                     >
                       {accounts.map((acc) => (
                         <option key={acc.id} value={acc.id}>
@@ -838,7 +840,7 @@ export default function SchedulerPage() {
 
                 {/* Media Type Selector */}
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">{t("Tipo de Formato")}</label>
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">{t("Tipo de Formato")}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[
                       { type: "REEL", label: "Reels", icon: "🎬" },
@@ -852,8 +854,8 @@ export default function SchedulerPage() {
                         onClick={() => setFormMediaType(item.type as PostMediaType)}
                         className={`p-3 rounded-2xl border text-center transition flex flex-col items-center gap-1 ${
                           formMediaType === item.type
-                            ? "bg-indigo-600/20 border-indigo-500 text-white shadow-sm shadow-indigo-500/20"
-                            : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                            ? "bg-accent/10 border-accent text-foreground shadow-sm"
+                            : "bg-background border-border text-muted hover:border-border-hover hover:text-foreground"
                         }`}
                       >
                         <span className="text-xl">{item.icon}</span>
@@ -866,12 +868,12 @@ export default function SchedulerPage() {
                 {/* Media URLs */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("URL da Mídia (Imagem ou Vídeo MP4)")}</label>
+                    <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">{t("URL da Mídia (Imagem ou Vídeo MP4)")}</label>
                     {formMediaType === "CAROUSEL" && (
                       <button
                         type="button"
                         onClick={() => setFormMediaUrls([...formMediaUrls, ""])}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                        className="text-xs text-accent hover:text-accent-hover font-semibold"
                       >{t("+ Adicionar Mídia ao Carrossel")}</button>
                     )}
                   </div>
@@ -888,13 +890,13 @@ export default function SchedulerPage() {
                             updated[idx] = e.target.value;
                             setFormMediaUrls(updated);
                           }}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition"
+                          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs text-foreground placeholder:text-muted outline-none focus:border-accent transition"
                         />
                         {formMediaUrls.length > 1 && (
                           <button
                             type="button"
                             onClick={() => setFormMediaUrls(formMediaUrls.filter((_, i) => i !== idx))}
-                            className="p-2 text-zinc-500 hover:text-rose-400 transition"
+                            className="p-2 text-muted hover:text-error transition"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -909,8 +911,8 @@ export default function SchedulerPage() {
                 {/* Caption Editor */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("Legenda do Post")}</label>
-                    <span className="text-[11px] text-zinc-500">
+                    <label className="text-xs font-semibold text-ink-soft uppercase tracking-wider">{t("Legenda do Post")}</label>
+                    <span className="text-[11px] text-muted">
                       {formCaption.length} / 2.200
                     </span>
                   </div>
@@ -919,7 +921,7 @@ export default function SchedulerPage() {
                     placeholder={t("Escreva a legenda envolvente do seu post... Diga para comentarem a palavra-chave!")}
                     value={formCaption}
                     onChange={(e) => setFormCaption(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500 transition"
+                    className="w-full bg-background border border-border rounded-xl p-4 text-xs text-foreground placeholder:text-muted outline-none focus:border-accent transition"
                   />
                   {/* Quick Hashtags */}
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -928,7 +930,7 @@ export default function SchedulerPage() {
                         key={tag}
                         type="button"
                         onClick={() => setFormCaption((prev) => `${prev} ${tag}`.trim())}
-                        className="px-2 py-1 bg-zinc-950 border border-zinc-800 rounded-lg text-[10px] text-zinc-400 hover:text-white transition"
+                        className="px-2 py-1 bg-background border border-border rounded-lg text-[10px] text-muted hover:text-foreground transition"
                       >
                         + {tag}
                       </button>
@@ -937,49 +939,49 @@ export default function SchedulerPage() {
                 </div>
 
                 {/* Schedule Date & Time */}
-                <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800 space-y-3">
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">{t("Data e Horário de Publicação")}</label>
+                <div className="p-4 rounded-2xl bg-background border border-border space-y-3">
+                  <label className="block text-xs font-semibold text-ink-soft uppercase tracking-wider">{t("Data e Horário de Publicação")}</label>
                   <input
                     type="datetime-local"
                     value={formScheduledFor}
                     onChange={(e) => setFormScheduledFor(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-zinc-100 outline-none focus:border-indigo-500 transition"
+                    className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-xs text-foreground outline-none focus:border-accent transition"
                   />
                   {/* Quick Scheduling Shortcuts */}
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setQuickSchedule(0, 18)}
-                      className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
+                      className="px-2.5 py-1 bg-surface-hover hover:bg-border rounded-lg text-[11px] text-ink-soft transition"
                     >{t("Hoje 18:00")}</button>
                     <button
                       type="button"
                       onClick={() => setQuickSchedule(24, 12)}
-                      className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
+                      className="px-2.5 py-1 bg-surface-hover hover:bg-border rounded-lg text-[11px] text-ink-soft transition"
                     >{t("Amanhã 12:00")}</button>
                     <button
                       type="button"
                       onClick={() => setQuickSchedule(24, 19)}
-                      className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-[11px] text-zinc-300 transition"
+                      className="px-2.5 py-1 bg-surface-hover hover:bg-border rounded-lg text-[11px] text-ink-soft transition"
                     >{t("Amanhã 19:00")}</button>
                   </div>
                 </div>
 
                 {/* Integrated Auto-Campaign */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-violet-950/30 to-indigo-950/20 border border-violet-500/30 space-y-4">
+                <div className="p-5 rounded-2xl bg-accent/5 border border-accent/25 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">💬</span>
                       <div>
-                        <h4 className="text-xs font-bold text-white">{t("Automação Comentário → Direct")}</h4>
-                        <p className="text-[11px] text-zinc-400">{t("Dispara DM automática assim que alguém comentar no post publicado.")}</p>
+                        <h4 className="text-xs font-bold text-foreground">{t("Automação Comentário → Direct")}</h4>
+                        <p className="text-[11px] text-muted">{t("Dispara DM automática assim que alguém comentar no post publicado.")}</p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormAutoCampaign(!formAutoCampaign)}
                       className={`w-11 h-6 rounded-full transition-colors relative ${
-                        formAutoCampaign ? "bg-indigo-600" : "bg-zinc-800"
+                        formAutoCampaign ? "bg-accent" : "bg-surface-hover"
                       }`}
                     >
                       <div
@@ -991,26 +993,26 @@ export default function SchedulerPage() {
                   </div>
 
                   {formAutoCampaign && (
-                    <div className="space-y-3 pt-2 border-t border-violet-500/20">
+                    <div className="space-y-3 pt-2 border-t border-accent/20">
                       <div>
-                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">{t("Palavras-chave Gatilho (separadas por vírgula)")}</label>
+                        <label className="block text-[11px] font-semibold text-ink-soft mb-1">{t("Palavras-chave Gatilho (separadas por vírgula)")}</label>
                         <input
                           type="text"
                           value={formKeywords}
                           onChange={(e) => setFormKeywords(e.target.value)}
                           placeholder={t("QUERO, LINK, PRECO, EU")}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500"
+                          className="w-full bg-background border border-border rounded-xl px-3.5 py-2 text-xs text-foreground placeholder:text-muted outline-none focus:border-accent"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-zinc-300 mb-1">{t("Mensagem enviada no Direct (DM)")}</label>
+                        <label className="block text-[11px] font-semibold text-ink-soft mb-1">{t("Mensagem enviada no Direct (DM)")}</label>
                         <textarea
                           rows={2}
                           value={formDmMessage}
                           onChange={(e) => setFormDmMessage(e.target.value)}
                           placeholder={t("Olá! Conforme prometido no post, aqui está seu link...")}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-100 placeholder-zinc-600 outline-none focus:border-indigo-500"
+                          className="w-full bg-background border border-border rounded-xl p-3 text-xs text-foreground placeholder:text-muted outline-none focus:border-accent"
                         />
                       </div>
                     </div>
@@ -1021,33 +1023,33 @@ export default function SchedulerPage() {
               {/* Right Column: Interactive Phone Mockup (5 cols) */}
               <div className="lg:col-span-5 flex flex-col items-center justify-center">
                 <div className="text-center mb-3">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{t("Simulador em Tempo Real")}</span>
+                  <span className="text-xs font-semibold text-muted uppercase tracking-wider">{t("Simulador em Tempo Real")}</span>
                 </div>
 
                 {/* Phone Frame */}
-                <div className="w-[290px] h-[580px] bg-black rounded-[44px] p-3 border-[6px] border-zinc-800 shadow-2xl relative flex flex-col justify-between overflow-hidden">
+                <div className="w-[290px] h-[580px] bg-black rounded-[44px] p-3 border-[6px] border-border shadow-2xl relative flex flex-col justify-between overflow-hidden">
                   {/* Dynamic Island */}
-                  <div className="w-20 h-4 bg-zinc-900 rounded-full mx-auto mb-2 shrink-0" />
+                  <div className="w-20 h-4 bg-surface-hover rounded-full mx-auto mb-2 shrink-0" />
 
                   {/* Mock Post Content */}
-                  <div className="bg-zinc-950 rounded-2xl flex-1 flex flex-col justify-between overflow-hidden border border-zinc-900">
+                  <div className="bg-background rounded-2xl flex-1 flex flex-col justify-between overflow-hidden border border-border">
                     {/* IG Header */}
-                    <div className="p-3 flex items-center justify-between border-b border-zinc-900">
+                    <div className="p-3 flex items-center justify-between border-b border-border">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-violet-600 p-[1.5px]">
-                          <div className="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center text-[10px] font-bold text-white">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-coral-dark p-[1.5px]">
+                          <div className="w-full h-full rounded-full bg-surface-hover flex items-center justify-center text-[10px] font-bold text-foreground">
                             {selectedAccount?.username ? selectedAccount.username[0].toUpperCase() : "M"}
                           </div>
                         </div>
-                        <span className="text-[11px] font-bold text-white truncate max-w-[120px]">
+                        <span className="text-[11px] font-bold text-foreground truncate max-w-[120px]">
                           @{selectedAccount?.username || "seuperfil"}
                         </span>
                       </div>
-                      <span className="text-zinc-600 text-xs">•••</span>
+                      <span className="text-muted text-xs">•••</span>
                     </div>
 
                     {/* Media Area */}
-                    <div className="flex-1 bg-zinc-900 relative overflow-hidden flex items-center justify-center">
+                    <div className="flex-1 bg-surface-hover relative overflow-hidden flex items-center justify-center">
                       {formMediaUrls[0] && formMediaUrls[0].trim().length > 0 ? (
                         <Image unoptimized fill sizes="(max-width: 768px) 100vw, 320px"
                           src={formMediaUrls[0]}
@@ -1055,22 +1057,22 @@ export default function SchedulerPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="text-center p-4 text-zinc-600 space-y-1">
+                        <div className="text-center p-4 text-muted space-y-1">
                           <span className="text-2xl">🎬</span>
                           <p className="text-[10px]">{t("Insira uma URL de mídia para visualizar")}</p>
                         </div>
                       )}
 
                       {formMediaType === "REEL" && (
-                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur text-[9px] font-bold text-white flex items-center gap-1">
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-ink/40 backdrop-blur text-[9px] font-bold text-foreground flex items-center gap-1">
                           <span>🎬</span> Reels
                         </div>
                       )}
                     </div>
 
                     {/* IG Action Bar */}
-                    <div className="p-3 space-y-2 bg-zinc-950">
-                      <div className="flex items-center justify-between text-zinc-200">
+                    <div className="p-3 space-y-2 bg-background">
+                      <div className="flex items-center justify-between text-foreground">
                         <div className="flex items-center gap-3 text-sm">
                           <span>❤️</span>
                           <span>💬</span>
@@ -1080,8 +1082,8 @@ export default function SchedulerPage() {
                       </div>
 
                       {/* Mock Caption */}
-                      <p className="text-[11px] text-zinc-300 line-clamp-2">
-                        <span className="font-bold text-white mr-1.5">
+                      <p className="text-[11px] text-ink-soft line-clamp-2">
+                        <span className="font-bold text-foreground mr-1.5">
                           {selectedAccount?.username || "seuperfil"}
                         </span>
                         {formCaption || "Escreva a sua legenda..."}
@@ -1089,7 +1091,7 @@ export default function SchedulerPage() {
 
                       {/* Auto Campaign Bubble in Preview */}
                       {formAutoCampaign && (
-                        <div className="p-1.5 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-[9px] text-indigo-300 flex items-center gap-1.5">
+                        <div className="p-1.5 rounded-lg bg-accent/10 border border-accent/30 text-[9px] text-accent flex items-center gap-1.5">
                           <span>💬</span>
                           <span className="truncate">{t("Gatilho:")}{formKeywords}</span>
                         </div>
@@ -1098,17 +1100,17 @@ export default function SchedulerPage() {
                   </div>
 
                   {/* Home Bar */}
-                  <div className="w-24 h-1 bg-zinc-700 rounded-full mx-auto mt-2 shrink-0" />
+                  <div className="w-24 h-1 bg-border rounded-full mx-auto mt-2 shrink-0" />
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
+            <div className="p-6 border-t border-border bg-background flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white transition"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-muted hover:text-foreground transition"
               >{t("Cancelar")}</button>
 
               <div className="flex items-center gap-3">
@@ -1116,7 +1118,7 @@ export default function SchedulerPage() {
                   type="button"
                   disabled={submitting}
                   onClick={() => handleSave(false)}
-                  className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50"
+                  className="px-5 py-2.5 bg-surface-hover hover:bg-border text-foreground text-xs font-bold rounded-xl transition disabled:opacity-50"
                 >
                   {submitting ? t("Salvando...") : t("Salvar Agendamento")}
                 </button>
@@ -1124,7 +1126,7 @@ export default function SchedulerPage() {
                   type="button"
                   disabled={submitting}
                   onClick={() => handleSave(true)}
-                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-xs font-bold rounded-xl shadow-sm transition active:scale-95 disabled:opacity-50"
                 >
                   {submitting ? t("Publicando...") : t("Publicar Imediatamente")}
                 </button>

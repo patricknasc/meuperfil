@@ -163,6 +163,10 @@ const translations: Record<string, readonly [string, string]> = {
     "Assinatura",
     "Suscripción"
   ],
+  "Token expiry unavailable": [
+    "Validade do token indisponível",
+    "Vencimiento del token no disponible"
+  ],
   "Plan": [
     "Plano",
     "Plan"
@@ -411,6 +415,10 @@ const translations: Record<string, readonly [string, string]> = {
 
 export function workspaceTranslator(locale: string) {
   return (message: string) => locale === "en" ? message : translations[message]?.[locale === "es" ? 1 : 0] ?? message;
+}
+/** Singular label for an item whose status is FAILED ("Failed" alone is a count label, "Falhas"). */
+export function failedStatusLabel(locale: string) {
+  return locale === "en" ? "Failed" : locale === "es" ? "Fallida" : "Falha";
 }
 export function workspaceDateLocale(locale: string) {
   return locale === "en" ? "en-US" : locale === "es" ? "es-ES" : "pt-BR";

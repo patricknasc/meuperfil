@@ -9,6 +9,7 @@
 import { usePathname } from "next/navigation";
 import { workspaceTranslator } from "@/lib/i18n/workspace";
 import LanguageSwitcher from "@/components/language-switcher";
+import { IconMenu } from "@/components/app-icons";
 import type { Locale } from "@/app/[lang]/dictionaries";
 
 const pageTitles: Record<string, string> = {
@@ -51,36 +52,32 @@ export default function TopBar({
   const title = t(pageTitles[normalizedPath] ?? fallbackTitle);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 lg:px-8 border-b border-border glass">
-      {/* Left: hamburger + title */}
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/85 px-4 backdrop-blur-md lg:px-8">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+          className="rounded-lg p-2 text-muted transition-colors hover:bg-surface-hover hover:text-foreground lg:hidden"
           aria-label={t("Toggle sidebar")}
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
+          <IconMenu />
         </button>
-        <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+        <h1 className="truncate font-heading text-xl font-semibold tracking-tight">{title}</h1>
       </div>
 
-      {/* Right: status and language switcher */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-border text-xs text-muted">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              instagramAccountCount > 0 ? "bg-success animate-pulse" : "bg-warning"
-            }`}
-          />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span
+          className={`hidden items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium sm:inline-flex ${
+            instagramAccountCount > 0 ? "border-success/25 bg-success/10 text-success" : "border-warning/30 bg-warning/10 text-warning"
+          }`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${instagramAccountCount > 0 ? "bg-success" : "bg-warning"}`} />
           {instagramAccountCount > 1
             ? `${instagramAccountCount} ${t("accounts")}`
             : instagramUsername
               ? `@${instagramUsername}`
               : t("Connect Instagram")}
-        </div>
-        <LanguageSwitcher currentLocale={locale} />
+        </span>
+        <LanguageSwitcher currentLocale={locale} tone="light" />
       </div>
     </header>
   );

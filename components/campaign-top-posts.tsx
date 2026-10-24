@@ -36,7 +36,7 @@ export default function CampaignTopPosts({ campaignId }: { campaignId: string })
     <div className="glass rounded-2xl p-5">
       <p className="text-xs uppercase tracking-wide text-muted">{t("Posts that generated the most DMs")}</p>
       {posts === null ? (
-        <div className="mt-4 h-24 rounded-xl bg-zinc-800/60 animate-pulse" />
+        <div className="mt-4 h-24 rounded-xl bg-surface-hover animate-pulse" />
       ) : posts.length === 0 ? (
         <p className="mt-3 text-sm text-muted">{t("No DMs from posts yet.")}</p>
       ) : (
@@ -53,7 +53,7 @@ export default function CampaignTopPosts({ campaignId }: { campaignId: string })
                 {post.media?.thumbnail ? (
                   <img src={post.media.thumbnail} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                 ) : (
-                  <div className="h-12 w-12 shrink-0 rounded-lg bg-zinc-800" />
+                  <div className="h-12 w-12 shrink-0 rounded-lg bg-surface-hover" />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-foreground">

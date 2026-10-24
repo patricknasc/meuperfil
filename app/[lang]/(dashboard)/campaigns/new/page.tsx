@@ -147,12 +147,12 @@ export default function NewCampaignPage() {
         )}
 
         {selectedTemplate && (
-          <div className="border border-cyan-200/20 bg-cyan-300/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-cyan-100">{t("Template loaded")}</p>
-            <p className="mt-2 text-sm font-semibold text-white">
+          <div className="rounded-2xl border border-accent/20 bg-accent/10 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent">{t("Template loaded")}</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">
               {selectedTemplate.title}
             </p>
-            <p className="mt-1 text-xs leading-5 text-zinc-300">{t("Pick the Instagram post or reel, adjust the copy, and launch when the connection is ready.")}</p>
+            <p className="mt-1 text-xs leading-5 text-ink-soft">{t("Pick the Instagram post or reel, adjust the copy, and launch when the connection is ready.")}</p>
           </div>
         )}
 
@@ -165,7 +165,7 @@ export default function NewCampaignPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t("e.g. Product launch link drop")}
-            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none transition-colors"
             maxLength={100}
           />
         </div>
@@ -239,7 +239,7 @@ export default function NewCampaignPage() {
             onChange={(e) => setDmMessage(e.target.value)}
             placeholder={t("Hey {username}! Here's the link you asked for: https://...")}
             rows={4}
-            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors resize-none"
+            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none transition-colors resize-none"
             maxLength={1000}
           />
           <p className="text-xs text-muted">{t("Use")}<code className="px-1 py-0.5 rounded bg-surface-hover text-accent font-mono text-[11px]">{"{username}"}</code>{t("to personalize with the commenter's name")}</p>
@@ -253,7 +253,7 @@ export default function NewCampaignPage() {
             value={trackedDestinationUrl}
             onChange={(e) => setTrackedDestinationUrl(e.target.value)}
             placeholder={t("https://yourlink.com/offer")}
-            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-zinc-500 focus:border-accent/40 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground placeholder:text-muted focus:border-accent/40 focus:outline-none transition-colors"
           />
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">{t("Add")}<code className="px-1 py-0.5 rounded bg-surface-hover text-accent font-mono text-[11px]">{"{link}"}</code>{t("to send the tracked redirect.")}</p>
@@ -277,7 +277,7 @@ export default function NewCampaignPage() {
               onClick={() => setWholeWordMatch(!wholeWordMatch)}
               className={`
                 relative w-11 h-6 rounded-full transition-colors
-                ${wholeWordMatch ? "bg-accent" : "bg-zinc-700"}
+                ${wholeWordMatch ? "bg-accent" : "bg-border"}
               `}
             >
               <span
@@ -302,7 +302,7 @@ export default function NewCampaignPage() {
               onClick={() => setIsActive(!isActive)}
               className={`
                 relative w-11 h-6 rounded-full transition-colors
-                ${isActive ? "bg-accent" : "bg-zinc-700"}
+                ${isActive ? "bg-accent" : "bg-border"}
               `}
             >
               <span
@@ -337,7 +337,7 @@ export default function NewCampaignPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-coral to-coral-dark text-sm font-semibold text-white shadow-lg shadow-coral/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
           >
             {saving ? (
               <>

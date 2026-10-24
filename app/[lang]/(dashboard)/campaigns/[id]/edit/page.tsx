@@ -211,7 +211,7 @@ export default function CampaignEditPage() {
             <button
               type="button"
               onClick={() => setWholeWordMatch((value) => !value)}
-              className={`relative w-11 h-6 rounded-full transition-colors ${wholeWordMatch ? "bg-accent" : "bg-zinc-700"}`}
+              className={`relative w-11 h-6 rounded-full transition-colors ${wholeWordMatch ? "bg-accent" : "bg-border"}`}
             >
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${wholeWordMatch ? "left-6" : "left-1"}`} />
             </button>
@@ -224,7 +224,7 @@ export default function CampaignEditPage() {
             <button
               type="button"
               onClick={() => setIsActive((value) => !value)}
-              className={`relative w-11 h-6 rounded-full transition-colors ${isActive ? "bg-accent" : "bg-zinc-700"}`}
+              className={`relative w-11 h-6 rounded-full transition-colors ${isActive ? "bg-accent" : "bg-border"}`}
             >
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${isActive ? "left-6" : "left-1"}`} />
             </button>
@@ -249,7 +249,7 @@ export default function CampaignEditPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 disabled:opacity-60"
+            className="rounded-xl bg-gradient-to-r from-coral to-coral-dark px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-coral/20 disabled:opacity-60"
           >
             {saving ? t("Saving...") : t("Save changes")}
           </button>

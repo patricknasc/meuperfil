@@ -71,7 +71,7 @@ export default function KeywordInput({ keywords, onChange, max = 10 }: KeywordIn
           // (e.g. clicking "Create campaign") instead of silently dropping it.
           onBlur={() => addKeyword(input)}
           placeholder={keywords.length === 0 ? t("Type keyword and press Enter...") : ""}
-          className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-zinc-500 outline-none"
+          className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-muted outline-none"
         />
       </div>
       <p className="text-xs text-muted">
