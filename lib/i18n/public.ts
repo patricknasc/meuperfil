@@ -1,4 +1,13 @@
 const text: Record<string, [string, string]> = {
+  "Sign in or create your account": ["Entrar ou criar conta", "Inicia sesión o crea tu cuenta"],
+  "Enter your email and we send you an access link. If you are new, your account is created right away, free.": ["Digite seu e-mail e enviamos um link de acesso. Se for sua primeira vez, sua conta é criada na hora, grátis.", "Escribe tu email y te enviamos un enlace de acceso. Si es tu primera vez, tu cuenta se crea al instante, gratis."],
+  "Continue with email": ["Continuar com e-mail", "Continuar con email"],
+  "Use another email": ["Usar outro e-mail", "Usar otro email"],
+  "No password needed.": ["Sem senha.", "Sin contraseña."],
+  "By continuing you agree to the": ["Ao continuar, você concorda com os", "Al continuar, aceptas los"],
+  "Terms of Use": ["Termos de uso", "Términos de uso"],
+  "and the": ["e a", "y la"],
+  "Need help?": ["Precisa de ajuda?", "¿Necesitas ayuda?"],
   "Sign in": ["Entrar", "Iniciar sesión"], "Start free": ["Começar grátis", "Empieza gratis"], "Templates": ["Modelos", "Plantillas"], "Agencies": ["Agências", "Agencias"], "Pricing": ["Preços", "Precios"], "Security": ["Segurança", "Seguridad"], "Last updated": ["Última atualização", "Última actualización"],
   "Sign in to manage Instagram comment-to-DM campaigns.": ["Entre para gerenciar campanhas de comentário para DM no Instagram.", "Inicia sesión para gestionar campañas de comentario a DM en Instagram."],
   "Template selected": ["Modelo selecionado", "Plantilla seleccionada"], "Check your email": ["Confira seu e-mail", "Revisa tu email"],

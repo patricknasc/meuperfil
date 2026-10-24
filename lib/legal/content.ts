@@ -632,6 +632,12 @@ const dataDeletion: Record<Locale, LegalDocument> = {
   },
 };
 
-export function getLegalDocument(kind: "privacy" | "dataDeletion", locale: Locale): LegalDocument {
-  return (kind === "privacy" ? privacy : dataDeletion)[locale];
+export type LegalKind = "privacy" | "dataDeletion" | "terms" | "metaReview";
+
+export async function getLegalDocument(kind: LegalKind, locale: Locale): Promise<LegalDocument> {
+  if (kind === "privacy") return privacy[locale];
+  if (kind === "dataDeletion") return dataDeletion[locale];
+  // Imported lazily: terms.ts imports this module for shared constants.
+  const docs = await import("./terms");
+  return (kind === "terms" ? docs.terms : docs.metaReview)[locale];
 }
