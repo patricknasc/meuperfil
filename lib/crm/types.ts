@@ -5,7 +5,7 @@
  * from both Bio Links and Instagram Comment-to-DM conversations.
  */
 
-export type LeadSource = "BIO_LINK" | "INSTAGRAM_DM" | "CAMPAIGN" | "MANUAL" | "IMPORT";
+export type LeadSource = "BIO_LINK" | "INSTAGRAM_DM" | "CAMPAIGN" | "MANUAL" | "IMPORT" | "STORE";
 
 export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "CONVERTED" | "LOST";
 
@@ -18,7 +18,7 @@ export interface Contact {
   instagramUsername?: string | null;
   instagramId?: string | null;
   source: LeadSource;
-  sourceId?: string | null; // Profile ID, Automation ID, or Link ID
+  sourceId?: string | null; // Profile ID, Automation ID, Link ID or Order ID
   status: LeadStatus;
   tags: string[];
   customFields?: Record<string, unknown>;

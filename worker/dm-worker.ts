@@ -2,6 +2,7 @@ import { createDMWorker } from "@/lib/queue/dm-worker";
 import { createPostPublisherWorker, reconcileScheduledPosts } from "@/lib/queue/post-worker";
 import { recordWorkerHeartbeat } from "@/lib/ops/worker-health";
 import { refreshExpiringInstagramTokens, resetMonthlyUsage } from "@/lib/meta/token-refresh";
+import { expireStaleOrders } from "@/lib/store/orders";
 import os from "node:os";
 
 const dmWorker = createDMWorker();
@@ -53,6 +54,19 @@ async function maintenance() {
 void maintenance();
 const maintenanceTimer = setInterval(() => void maintenance(), MAINTENANCE_INTERVAL_MS);
 
+// Store: cancel unpaid orders past their deadline so reserved stock returns.
+const ORDER_EXPIRY_INTERVAL_MS = 5 * 60 * 1000;
+async function expireOrders() {
+  try {
+    const expired = await expireStaleOrders();
+    if (expired > 0) console.log(`[Worker] Store: ${expired} unpaid orders expired`);
+  } catch (error) {
+    console.error("[Worker] Store order expiry failed", error);
+  }
+}
+void expireOrders();
+const orderExpiryTimer = setInterval(() => void expireOrders(), ORDER_EXPIRY_INTERVAL_MS);
+
 void heartbeat();
 const heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_INTERVAL_MS);
 
@@ -61,6 +75,7 @@ async function shutdown(signal: string) {
   clearInterval(heartbeatTimer);
   clearInterval(reconciliationTimer);
   clearInterval(maintenanceTimer);
+  clearInterval(orderExpiryTimer);
   await Promise.allSettled([
     dmWorker.close(),
     postWorker.close(),

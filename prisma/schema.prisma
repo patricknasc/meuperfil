@@ -97,6 +97,7 @@ model Workspace {
   leadInteractions  LeadInteraction[]
   store             Store?
   products          Product[]
+  orders            Order[]
 
   @@index([ownerId])
 }
@@ -572,6 +573,7 @@ enum LeadSource {
   CAMPAIGN
   MANUAL
   IMPORT
+  STORE
 }
 
 enum LeadStatus {
@@ -601,6 +603,7 @@ model Contact {
   updatedAt         DateTime          @updatedAt
   workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   interactions      LeadInteraction[]
+  orders            Order[]
 
   @@unique([workspaceId, identityKey])
   @@index([workspaceId, status])
@@ -662,12 +665,14 @@ model Store {
   quoteShipping         Boolean     @default(false)
   returnPolicy          String?
   orderExpiryHours      Int         @default(48)
+  nextOrderNumber       Int         @default(1)
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
   workspace  Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   categories ProductCategory[]
   products   Product[]
+  orders     Order[]
 }
 
 model ProductCategory {
@@ -710,10 +715,11 @@ model Product {
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
-  store     Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  category  ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  images    ProductImage[]
+  store      Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  workspace  Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  category   ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images     ProductImage[]
+  orderItems OrderItem[]
 
   @@unique([storeId, slug])
   @@index([storeId, isActive, sortOrder])
@@ -733,4 +739,81 @@ model ProductImage {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId, sortOrder])
+}
+
+enum OrderChannel {
+  WHATSAPP
+  PIX_DIRECT
+  PLATFORM
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELED
+  REFUNDED
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  storeId          String
+  workspaceId      String
+  number           Int
+  publicToken      String       @unique
+  channel          OrderChannel
+  status           OrderStatus  @default(PENDING)
+  customerName     String
+  customerEmail    String?
+  customerPhone    String
+  customerDocument String?
+  customerNote     String?
+  locale           String       @default("pt")
+  shippingAddress  Json?
+  shippingMethod   String?
+  shippingLabel    String?
+  shippingCents    Int          @default(0)
+  shippingQuoteRef String?
+  subtotalCents    Int
+  platformFeeCents Int          @default(0)
+  totalCents       Int
+  trackingCode     String?
+  contactId        String?
+  expiresAt        DateTime?
+  paidAt           DateTime?
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
+  canceledAt       DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+
+  @@unique([storeId, number])
+  @@index([workspaceId, status, createdAt])
+  @@index([status, expiresAt])
+}
+
+model OrderItem {
+  id             String      @id @default(cuid())
+  orderId        String
+  productId      String?
+  name           String
+  type           ProductType
+  unitPriceCents Int
+  quantity       Int
+  imageUrl       String?
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { PixKeyType, ProductType } from "@/app/generated/prisma/client";
 import { normalizeWhatsApp } from "@/lib/profiles/links";
 import { isValidDestinationUrl } from "@/lib/profiles/validation";
+import { isValidPixKey } from "@/lib/store/pix";
 
 export const MAX_IMAGES_PER_PRODUCT = 8;
 export const MAX_PRICE_CENTS = 100_000_000; // R$ 1.000.000,00
@@ -79,6 +80,8 @@ export const updateStoreSchema = z
         path: ["pixKey"],
         message: "Para receber por Pix, informe a chave, o tipo, o nome e a cidade do recebedor.",
       });
+    } else if (store.pixKey && store.pixKeyType && !isValidPixKey(store.pixKey, store.pixKeyType)) {
+      ctx.addIssue({ code: "custom", path: ["pixKey"], message: "Chave Pix inválida para o tipo escolhido." });
     }
     if (store.quoteShipping && !store.originZip) {
       ctx.addIssue({ code: "custom", path: ["originZip"], message: "Informe o CEP de origem para calcular o frete." });

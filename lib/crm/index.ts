@@ -8,7 +8,7 @@ export * from "./types";
 export const leadStatusSchema = z.enum(["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST"]);
 const captureSchema = z.object({
   workspaceId: z.string().min(1),
-  source: z.enum(["BIO_LINK", "INSTAGRAM_DM", "CAMPAIGN", "MANUAL", "IMPORT"]),
+  source: z.enum(["BIO_LINK", "INSTAGRAM_DM", "CAMPAIGN", "MANUAL", "IMPORT", "STORE"]),
   sourceId: z.string().min(1).optional(), interactionKey: z.string().min(1).optional(),
   name: z.string().trim().max(200).optional(),
   email: z.string().trim().toLowerCase().email().optional(), phone: z.string().trim().min(3).max(40).optional(),
@@ -30,6 +30,9 @@ export async function captureLeadFromInteraction(input: CaptureLeadInput): Promi
     } else if (data.source === "BIO_LINK") {
       const profile = data.sourceId ? await tx.profile.findFirst({ where: { id: data.sourceId, workspaceId: data.workspaceId }, select: { id: true } }) : null;
       if (!profile) throw new Error("Perfil não encontrado neste workspace.");
+    } else if (data.source === "STORE") {
+      const order = data.sourceId ? await tx.order.findFirst({ where: { id: data.sourceId, workspaceId: data.workspaceId }, select: { id: true } }) : null;
+      if (!order) throw new Error("Pedido não encontrado neste workspace.");
     }
     const { interactionKey: _interactionKey, customFields, ...contactData } = data;
     void _interactionKey;

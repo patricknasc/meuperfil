@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../lib/db/client";
+import { getRedisConnection } from "../lib/queue/client";
+import { expireStaleOrders } from "../lib/store/orders";
 
 /**
  * HTTP smoke for the store against a local dev server on :3015.
@@ -204,6 +206,146 @@ async function main() {
     }
     assert.equal((await request(`/pt/store`)).status, 307, "dashboard requires login");
 
+    // ─── Orders ──────────────────────────────────────────────────────────────
+    const rateKeys = await getRedisConnection().keys("rate:store:*");
+    if (rateKeys.length) await getRedisConnection().del(...rateKeys);
+    const settings = await request("/api/store", tokens[0], "PUT", {
+      name: "Loja Smoke",
+      acceptWhatsapp: true,
+      whatsappPhone: "11 99999-8888",
+      acceptPixDirect: true,
+      pixKeyType: "EMAIL",
+      pixKey: "pix@example.com",
+      pixMerchantName: "Loja Smoke",
+      pixMerchantCity: "Sao Paulo",
+      pickupEnabled: true,
+      pickupAddress: "Rua das Flores, 10",
+      flatShippingCents: 1500,
+      freeShippingOverCents: 20000,
+      quoteShipping: false,
+    });
+    assert.equal(settings.status, 200, await settings.clone().text());
+    const otherProfile = await prisma.profile.create({ data: { workspaceId: workspaces[1], handle: `${handle}-b`, displayName: "Outra" } });
+    await request("/api/store", tokens[1]);
+
+    const api = `/api/store/public/${handle}`;
+    const cart = await (await request(`${api}/cart`, undefined, "POST", { items: [{ productId: shirt.id, quantity: 2 }] })).json();
+    assert.deepEqual(cart.data.channels, { WHATSAPP: true, PIX_DIRECT: true });
+    assert.equal(cart.data.products[0].priceCents, 4990);
+
+    const shippingRes = await (await request(`${api}/shipping`, undefined, "POST", { items: [{ productId: shirt.id, quantity: 2 }] })).json();
+    assert.deepEqual(shippingRes.data.options.map((o: { id: string }) => o.id), ["pickup", "flat"]);
+    const digitalShipping = await (await request(`${api}/shipping`, undefined, "POST", { items: [{ productId: ebook.id, quantity: 1 }] })).json();
+    assert.deepEqual(digitalShipping.data.options.map((o: { id: string }) => o.id), ["none"]);
+
+    const address = { zip: "01310-100", street: "Av. Paulista", number: "1000", district: "Bela Vista", city: "São Paulo", state: "SP" };
+    const customer = { name: "Ana Compradora", phone: "(11) 98888-7777", email: "ana@example.com" };
+
+    // Client-sent prices are ignored; tampered shipping is refused.
+    const tampered = await request(`${api}/orders`, undefined, "POST", {
+      items: [{ productId: shirt.id, quantity: 1, priceCents: 1 }],
+      channel: "WHATSAPP",
+      customer,
+      shippingOptionId: "quote:1",
+      address,
+    });
+    assert.equal(tampered.status, 409);
+    const noAddress = await request(`${api}/orders`, undefined, "POST", { items: [{ productId: shirt.id, quantity: 1 }], channel: "WHATSAPP", customer, shippingOptionId: "flat" });
+    assert.equal(noAddress.status, 409);
+    const hiddenOrder = await request(`${api}/orders`, undefined, "POST", {
+      items: [{ productId: (await hiddenRes.json()).data.id, quantity: 1 }],
+      channel: "WHATSAPP",
+      customer,
+      shippingOptionId: "none",
+    });
+    assert.equal(hiddenOrder.status, 409, "hidden products cannot be ordered");
+
+    const waRes = await request(`${api}/orders`, undefined, "POST", {
+      items: [{ productId: shirt.id, quantity: 2, priceCents: 1 }],
+      channel: "WHATSAPP",
+      customer: { ...customer, note: "Embrulhar para presente" },
+      shippingOptionId: "flat",
+      address,
+      locale: "pt",
+    });
+    assert.equal(waRes.status, 201, await waRes.clone().text());
+    const wa = (await waRes.json()).data;
+    assert.equal(wa.number, 1);
+    assert(wa.whatsappUrl.startsWith("https://wa.me/5511999998888?text="));
+    assert(decodeURIComponent(wa.whatsappUrl).includes("Embrulhar para presente"));
+    const waOrder = await prisma.order.findUniqueOrThrow({ where: { publicToken: wa.publicToken } });
+    assert.equal(waOrder.totalCents, 2 * 4990 + 1500);
+    assert.equal(waOrder.status, "PENDING");
+    assert.equal((await prisma.product.findUniqueOrThrow({ where: { id: shirt.id } })).stock, 3, "stock reserved");
+
+    const waPage = await request(`/pt/${handle}/pedido/${wa.publicToken}?novo=1`);
+    assert.equal(waPage.status, 200);
+    const waHtml = await waPage.text();
+    assert(waHtml.includes("Enviar pedido no WhatsApp") && waHtml.includes("Av. Paulista, 1000"));
+    assert.equal((await request(`/pt/${otherProfile.handle}/pedido/${wa.publicToken}`)).status, 404, "token only works under the seller's handle");
+    assert.equal((await request(`/pt/${handle}/pedido/nao-existe-token-falso-123`)).status, 404);
+
+    const pixRes = await request(`${api}/orders`, undefined, "POST", {
+      items: [{ productId: ebook.id, quantity: 1 }],
+      channel: "PIX_DIRECT",
+      customer,
+      shippingOptionId: "none",
+      locale: "en",
+    });
+    assert.equal(pixRes.status, 201);
+    const pix = (await pixRes.json()).data;
+    const pixHtml = await (await request(`/en/${handle}/pedido/${pix.publicToken}`)).text();
+    assert(pixHtml.includes("000201") && pixHtml.includes("br.gov.bcb.pix") && pixHtml.includes("<svg"), "Pix QR and copy-paste code");
+    assert(pixHtml.includes("Awaiting payment"));
+    assert(!pixHtml.includes("files.example.com"), "digital link hidden before payment");
+
+    // Two buyers race for the last unit: exactly one wins.
+    await prisma.product.update({ where: { id: shirt.id }, data: { stock: 1 } });
+    const race = await Promise.all(
+      [0, 1].map(() =>
+        request(`${api}/orders`, undefined, "POST", { items: [{ productId: shirt.id, quantity: 1 }], channel: "WHATSAPP", customer, shippingOptionId: "pickup" })
+      )
+    );
+    assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+    assert.equal((await prisma.product.findUniqueOrThrow({ where: { id: shirt.id } })).stock, 0);
+
+    // Owner management and isolation
+    const list = await (await request("/api/store/orders", tokens[0])).json();
+    assert.equal(list.data.total, 3);
+    assert.equal(list.data.summary.pendingCount, 3);
+    assert.equal((await (await request("/api/store/orders", tokens[1])).json()).data.total, 0);
+    assert.equal((await request(`/api/store/orders/${waOrder.id}`, tokens[1])).status, 404);
+    assert.equal((await request(`/api/store/orders/${waOrder.id}`, tokens[1], "PATCH", { status: "PAID" })).status, 404);
+    const byNumber = await (await request("/api/store/orders?search=%231", tokens[0])).json();
+    assert.equal(byNumber.data.orders[0].number, 1);
+
+    const pixOrder = await prisma.order.findUniqueOrThrow({ where: { publicToken: pix.publicToken } });
+    assert.equal((await request(`/api/store/orders/${pixOrder.id}`, tokens[0], "PATCH", { status: "PAID" })).status, 200);
+    assert.equal((await request(`/api/store/orders/${pixOrder.id}`, tokens[0], "PATCH", { status: "CANCELED" })).status, 400, "paid orders cannot be canceled");
+    const paidHtml = await (await request(`/en/${handle}/pedido/${pix.publicToken}`)).text();
+    assert(paidHtml.includes("files.example.com/receitas.pdf"), "digital link released after payment");
+    assert(!paidHtml.includes("br.gov.bcb.pix"), "no Pix code once paid");
+
+    // Canceling an unpaid order returns stock; so does expiry.
+    assert.equal((await request(`/api/store/orders/${waOrder.id}`, tokens[0], "PATCH", { status: "CANCELED" })).status, 200);
+    assert.equal((await prisma.product.findUniqueOrThrow({ where: { id: shirt.id } })).stock, 2);
+    const raceWinner = await prisma.order.findFirstOrThrow({ where: { storeId: waOrder.storeId, status: "PENDING" } });
+    await prisma.order.update({ where: { id: raceWinner.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    assert((await expireStaleOrders()) >= 1);
+    assert.equal((await prisma.order.findUniqueOrThrow({ where: { id: raceWinner.id } })).status, "CANCELED");
+    assert.equal((await prisma.product.findUniqueOrThrow({ where: { id: shirt.id } })).stock, 3);
+
+    // Buyers become STORE leads in the CRM.
+    const lead = await prisma.contact.findFirst({ where: { workspaceId: workspaces[0], source: "STORE" } });
+    assert(lead && lead.phone === "11988887777" && lead.tags.includes("cliente-loja"));
+    assert.equal((await prisma.order.findUniqueOrThrow({ where: { id: waOrder.id } })).contactId, lead.id);
+
+    for (const locale of ["pt", "en", "es"]) {
+      assert.equal((await request(`/${locale}/${handle}/carrinho`)).status, 200);
+      assert.equal((await request(`/${locale}/store/orders`, tokens[0])).status, 200);
+      assert.equal((await request(`/${locale}/store/orders/${waOrder.id}`, tokens[0])).status, 200);
+    }
+
     // Members can read but not change the store
     await prisma.workspaceMember.update({
       where: { workspaceId_userId: { workspaceId: workspaces[0], userId: userIds[0] } },
@@ -211,11 +353,12 @@ async function main() {
     });
     assert.equal((await request(`/api/store/products/${shirt.id}`, tokens[0], "DELETE")).status, 403);
 
-    console.log("Store smoke passed: settings, uploads, products, isolation, bio gallery, catalog search/filters and pages in three languages.");
+    console.log("Store smoke passed: settings, uploads, products, isolation, bio gallery, catalog, checkout, Pix, WhatsApp, stock races, order management, expiry and CRM in three languages.");
   } finally {
     if (workspaces.length) await prisma.workspace.deleteMany({ where: { id: { in: workspaces } } });
     if (userIds.length) await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await prisma.$disconnect();
+    getRedisConnection().disconnect();
   }
 }
 
