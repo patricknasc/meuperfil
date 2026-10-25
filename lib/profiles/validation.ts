@@ -15,6 +15,7 @@ export const RESERVED_HANDLES = new Set([
   "billing",
   "blog",
   "campaigns",
+  "carrinho",
   "checkout",
   "comment-link-automation",
   "dashboard",
@@ -29,11 +30,13 @@ export const RESERVED_HANDLES = new Set([
   "login",
   "logout",
   "logs",
+  "loja",
   "manychat-alternative",
   "meta-review",
   "meuperfil",
   "oauth",
   "p",
+  "pedido",
   "pricing",
   "privacy",
   "profiles",
@@ -46,6 +49,7 @@ export const RESERVED_HANDLES = new Set([
   "signup",
   "static",
   "status",
+  "store",
   "templates",
   "terms",
   "webhook",
@@ -156,11 +160,29 @@ export const socialLinkItemSchema = z.object({
   label: z.string().max(50).optional(),
 });
 
-/** Block config: social link lists are validated, other blocks keep no config. */
-const blockConfigSchema = z
-  .object({ links: z.array(socialLinkItemSchema).min(1, "Adicione ao menos um link de rede social").max(30) })
-  .nullable()
-  .optional();
+const socialLinksConfigSchema = z.object({
+  links: z.array(socialLinkItemSchema).min(1, "Adicione ao menos um link de rede social").max(30),
+});
+
+/** STORE block: which products the gallery shows on the bio page. */
+export const storeBlockConfigSchema = z.object({
+  mode: z.enum(["featured", "category", "newest"]).default("featured"),
+  categoryId: z.string().optional().nullable(),
+  limit: z.number().int().min(2).max(12).default(6),
+});
+
+export type StoreBlockConfig = z.infer<typeof storeBlockConfigSchema>;
+
+/** Shape is checked per block type in parseBlockConfig, since updates do not carry the type. */
+const blockConfigSchema = z.record(z.string(), z.unknown()).nullable().optional();
+
+/** Social link lists and store galleries are validated; other blocks keep no config. */
+export function parseBlockConfig(type: ProfileBlockType, config: unknown) {
+  if (config === undefined) return undefined;
+  if (type === ProfileBlockType.SOCIAL_LINKS) return config === null ? null : socialLinksConfigSchema.parse(config);
+  if (type === ProfileBlockType.STORE) return storeBlockConfigSchema.parse(config ?? {});
+  return null;
+}
 
 export const createBlockSchema = z.object({
   type: z.nativeEnum(ProfileBlockType).default(ProfileBlockType.LINK),

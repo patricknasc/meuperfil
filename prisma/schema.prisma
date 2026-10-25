@@ -18,11 +18,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts          Account[]
-  sessions          Session[]
-  ownedWorkspaces   Workspace[]       @relation("WorkspaceOwner")
-  workspaceMembers  WorkspaceMember[]
-  sentInvitations   WorkspaceInvitation[] @relation("WorkspaceInvitationsSent")
+  accounts         Account[]
+  sessions         Session[]
+  ownedWorkspaces  Workspace[]           @relation("WorkspaceOwner")
+  workspaceMembers WorkspaceMember[]
+  sentInvitations  WorkspaceInvitation[] @relation("WorkspaceInvitationsSent")
 }
 
 model Account {
@@ -72,14 +72,14 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  plan                 Plan                @default(FREE)
-  subscriptionStatus   SubscriptionStatus  @default(NONE)
-  stripeCustomerId     String?             @unique
-  stripeSubscriptionId String?             @unique
+  plan                 Plan               @default(FREE)
+  subscriptionStatus   SubscriptionStatus @default(NONE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
   stripePriceId        String?
   currentPeriodEnd     DateTime?
-  usagePeriodStart     DateTime            @default(now())
-  dmsSentThisPeriod    Int                 @default(0)
+  usagePeriodStart     DateTime           @default(now())
+  dmsSentThisPeriod    Int                @default(0)
 
   members           WorkspaceMember[]
   invitations       WorkspaceInvitation[]
@@ -95,6 +95,8 @@ model Workspace {
   scheduledPosts    ScheduledPost[]
   contacts          Contact[]
   leadInteractions  LeadInteraction[]
+  store             Store?
+  products          Product[]
 
   @@index([ownerId])
 }
@@ -136,16 +138,16 @@ model WorkspaceInvitation {
 }
 
 model InstagramAccount {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   workspaceId       String
-  instagramId       String   @unique
+  instagramId       String    @unique
   username          String
   name              String?
   accessToken       String
   tokenExpiresAt    DateTime?
-  webhookSubscribed Boolean  @default(false)
-  connectedAt       DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  webhookSubscribed Boolean   @default(false)
+  connectedAt       DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   automations    Automation[]
@@ -157,30 +159,30 @@ model InstagramAccount {
 }
 
 model Automation {
-  id                 String   @id @default(cuid())
+  id                 String @id @default(cuid())
   workspaceId        String
   instagramAccountId String
 
-  name           String
-  goal           String?
-  postId         String
-  postUrl        String?
-  keywords       String[]
-  dmMessage      String
-  isActive       Boolean @default(true)
-  wholeWordMatch Boolean @default(true)
+  name               String
+  goal               String?
+  postId             String
+  postUrl            String?
+  keywords           String[]
+  dmMessage          String
+  isActive           Boolean   @default(true)
+  wholeWordMatch     Boolean   @default(true)
   /// Accept one wrong letter in keywords of 5+ characters.
-  typoTolerance  Boolean @default(false)
+  typoTolerance      Boolean   @default(false)
   /// Optional end of the campaign; null means it never expires.
-  endsAt         DateTime?
-  reportShareSlug    String? @unique
-  reportShareEnabled Boolean @default(true)
+  endsAt             DateTime?
+  reportShareSlug    String?   @unique
+  reportShareEnabled Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount  @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
   dmLogs           DmLog[]
   trackedLinks     TrackedLink[]
   linkClicks       LinkClick[]
@@ -192,22 +194,22 @@ model Automation {
 }
 
 model DmLog {
-  id                 String     @id @default(cuid())
+  id                 String @id @default(cuid())
   workspaceId        String
   automationId       String
   instagramAccountId String
 
-  commenterId   String
-  commenterName String?
-  commentText   String
-  commentId     String
+  commenterId    String
+  commenterName  String?
+  commentText    String
+  commentId      String
   matchedKeyword String?
   /// Post or reel the comment was made on (useful for "all posts" campaigns).
   mediaId        String?
-  status        DmStatus @default(PENDING)
-  attempts      Int      @default(0)
-  dmSentAt      DateTime?
-  errorMessage  String?
+  status         DmStatus  @default(PENDING)
+  attempts       Int       @default(0)
+  dmSentAt       DateTime?
+  errorMessage   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -266,14 +268,14 @@ model LinkClick {
 }
 
 model WebhookEvent {
-  id          String        @id @default(cuid())
-  workspaceId String?
-  object      String?
-  payload     Json
-  status      WebhookStatus @default(PENDING)
+  id           String        @id @default(cuid())
+  workspaceId  String?
+  object       String?
+  payload      Json
+  status       WebhookStatus @default(PENDING)
   errorMessage String?
-  createdAt   DateTime      @default(now())
-  processedAt DateTime?
+  createdAt    DateTime      @default(now())
+  processedAt  DateTime?
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
@@ -282,12 +284,12 @@ model WebhookEvent {
 }
 
 model BillingEvent {
-  id          String   @id @default(cuid())
-  workspaceId String?
-  stripeEventId String @unique
-  type        String
-  payload     Json
-  processedAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  workspaceId   String?
+  stripeEventId String   @unique
+  type          String
+  payload       Json
+  processedAt   DateTime @default(now())
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
@@ -295,13 +297,13 @@ model BillingEvent {
 }
 
 model OperationalEvent {
-  id          String                @id @default(cuid())
+  id          String                 @id @default(cuid())
   workspaceId String?
   source      OperationalEventSource
-  level       OperationalEventLevel @default(INFO)
+  level       OperationalEventLevel  @default(INFO)
   message     String
   payload     Json?
-  createdAt   DateTime              @default(now())
+  createdAt   DateTime               @default(now())
   resolvedAt  DateTime?
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
@@ -385,49 +387,50 @@ enum ProfileBlockType {
   LINK
   TEXT_DIVIDER
   SOCIAL_LINKS
+  STORE
 }
 
 model Profile {
-  id              String       @id @default(cuid())
-  workspaceId     String
-  handle          String       @unique
-  displayName     String
-  bio             String?
-  avatarUrl       String?
-  theme           ProfileTheme @default(MODERN_DARK)
-  themeSettings   Json?
-  isPublished     Boolean      @default(true)
-  customDomain    String?      @unique
-  seoTitle        String?
-  seoDescription  String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  workspaceId    String
+  handle         String       @unique
+  displayName    String
+  bio            String?
+  avatarUrl      String?
+  theme          ProfileTheme @default(MODERN_DARK)
+  themeSettings  Json?
+  isPublished    Boolean      @default(true)
+  customDomain   String?      @unique
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  workspace       Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  blocks          ProfileBlock[]
-  visits          ProfileVisit[]
-  clicks          ProfileBlockClick[]
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  blocks    ProfileBlock[]
+  visits    ProfileVisit[]
+  clicks    ProfileBlockClick[]
 
   @@index([workspaceId])
   @@index([handle])
 }
 
 model ProfileBlock {
-  id             String           @id @default(cuid())
-  profileId      String
-  type           ProfileBlockType @default(LINK)
-  title          String?
-  url            String?
-  description    String?
-  imageUrl       String?
-  isActive       Boolean          @default(true)
-  sortOrder      Int              @default(0)
-  config         Json?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id          String           @id @default(cuid())
+  profileId   String
+  type        ProfileBlockType @default(LINK)
+  title       String?
+  url         String?
+  description String?
+  imageUrl    String?
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  config      Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
-  profile        Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  clicks         ProfileBlockClick[]
+  profile Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  clicks  ProfileBlockClick[]
 
   @@index([profileId])
   @@index([sortOrder])
@@ -448,7 +451,7 @@ model ProfileVisit {
   utmCampaign String?
   createdAt   DateTime @default(now())
 
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([workspaceId])
@@ -473,8 +476,8 @@ model ProfileBlockClick {
   utmCampaign    String?
   createdAt      DateTime @default(now())
 
-  profile        Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  block          ProfileBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  profile Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  block   ProfileBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([blockId])
@@ -510,40 +513,40 @@ enum PostStatus {
 }
 
 model ScheduledPost {
-  id                 String          @id @default(cuid())
+  id                 String  @id @default(cuid())
   workspaceId        String
   instagramAccountId String?
-  
-  caption            String?
-  mediaUrls          String[]        @default([])
-  mediaType          PostMediaType   @default(IMAGE)
-  platform           PostPlatform    @default(INSTAGRAM)
-  
-  scheduledFor       DateTime?
-  publishedAt        DateTime?
-  status             PostStatus      @default(DRAFT)
-  
-  queueVersion       Int             @default(0)
+
+  caption   String?
+  mediaUrls String[]      @default([])
+  mediaType PostMediaType @default(IMAGE)
+  platform  PostPlatform  @default(INSTAGRAM)
+
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  status       PostStatus @default(DRAFT)
+
+  queueVersion       Int       @default(0)
   publishAttemptedAt DateTime?
   quotaCountedAt     DateTime?
 
   // Meta container tracking
-  metaContainerId    String?
-  publishedPostId    String?
-  publishedPostUrl   String?
-  errorMessage       String?
-  
+  metaContainerId  String?
+  publishedPostId  String?
+  publishedPostUrl String?
+  errorMessage     String?
+
   // Integrated auto-campaign
-  autoCampaignEnabled   Boolean      @default(false)
-  autoCampaignKeywords  String[]     @default([])
+  autoCampaignEnabled   Boolean  @default(false)
+  autoCampaignKeywords  String[] @default([])
   autoCampaignDmMessage String?
   createdAutomationId   String?
-  
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
 
-  workspace          Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  instagramAccount   InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  instagramAccount InstagramAccount? @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
 
   @@index([workspaceId])
   @@index([instagramAccountId])
@@ -551,7 +554,6 @@ model ScheduledPost {
   @@index([scheduledFor])
   @@index([workspaceId, status])
 }
-
 
 model BetaWaitlistEntry {
   id        String   @id @default(cuid())
@@ -581,7 +583,7 @@ enum LeadStatus {
 }
 
 model Contact {
-  id                String     @id @default(cuid())
+  id                String            @id @default(cuid())
   workspaceId       String
   identityKey       String
   name              String?
@@ -591,13 +593,13 @@ model Contact {
   instagramId       String?
   source            LeadSource
   sourceId          String?
-  status            LeadStatus @default(NEW)
-  tags              String[]   @default([])
+  status            LeadStatus        @default(NEW)
+  tags              String[]          @default([])
   customFields      Json?
-  lastInteractionAt DateTime   @default(now())
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  workspace         Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lastInteractionAt DateTime          @default(now())
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   interactions      LeadInteraction[]
 
   @@unique([workspaceId, identityKey])
@@ -606,18 +608,129 @@ model Contact {
 }
 
 model LeadInteraction {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   workspaceId  String
   contactId    String
   automationId String?
-  eventKey     String     @unique
+  eventKey     String      @unique
   source       LeadSource
   sourceId     String?
-  createdAt    DateTime   @default(now())
-  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact      Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
   automation   Automation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
 
   @@index([workspaceId, automationId])
   @@index([contactId, createdAt])
+}
+
+// ─── Store (product gallery, cart and orders) ───────────────────────────────
+
+enum ProductType {
+  PHYSICAL
+  DIGITAL
+  SERVICE
+}
+
+enum PixKeyType {
+  CPF
+  CNPJ
+  EMAIL
+  PHONE
+  RANDOM
+}
+
+model Store {
+  id                    String      @id @default(cuid())
+  workspaceId           String      @unique
+  name                  String
+  description           String?
+  whatsappPhone         String?
+  pixKey                String?
+  pixKeyType            PixKeyType?
+  pixMerchantName       String?
+  pixMerchantCity       String?
+  acceptWhatsapp        Boolean     @default(true)
+  acceptPixDirect       Boolean     @default(false)
+  acceptPlatform        Boolean     @default(false)
+  originZip             String?
+  originAddress         Json?
+  pickupEnabled         Boolean     @default(false)
+  pickupAddress         String?
+  flatShippingCents     Int?
+  freeShippingOverCents Int?
+  quoteShipping         Boolean     @default(false)
+  returnPolicy          String?
+  orderExpiryHours      Int         @default(48)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  workspace  Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  categories ProductCategory[]
+  products   Product[]
+}
+
+model ProductCategory {
+  id        String   @id @default(cuid())
+  storeId   String
+  name      String
+  slug      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([storeId, slug])
+}
+
+model Product {
+  id                    String      @id @default(cuid())
+  storeId               String
+  workspaceId           String
+  categoryId            String?
+  type                  ProductType @default(PHYSICAL)
+  name                  String
+  slug                  String
+  description           String?
+  priceCents            Int
+  compareAtCents        Int?
+  stock                 Int?
+  sku                   String?
+  tags                  String[]    @default([])
+  weightGrams           Int?
+  heightCm              Int?
+  widthCm               Int?
+  lengthCm              Int?
+  digitalDeliveryUrlEnc String?
+  isActive              Boolean     @default(true)
+  isFeatured            Boolean     @default(false)
+  sortOrder             Int         @default(0)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  store     Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  category  ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images    ProductImage[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, isActive, sortOrder])
+  @@index([storeId, categoryId])
+  @@index([workspaceId])
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  productId   String
+  url         String
+  storagePath String?
+  alt         String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
 }

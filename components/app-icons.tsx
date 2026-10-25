@@ -26,6 +26,13 @@ export const IconLink = (p: IconProps) => (
     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
   </Svg>
 );
+export const IconStore = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+    <path d="M3 6h18" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
+  </Svg>
+);
 export const IconCalendar = (p: IconProps) => (
   <Svg {...p}>
     <rect x="3" y="4" width="18" height="18" rx="2" />

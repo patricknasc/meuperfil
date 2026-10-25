@@ -34,6 +34,8 @@ describe("billing plan helpers", () => {
       maxProfiles: 1,
       maxBlocksPerProfile: 5,
       maxScheduledPostsPerMonth: 5,
+      maxProducts: 10,
+      platformFeeBps: 500,
     });
     expect(PLAN_LIMITS.PRO.maxAutomations).toBe(10);
     expect(PLAN_LIMITS.PRO.maxInstagramAccounts).toBe(1);

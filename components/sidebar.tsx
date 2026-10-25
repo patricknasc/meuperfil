@@ -21,12 +21,14 @@ import {
   IconMessages,
   IconOverview,
   IconSettings,
+  IconStore,
   IconUsers,
 } from "@/components/app-icons";
 
 const navItems = [
   { key: "dashboard", path: "/dashboard", Icon: IconOverview },
   { key: "profiles", path: "/profiles", Icon: IconLink },
+  { key: "store", path: "/store", Icon: IconStore },
   { key: "scheduler", path: "/scheduler", Icon: IconCalendar },
   { key: "campaigns", path: "/campaigns", Icon: IconMegaphone },
   { key: "leads", path: "/leads", Icon: IconUsers },

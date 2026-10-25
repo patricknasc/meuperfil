@@ -24,6 +24,7 @@ const pageTitles: Record<string, string> = {
   "/scheduler": "Scheduler",
   "/profiles": "Bio link",
   "/leads": "Leads",
+  "/store": "Store",
 };
 
 interface TopBarProps {
@@ -44,11 +45,13 @@ export default function TopBar({
   const normalizedPath = pathname.replace(/^\/(en|pt|es)/, "") || "/";
   const fallbackTitle = normalizedPath.startsWith("/profiles/")
     ? "Bio link"
-    : /\/(campaigns|automations)\/[^/]+\/edit$/.test(normalizedPath)
-      ? "Edit Campaign"
-      : /\/(campaigns|automations)\/[^/]+$/.test(normalizedPath)
-        ? "Campaign"
-        : "Dashboard";
+    : normalizedPath.startsWith("/store/")
+      ? "Store"
+      : /\/(campaigns|automations)\/[^/]+\/edit$/.test(normalizedPath)
+        ? "Edit Campaign"
+        : /\/(campaigns|automations)\/[^/]+$/.test(normalizedPath)
+          ? "Campaign"
+          : "Dashboard";
   const title = t(pageTitles[normalizedPath] ?? fallbackTitle);
 
   return (

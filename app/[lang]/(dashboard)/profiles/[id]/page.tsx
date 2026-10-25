@@ -27,11 +27,14 @@ import { SOCIAL_PLATFORMS, getSocialPlatform } from "@/lib/profiles/social-platf
 import { profileFontVariables } from "@/lib/profiles/fonts";
 import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
 import { ModalScrollLock } from "@/components/modal-scroll-lock";
+import { StoreBlockFields, parseStoreBlockConfig, type StoreBlockConfigValue } from "@/components/store/store-block-fields";
+import { storeTranslator } from "@/lib/i18n/store";
 
 export const ProfileBlockType = {
   LINK: "LINK",
   TEXT_DIVIDER: "TEXT_DIVIDER",
   SOCIAL_LINKS: "SOCIAL_LINKS",
+  STORE: "STORE",
   INSTAGRAM_POST: "INSTAGRAM_POST",
 } as const;
 
@@ -104,6 +107,7 @@ export default function ProfileStudioPage() {
   const [newBlockUrl, setNewBlockUrl] = useState("");
   const [newBlockDescription, setNewBlockDescription] = useState("");
   const [newBlockImageUrl, setNewBlockImageUrl] = useState("");
+  const [newStoreConfig, setNewStoreConfig] = useState<StoreBlockConfigValue>({ mode: "featured", limit: 4 });
   const [addingBlock, setAddingBlock] = useState(false);
 
   // Edit Block Modal
@@ -311,7 +315,7 @@ export default function ProfileStudioPage() {
     e.preventDefault();
     setModalError(null);
 
-    let configPayload: { links: Array<{ platform: string; url: string }> } | null = null;
+    let configPayload: Record<string, unknown> | null = null;
     let finalUrl: string | null = null;
     let finalImageUrl: string | null = null;
 
@@ -331,6 +335,10 @@ export default function ProfileStudioPage() {
       if ("error" in socials) return setModalError(socials.error);
       configPayload = { links: socials.links };
       finalUrl = socials.links[0].url;
+    }
+
+    if (newBlockType === ProfileBlockType.STORE) {
+      configPayload = { ...newStoreConfig };
     }
 
     setAddingBlock(true);
@@ -759,6 +767,9 @@ export default function ProfileStudioPage() {
                             {block.type === ProfileBlockType.SOCIAL_LINKS && (
                               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" /></svg>
                             )}
+                            {block.type === ProfileBlockType.STORE && (
+                              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                            )}
                           </div>
                         )}
 
@@ -772,6 +783,8 @@ export default function ProfileStudioPage() {
                                 ? t("Link")
                                 : block.type === ProfileBlockType.TEXT_DIVIDER
                                 ? t("Divisor")
+                                : block.type === ProfileBlockType.STORE
+                                ? storeTranslator(lang)("Loja")
                                 : t("Sociais")}
                             </span>
                           </div>
@@ -1469,6 +1482,20 @@ export default function ProfileStudioPage() {
                           );
                         }
 
+                        if (block.type === ProfileBlockType.STORE) {
+                          const { limit } = parseStoreBlockConfig(block.config);
+                          return (
+                            <div key={block.id} className="space-y-2 py-1">
+                              <p className={`px-1 text-xs ${themeConfig.classes.linkTitle}`}>{block.title || storeTranslator(lang)("Loja")}</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {Array.from({ length: Math.min(limit, 4) }, (_, i) => (
+                                  <div key={i} className={`aspect-square ${themeConfig.classes.linkRadius ?? "rounded-2xl"} ${themeConfig.classes.linkCard} opacity-70`} />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
                         if (block.type === ProfileBlockType.SOCIAL_LINKS && block.config?.links) {
                           const links = block.config.links as Array<{ platform: string; url: string }>;
                           return (
@@ -1547,7 +1574,7 @@ export default function ProfileStudioPage() {
             </div>
 
             {/* Type selector */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <button
                 type="button"
                 onClick={() => setNewBlockType(ProfileBlockType.LINK)}
@@ -1580,6 +1607,20 @@ export default function ProfileStudioPage() {
                 }`}
               >
                 {t("Redes Sociais")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewBlockType(ProfileBlockType.STORE);
+                  if (!newBlockTitle) setNewBlockTitle(storeTranslator(lang)("Loja"));
+                }}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold transition ${
+                  newBlockType === ProfileBlockType.STORE
+                    ? "border-accent bg-accent/20 text-foreground"
+                    : "border-border bg-background text-muted"
+                }`}
+              >
+                {storeTranslator(lang)("Galeria da loja")}
               </button>
             </div>
 
@@ -1653,6 +1694,10 @@ export default function ProfileStudioPage() {
                     {linkPreview(normalizeWebUrl(newBlockImageUrl), newBlockImageUrl)}
                   </div>
                 </>
+              )}
+
+              {newBlockType === ProfileBlockType.STORE && (
+                <StoreBlockFields lang={lang} value={newStoreConfig} onChange={setNewStoreConfig} />
               )}
 
               {newBlockType === ProfileBlockType.SOCIAL_LINKS && (
@@ -1825,6 +1870,14 @@ export default function ProfileStudioPage() {
                     {linkPreview(normalizeWebUrl(editingBlock.imageUrl || ""), editingBlock.imageUrl || "")}
                   </div>
                 </>
+              )}
+
+              {editingBlock.type === ProfileBlockType.STORE && (
+                <StoreBlockFields
+                  lang={lang}
+                  value={parseStoreBlockConfig(editingBlock.config)}
+                  onChange={(config) => setEditingBlock({ ...editingBlock, config: { ...config } })}
+                />
               )}
 
               {editingBlock.type === ProfileBlockType.SOCIAL_LINKS && (

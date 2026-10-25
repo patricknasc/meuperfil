@@ -16,6 +16,7 @@ const PROTECTED_PREFIXES = [
   "/logs",
   "/settings",
   "/diagnostics",
+  "/store",
 ];
 
 function hasSessionCookie(request: NextRequest): boolean {

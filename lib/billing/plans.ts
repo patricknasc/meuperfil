@@ -8,6 +8,9 @@ export interface PlanLimit {
   maxProfiles: number;
   maxBlocksPerProfile: number;
   maxScheduledPostsPerMonth: number;
+  maxProducts: number;
+  /** Platform fee on sales paid through MeuPerfil checkout, in basis points (100 = 1%). */
+  platformFeeBps: number;
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
@@ -19,6 +22,8 @@ export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
     maxProfiles: 1,
     maxBlocksPerProfile: 5,
     maxScheduledPostsPerMonth: 5,
+    maxProducts: 10,
+    platformFeeBps: 500,
   },
   PRO: {
     maxAutomations: 10,
@@ -28,6 +33,8 @@ export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
     maxProfiles: 3,
     maxBlocksPerProfile: 25,
     maxScheduledPostsPerMonth: 60,
+    maxProducts: 200,
+    platformFeeBps: 200,
   },
   AGENCY: {
     maxAutomations: Number.POSITIVE_INFINITY,
@@ -37,6 +44,8 @@ export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
     maxProfiles: 20,
     maxBlocksPerProfile: 100,
     maxScheduledPostsPerMonth: Number.POSITIVE_INFINITY,
+    maxProducts: Number.POSITIVE_INFINITY,
+    platformFeeBps: 0,
   },
 };
 

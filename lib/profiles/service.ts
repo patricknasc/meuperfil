@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import { Prisma, ProfileTheme, ProfileBlockType } from "@/app/generated/prisma/client";
 import { canCreateProfileForWorkspace, canAddBlockToProfile } from "@/lib/billing/profile-limits";
-import { sanitizeHandle, isValidDestinationUrl } from "@/lib/profiles/validation";
+import { sanitizeHandle, isValidDestinationUrl, parseBlockConfig } from "@/lib/profiles/validation";
 import { isSafeSocialUrl } from "@/lib/profiles/links";
 import type { VisitContext } from "@/lib/tracking/visitor";
 import type { CustomThemeSettings } from "@/lib/profiles/themes";
@@ -37,7 +37,7 @@ export interface CreateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: Prisma.InputJsonValue | null;
+  config?: unknown;
 }
 
 export interface UpdateBlockInput {
@@ -47,7 +47,7 @@ export interface UpdateBlockInput {
   imageUrl?: string | null;
   isActive?: boolean;
   sortOrder?: number;
-  config?: Prisma.InputJsonValue | null;
+  config?: unknown;
 }
 
 /**
@@ -256,6 +256,7 @@ export async function createBlock(
   });
 
   const sortOrder = input.sortOrder ?? (maxOrder ? maxOrder.sortOrder + 1 : 0);
+  const config = parseBlockConfig(input.type, input.config);
 
   return prisma.profileBlock.create({
     data: {
@@ -267,7 +268,7 @@ export async function createBlock(
       imageUrl: input.imageUrl,
       isActive: input.isActive ?? true,
       sortOrder,
-      config: input.config ?? undefined,
+      config: config ?? undefined,
     },
   });
 }
@@ -302,7 +303,8 @@ export async function updateBlock(
   if (input.imageUrl !== undefined) data.imageUrl = input.imageUrl;
   if (input.isActive !== undefined) data.isActive = input.isActive;
   if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
-  if (input.config !== undefined) data.config = input.config === null ? Prisma.DbNull : input.config;
+  const config = parseBlockConfig(block.type, input.config);
+  if (config !== undefined) data.config = config === null ? Prisma.DbNull : config;
 
   return prisma.profileBlock.update({
     where: { id: blockId },

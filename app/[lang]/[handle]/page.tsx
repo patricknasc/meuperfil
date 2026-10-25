@@ -11,6 +11,10 @@ import { getSocialPlatform } from "@/lib/profiles/social-platforms";
 import { SocialGlyph, socialButtonProps } from "@/components/social-icon";
 import { ProfileBlockType } from "@/app/generated/prisma/client";
 import { hashClickIp } from "@/lib/tracking/server";
+import { storeBlockConfigSchema } from "@/lib/profiles/validation";
+import { getStoreBlockProducts, type PublicProduct } from "@/lib/store/service";
+import { storeTranslator } from "@/lib/i18n/store";
+import { ProductCard } from "@/components/store/product-card";
 
 interface PageProps {
   params: Promise<{ lang: string; handle: string }>;
@@ -83,6 +87,19 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
 
   const themeConfig = getThemeConfig(profile.theme);
   const iconStyle = themeIconStyle(profile.theme, profile.themeSettings);
+  const storeT = storeTranslator(lang);
+
+  // Store galleries load their products up front so the blocks render in one pass.
+  const storeBlockProducts = new Map<string, PublicProduct[]>();
+  await Promise.all(
+    profile.blocks
+      .filter((block) => block.type === ProfileBlockType.STORE)
+      .map(async (block) => {
+        const config = storeBlockConfigSchema.safeParse(block.config ?? {});
+        const products = await getStoreBlockProducts(profile.workspaceId, config.success ? config.data : storeBlockConfigSchema.parse({}));
+        storeBlockProducts.set(block.id, products);
+      })
+  );
 
   return (
     <main
@@ -166,6 +183,33 @@ export default async function PublicProfilePage({ params, searchParams }: PagePr
                     );
                   })}
                 </div>
+              );
+            }
+
+            if (block.type === ProfileBlockType.STORE) {
+              const products = storeBlockProducts.get(block.id) ?? [];
+              if (!products.length) return null;
+              const shopHref = `/${lang}/${profile.handle}/loja`;
+              return (
+                <section key={block.id} className="space-y-3 py-1" aria-label={block.title || storeT("Loja")}>
+                  <div className="flex items-center justify-between gap-3 px-1">
+                    <h2 className={`text-sm ${themeConfig.classes.linkTitle}`}>{block.title || storeT("Loja")}</h2>
+                    <a href={shopHref} className={`text-xs font-semibold underline ${themeConfig.classes.bio}`}>
+                      {storeT("Ver tudo")}
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {products.map((product) => (
+                      <ProductCard key={product.id} product={product} href={`${shopHref}/${product.slug}`} lang={lang} theme={themeConfig} />
+                    ))}
+                  </div>
+                  <a
+                    href={shopHref}
+                    className={`block w-full p-3.5 text-center text-sm ${themeConfig.classes.linkRadius ?? "rounded-2xl"} ${themeConfig.classes.linkCard} ${themeConfig.classes.linkCardHover} ${themeConfig.classes.linkTitle}`}
+                  >
+                    {storeT("Ver loja")}
+                  </a>
+                </section>
               );
             }
 

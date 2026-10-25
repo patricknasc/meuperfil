@@ -371,6 +371,10 @@ const translations: Record<string, readonly [string, string]> = {
     "Agendador",
     "Programador"
   ],
+  "Store": [
+    "Loja",
+    "Tienda"
+  ],
   "Bio link": [
     "Link na bio",
     "Enlace en bio"
